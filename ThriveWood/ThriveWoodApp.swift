@@ -11,13 +11,21 @@ import SwiftData
 @main
 struct ThriveWoodApp: App {
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let schema = Schema(ThriveWoodSchemaV1.models)
+        let modelConfiguration = ModelConfiguration(
+            "ThriveWood",
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            allowsSave: true,
+            cloudKitDatabase: .automatic
+        )
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(
+                for: schema,
+                migrationPlan: ThriveWoodMigrationPlan.self,
+                configurations: [modelConfiguration]
+            )
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
@@ -25,7 +33,8 @@ struct ThriveWoodApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootTabView()
+                .environment(AppEnvironment(context: sharedModelContainer.mainContext))
         }
         .modelContainer(sharedModelContainer)
     }
