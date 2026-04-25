@@ -5,7 +5,6 @@
 //  Created by Ben Siebert on 22.04.26.
 //
 
-
 import SwiftUI
 import SwiftData
 
@@ -29,6 +28,10 @@ final class AppEnvironment {
     let workoutService: WorkoutService
     let analyticsService: AnalyticsService
     let notificationService: NotificationService
+    
+    #if DEBUG
+    var debugService: DebugService!
+    #endif
 
     init(context: ModelContext) {
         let habitRepo      = SwiftDataHabitRepository(context: context)
@@ -62,5 +65,9 @@ final class AppEnvironment {
         try? exerciseRepo.seedBuiltInsIfNeeded()
         _ = try? profileRepo.currentProfile()
         _ = try? forestRepo.currentForest()
+        
+        #if DEBUG
+        self.debugService = DebugService(env: self)
+        #endif
     }
 }

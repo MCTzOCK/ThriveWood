@@ -9,7 +9,7 @@
 import SwiftUI
 
 enum AppTab: Hashable {
-    case home, forest, analytics, sport
+    case home, forest, analytics, sport, settings
 }
 
 struct RootTabView: View {
@@ -33,6 +33,10 @@ struct RootTabView: View {
             SportView()
                 .tabItem { Label("Sport", systemImage: "dumbbell.fill") }
                 .tag(AppTab.sport)
+            
+            SettingsView()
+                .tabItem { Label("Einstellungen", systemImage: "gearshape.fill") }
+                .tag(AppTab.settings)
         }
         .tint(.green)
         .onChange(of: selection) { _, _ in Haptics.selection() }

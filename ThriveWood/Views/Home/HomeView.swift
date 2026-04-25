@@ -13,7 +13,10 @@ struct HomeView: View {
     @State private var vm: HomeViewModel?
     @State private var showingNewHabit = false
     @State private var editingHabit: Habit?
-
+    
+    @State private var showingDebug: Bool = false
+    
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -34,13 +37,18 @@ struct HomeView: View {
                 HabitEditorView(habit: habit)
                     .onDisappear { vm?.load() }
             }
+            .sheet(isPresented: $showingDebug) {
+#if DEBUG
+                DebugMenuView()
+#endif
+            }
         }
         .task {
             if vm == nil { vm = HomeViewModel(env: env) }
             vm?.load()
         }
     }
-
+    
     @ViewBuilder
     private func content(vm: HomeViewModel) -> some View {
         @Bindable var vm = vm
@@ -53,7 +61,7 @@ struct HomeView: View {
                     )
                 )
                 .padding(.horizontal, Theme.Spacing.l)
-
+                
                 DailySummaryCard(
                     points: vm.pointsToday,
                     goal: vm.dailyGoal,
@@ -61,7 +69,7 @@ struct HomeView: View {
                     availablePoints: vm.availablePoints
                 )
                 .padding(.horizontal, Theme.Spacing.l)
-
+                
                 habitList(vm: vm)
             }
             .padding(.vertical, Theme.Spacing.l)
@@ -71,7 +79,7 @@ struct HomeView: View {
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
     }
-
+    
     @ViewBuilder
     private func habitList(vm: HomeViewModel) -> some View {
         if vm.habits.isEmpty {
@@ -96,20 +104,12 @@ struct HomeView: View {
                             vm.delete(habit)
                         }
                     }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) { vm.delete(habit) } label: {
-                            Label("Archivieren", systemImage: "archivebox")
-                        }
-                        Button { editingHabit = habit } label: {
-                            Label("Bearbeiten", systemImage: "pencil")
-                        }.tint(.blue)
-                    }
                 }
             }
             .padding(.horizontal, Theme.Spacing.l)
         }
     }
-
+    
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
@@ -118,5 +118,12 @@ struct HomeView: View {
             }
             .accessibilityLabel("Neuer Habit")
         }
+#if DEBUG
+        ToolbarItem(placement: .topBarLeading) {
+            Button { showingDebug = true } label: {
+                Image(systemName: "hammer.fill")
+            }
+        }
+#endif
     }
 }
