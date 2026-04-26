@@ -12,16 +12,16 @@ import Combine
 struct ActiveSessionBanner: View {
     let session: WorkoutSession
     let onTap: () -> Void
-
+    
     @State private var now: Date = .now
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
+    
     private var elapsed: String {
         let s = Int(now.timeIntervalSince(session.startedAt))
         let m = s / 60, sec = s % 60
         return String(format: "%d:%02d", m, sec)
     }
-
+    
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: Theme.Spacing.m) {
@@ -55,7 +55,7 @@ struct ActiveSessionBanner: View {
 
 struct QuickStartCard: View {
     let onStart: () -> Void
-
+    
     var body: some View {
         Button(action: onStart) {
             HStack(spacing: Theme.Spacing.m) {
@@ -86,11 +86,11 @@ struct WorkoutsSection: View {
     let onStart: (Workout) -> Void
     let onEdit: (Workout) -> Void
     let onDelete: (Workout) -> Void
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             Text("Meine Workouts").font(.headline)
-
+            
             if workouts.isEmpty {
                 VStack(spacing: Theme.Spacing.m) {
                     Image(systemName: "dumbbell.fill")
@@ -125,7 +125,7 @@ struct WorkoutsSection: View {
 struct WorkoutCard: View {
     let workout: Workout
     let onStart: () -> Void
-
+    
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
             ZStack {
@@ -161,13 +161,26 @@ struct WorkoutCard: View {
 
 struct RecentSessionsSection: View {
     let sessions: [WorkoutSession]
-
+    let onSelect: (WorkoutSession) -> Void
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Letzte Trainings").font(.headline)
+            HStack {
+                Text("Letzte Trainings").font(.headline)
+                Spacer()
+                if sessions.count > 5 {
+                    NavigationLink("Alle") {
+                        AllSessionsView(sessions: sessions, onSelect: onSelect)
+                    }
+                    .font(.subheadline.weight(.semibold))
+                }
+            }
             VStack(spacing: Theme.Spacing.s) {
                 ForEach(sessions.prefix(5)) { s in
-                    SessionRow(session: s)
+                    Button { onSelect(s) } label: {
+                        SessionRow(session: s)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -176,7 +189,7 @@ struct RecentSessionsSection: View {
 
 struct SessionRow: View {
     let session: WorkoutSession
-
+    
     private var duration: String {
         guard let sec = session.durationSeconds else { return "–" }
         return "\(sec / 60) min"
@@ -184,7 +197,7 @@ struct SessionRow: View {
     private var totalVolume: Double {
         session.sets.reduce(0) { $0 + ($1.weight ?? 0) * Double($1.reps ?? 0) }
     }
-
+    
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
             Image(systemName: "calendar")

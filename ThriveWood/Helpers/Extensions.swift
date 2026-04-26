@@ -8,10 +8,12 @@
 import Foundation
 
 extension Calendar {
-    /// App-weiter Kalender (konfigurierbar für Wochenstart via UserProfile).
+    /// App-weiter Kalender. Liest den Wochenbeginn aus dem aktuellen UserProfile.
+    /// Fallback: Montag.
     static var app: Calendar {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = .current
+        cal.firstWeekday = AppCalendarConfig.shared.firstWeekday
         return cal
     }
 
@@ -28,3 +30,15 @@ extension Calendar {
     }
 }
 
+/// Globaler, leichtgewichtiger Config-Container.
+/// Wird von AppEnvironment beim Start und bei Profil-Änderungen aktualisiert.
+final class AppCalendarConfig: @unchecked Sendable {
+    static let shared = AppCalendarConfig()
+    private init() {}
+
+    private(set) var firstWeekday: Int = 2 // Montag = 2 (Calendar-Standard)
+
+    func update(weekStartsOn: Weekday) {
+        firstWeekday = weekStartsOn.rawValue
+    }
+}

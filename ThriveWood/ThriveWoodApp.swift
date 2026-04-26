@@ -30,11 +30,28 @@ struct ThriveWoodApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    
+    @State private var env: AppEnvironment?
 
     var body: some Scene {
         WindowGroup {
-            RootTabView()
-                .environment(AppEnvironment(context: sharedModelContainer.mainContext))
+            Group {
+                if let env {
+                    RootTabView()
+                        .environment(env)
+                        .environment(NotificationRouter.shared)
+                } else {
+                    ProgressView()
+                }
+            }
+            .task {
+                if env == nil {
+                    let e = AppEnvironment(context: sharedModelContainer.mainContext)
+                    NotificationRouter.shared.env = e
+                    e.notificationService.bootstrap()
+                    env = e
+                }
+            }
         }
         .modelContainer(sharedModelContainer)
     }

@@ -125,7 +125,7 @@ struct ActiveSessionView: View {
     // MARK: Header
     private var header: some View {
         HStack(spacing: Theme.Spacing.l) {
-            StatTile(value: "\(session.sets.filter { $0.isCompleted }.count)",
+            StatTile(value: "\(session.sets.filter(\.isCompleted).count)",
                      label: "Sätze", tint: .green)
             StatTile(value: "\(Int(totalVolume))",
                      label: "Volumen (\(session.weightUnit.rawValue))", tint: .blue)
@@ -136,9 +136,7 @@ struct ActiveSessionView: View {
     }
 
     private var totalVolume: Double {
-        session.sets.filter { $0.isCompleted }.reduce(0) {
-            $0 + ($1.weight ?? 0) * Double($1.reps ?? 0)
-        }
+        session.sets.filter { $0.isCompleted }.reduce(0) { $0 + $1.volumeValue }
     }
 
     private struct StatTile: View {
@@ -163,7 +161,10 @@ struct ActiveSessionView: View {
         let newOrder = (existing.map(\.order).max() ?? -1) + 1
         let set = SetEntry(
             order: newOrder, exercise: exercise, session: session,
-            reps: last?.reps, weight: last?.weight
+            reps: last?.reps,
+            weight: last?.weight,
+            durationSeconds: last?.durationSeconds,
+            distanceMeters: last?.distanceMeters
         )
         session.sets.append(set)
         try? env.sessionRepo.update(session)
@@ -185,7 +186,9 @@ struct ActiveSessionView: View {
             Haptics.success()
             // Rest-Timer: suche passenden Slot im Plan
             let restSec = session.workout?.exercises
-                .first(where: { $0.exercise?.id == exercise.id })?.restSeconds ?? 90
+                .first(where: { $0.exercise?.id == exercise.id })?.restSeconds
+                ?? (try? env.profileRepo.currentProfile().defaultRestSeconds)
+                ?? 90
             if restSec > 0 { rest.start(seconds: restSec) }
         } else {
             Haptics.impact(.light)
@@ -203,5 +206,27 @@ struct ActiveSessionView: View {
             Haptics.success()
             dismiss()
         } catch { errors.show(error) }
+    }
+}
+
+
+struct AddExerciseButton: View {
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                Text("Übung hinzufügen")
+            }
+            .font(.headline)
+            .foregroundStyle(.blue)
+            .frame(maxWidth: .infinity)
+            .padding(Theme.Spacing.m)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.m)
+                    .strokeBorder(Color.blue.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [6]))
+            )
+        }
+        .buttonStyle(.plain)
     }
 }

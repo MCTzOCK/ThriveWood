@@ -34,6 +34,9 @@ struct DebugMenuView: View {
                     Button("✅ Alle Habits heute abhaken") {
                         run { try env.debugService.completeAllToday() }
                     }
+                    Button("🔔 Test-Notification (5s)") {
+                        Task { try? await env.debugService.fireTestNotification() }
+                    }
                 }
 
                 Section("Zurücksetzen") {

@@ -11,10 +11,10 @@ import SwiftUI
 struct HabitEditorView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
-
+    
     // Nil → neuer Habit
     let habit: Habit?
-
+    
     // Form-State
     @State private var title: String = ""
     @State private var details: String = ""
@@ -27,20 +27,20 @@ struct HabitEditorView: View {
     @State private var reminderTime: Date = Calendar.app.date(
         bySettingHour: 9, minute: 0, second: 0, of: .now
     ) ?? .now
-
+    
     @State private var errors = ErrorState()
     @State private var isSaving = false
-
+    
     private let iconOptions: [String] = [
         "leaf.fill","drop.fill","flame.fill","figure.run","book.fill",
         "moon.fill","sun.max.fill","heart.fill","brain.head.profile",
         "cup.and.saucer.fill","dumbbell.fill","bed.double.fill","pencil",
         "music.note","fork.knife","pills.fill","camera.fill"
     ]
-
+    
     private var isEditing: Bool { habit != nil }
     private var isValid: Bool { !title.trimmingCharacters(in: .whitespaces).isEmpty }
-
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -67,9 +67,9 @@ struct HabitEditorView: View {
             .onAppear(perform: hydrate)
         }
     }
-
+    
     // MARK: - Sections
-
+    
     private var detailsSection: some View {
         Section("Details") {
             TextField("Titel", text: $title)
@@ -78,7 +78,7 @@ struct HabitEditorView: View {
                 .lineLimit(1...3)
         }
     }
-
+    
     private var appearanceSection: some View {
         Section("Darstellung") {
             HStack(spacing: Theme.Spacing.m) {
@@ -98,17 +98,17 @@ struct HabitEditorView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-
+            
             NavigationLink {
                 IconPicker(selection: $icon, options: iconOptions, tint: color.color)
             } label: {
                 LabeledContent("Symbol") { Image(systemName: icon) }
             }
-
+            
             ColorGrid(selection: $color)
         }
     }
-
+    
     private var pointsSection: some View {
         Section {
             Picker("Schwierigkeit", selection: $points) {
@@ -122,7 +122,7 @@ struct HabitEditorView: View {
             Text("Punkte werden bei jedem Abhaken gutgeschrieben und lassen deinen Wald wachsen.")
         }
     }
-
+    
     private var scheduleSection: some View {
         Section("Zeitplan") {
             Picker("Frequenz", selection: $frequency) {
@@ -130,22 +130,33 @@ struct HabitEditorView: View {
                 Text("Bestimmte Tage").tag(HabitFrequency.custom)
             }
             .pickerStyle(.segmented)
-
+            
             if frequency != .daily {
                 WeekdaySelector(selection: $selectedWeekdays)
             }
         }
     }
-
+    
     private var reminderSection: some View {
         Section("Erinnerung") {
             Toggle("Tägliche Erinnerung", isOn: $remindersOn.animation())
+                .onChange(of: remindersOn) { _, newValue in
+                    guard newValue else { return }
+                    Task {
+                        let granted = await env.notificationService.ensureAuthorized()
+                        if !granted {
+                            remindersOn = false
+                            errors.message = "Bitte erlaube Mitteilungen in den iOS-Einstellungen."
+                            errors.isPresented = true
+                        }
+                    }
+                }
             if remindersOn {
                 DatePicker("Uhrzeit", selection: $reminderTime, displayedComponents: .hourAndMinute)
             }
         }
     }
-
+    
     private var deleteSection: some View {
         Section {
             Button(role: .destructive) {
@@ -157,7 +168,7 @@ struct HabitEditorView: View {
             }
         }
     }
-
+    
     private var frequencyLabel: String {
         switch frequency {
         case .daily: "täglich"
@@ -165,9 +176,9 @@ struct HabitEditorView: View {
         case .custom: "\(selectedWeekdays.count) Tage/Woche"
         }
     }
-
+    
     // MARK: - Logic
-
+    
     private func hydrate() {
         guard let habit else { return }
         title = habit.title
@@ -180,43 +191,45 @@ struct HabitEditorView: View {
         remindersOn = habit.reminderTime != nil
         if let t = habit.reminderTime { reminderTime = t }
     }
-
+    
     private func save() {
         isSaving = true
         defer { isSaving = false }
-        do {
-            let weekdays = Array(selectedWeekdays).sorted { $0.rawValue < $1.rawValue }
-            let reminder: Date? = remindersOn ? reminderTime : nil
-
-            if let habit {
-                habit.title = title.trimmingCharacters(in: .whitespaces)
-                habit.details = details
-                habit.iconSystemName = icon
-                habit.color = color
-                habit.points = points
-                habit.frequency = frequency
-                habit.activeWeekdays = weekdays.map(\.rawValue)
-                habit.reminderTime = reminder
-                try env.habitRepo.update(habit)
-            } else {
-                let new = Habit(
-                    title: title.trimmingCharacters(in: .whitespaces),
-                    details: details,
-                    iconSystemName: icon,
-                    color: color,
-                    points: points,
-                    frequency: frequency,
-                    activeWeekdays: weekdays,
-                    reminderTime: reminder,
-                    sortOrder: Int.max
-                )
-                try env.habitRepo.create(new)
+        Task {
+            do {
+                let weekdays = Array(selectedWeekdays).sorted { $0.rawValue < $1.rawValue }
+                let reminder: Date? = remindersOn ? reminderTime : nil
+                
+                if let habit {
+                    habit.title = title.trimmingCharacters(in: .whitespaces)
+                    habit.details = details
+                    habit.iconSystemName = icon
+                    habit.color = color
+                    habit.points = points
+                    habit.frequency = frequency
+                    habit.activeWeekdays = weekdays.map(\.rawValue)
+                    habit.reminderTime = reminder
+                    try await env.saveHabit(habit, isNew: false)
+                } else {
+                    let new = Habit(
+                        title: title.trimmingCharacters(in: .whitespaces),
+                        details: details,
+                        iconSystemName: icon,
+                        color: color,
+                        points: points,
+                        frequency: frequency,
+                        activeWeekdays: weekdays,
+                        reminderTime: reminder,
+                        sortOrder: Int.max
+                    )
+                    try await env.saveHabit(new, isNew: true)
+                }
+                Haptics.success()
+                dismiss()
+            } catch {
+                Haptics.warning()
+                errors.show(error)
             }
-            Haptics.success()
-            dismiss()
-        } catch {
-            Haptics.warning()
-            errors.show(error)
         }
     }
 }

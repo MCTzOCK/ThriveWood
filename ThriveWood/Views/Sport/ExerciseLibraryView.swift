@@ -38,7 +38,7 @@ struct ExerciseLibraryView: View {
                 categoryChips
                 List {
                     ForEach(grouped, id: \.0) { muscle, list in
-                        Section(muscle.rawValue.capitalized) {
+                        Section(muscle.id.capitalized) {
                             ForEach(list) { e in
                                 Button {
                                     Haptics.selection()
@@ -52,7 +52,7 @@ struct ExerciseLibraryView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(e.name).font(.subheadline.weight(.semibold))
                                                 .foregroundStyle(.primary)
-                                            Text(e.category.rawValue.capitalized)
+                                            Text(e.category.id.capitalized)
                                                 .font(.caption).foregroundStyle(.secondary)
                                         }
                                         Spacer()
@@ -98,7 +98,7 @@ struct ExerciseLibraryView: View {
                     selectedCategory = nil
                 }
                 ForEach(ExerciseCategory.allCases) { c in
-                    Chip(title: c.rawValue.capitalized,
+                    Chip(title: c.id,
                          isSelected: selectedCategory == c) {
                         selectedCategory = c
                     }

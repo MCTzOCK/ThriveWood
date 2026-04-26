@@ -20,6 +20,13 @@ final class UserProfile {
     var enableNotifications: Bool
     var onboardingCompletedAt: Date?
     var createdAt: Date
+    var appearanceRaw: String      // AppAppearance
+    var accentThemeRaw: String     // AccentTheme
+    var quietHoursEnabled: Bool
+    var quietHoursStart: Date
+    var quietHoursEnd: Date
+    var defaultRestSeconds: Int
+    var iCloudSyncEnabled: Bool
 
     init(
         id: UUID = UUID(),
@@ -41,6 +48,14 @@ final class UserProfile {
         self.enableNotifications = enableNotifications
         self.onboardingCompletedAt = onboardingCompletedAt
         self.createdAt = createdAt
+        self.appearanceRaw = AppAppearance.system.rawValue
+        self.accentThemeRaw = AccentTheme.forest.rawValue
+        self.quietHoursEnabled = false
+        self.quietHoursStart = Calendar.current.date(bySettingHour: 22, minute: 0, second: 0, of: .now) ?? .now
+        self.quietHoursEnd   = Calendar.current.date(bySettingHour: 7,  minute: 0, second: 0, of: .now) ?? .now
+        self.defaultRestSeconds = 90
+        self.iCloudSyncEnabled = true
+
     }
 
     var preferredWeightUnit: WeightUnit {
@@ -50,5 +65,14 @@ final class UserProfile {
     var weekStartsOn: Weekday {
         get { Weekday(rawValue: weekStartsOnRaw) ?? .monday }
         set { weekStartsOnRaw = newValue.rawValue }
+    }
+    
+    var appearance: AppAppearance {
+        get { AppAppearance(rawValue: appearanceRaw) ?? .system }
+        set { appearanceRaw = newValue.rawValue }
+    }
+    var accentTheme: AccentTheme {
+        get { AccentTheme(rawValue: accentThemeRaw) ?? .forest }
+        set { accentThemeRaw = newValue.rawValue }
     }
 }

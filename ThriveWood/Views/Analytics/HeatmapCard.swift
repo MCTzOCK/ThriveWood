@@ -50,11 +50,12 @@ struct HeatmapCard: View {
 
     private var columns: [[HabitHeatmapCell?]] {
         guard let first = heatmap.first else { return [] }
-        // Leere Cells am Anfang, sodass Spalte oben mit Sonntag beginnt.
-        let startWeekday = Calendar.app.component(.weekday, from: first.date) // 1=So
-        var cells: [HabitHeatmapCell?] = Array(repeating: nil, count: startWeekday - 1)
+        let cal = Calendar.app
+        let weekday = cal.component(.weekday, from: first.date)
+        // Offset relativ zum Wochenstart
+        let offset = (weekday - cal.firstWeekday + 7) % 7
+        var cells: [HabitHeatmapCell?] = Array(repeating: nil, count: offset)
         cells.append(contentsOf: heatmap.map { Optional($0) })
-        // Auffüllen auf ein Vielfaches von 7.
         while cells.count % 7 != 0 { cells.append(nil) }
         return stride(from: 0, to: cells.count, by: 7).map {
             Array(cells[$0..<min($0 + 7, cells.count)])

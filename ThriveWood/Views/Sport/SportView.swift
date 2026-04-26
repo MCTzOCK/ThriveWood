@@ -14,11 +14,14 @@ struct SportView: View {
     @State private var showingNewWorkout = false
     @State private var editingWorkout: Workout?
     @State private var presentedSession: WorkoutSession?
-
+    @State private var detailSession: WorkoutSession?
+    
     var body: some View {
         NavigationStack {
             Group {
-                if let vm { content(vm: vm) }
+                if let vm {
+                    content(vm: vm)
+                }
                 else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
             .navigationTitle("Sport")
@@ -45,7 +48,7 @@ struct SportView: View {
             vm?.load()
         }
     }
-
+    
     @ViewBuilder
     private func content(vm: SportViewModel) -> some View {
         ScrollView {
@@ -56,12 +59,12 @@ struct SportView: View {
                     }
                     .padding(.horizontal, Theme.Spacing.l)
                 }
-
+                
                 QuickStartCard {
                     if let s = vm.startSession(for: nil) { presentedSession = s }
                 }
                 .padding(.horizontal, Theme.Spacing.l)
-
+                
                 WorkoutsSection(
                     workouts: vm.workouts,
                     onStart: { w in
@@ -71,9 +74,11 @@ struct SportView: View {
                     onDelete: vm.delete
                 )
                 .padding(.horizontal, Theme.Spacing.l)
-
+                
                 if !vm.recentSessions.isEmpty {
-                    RecentSessionsSection(sessions: vm.recentSessions)
+                    RecentSessionsSection(sessions: vm.recentSessions) { selected in
+                        detailSession = selected
+                    }
                         .padding(.horizontal, Theme.Spacing.l)
                 }
             }
@@ -82,5 +87,8 @@ struct SportView: View {
         .background(Color(.systemGroupedBackground))
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
+        .navigationDestination(item: $detailSession) { session in
+            WorkoutSessionDetailView(session: session)
+        }
     }
 }

@@ -11,9 +11,9 @@ import SwiftUI
 struct WorkoutEditorView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
-
+    
     let workout: Workout?
-
+    
     @State private var name: String = ""
     @State private var details: String = ""
     @State private var color: HabitColor = .blue
@@ -22,10 +22,10 @@ struct WorkoutEditorView: View {
     @State private var showingLibrary = false
     @State private var errors = ErrorState()
     @State private var workoutRef: Workout?
-
+    
     private var isEditing: Bool { workout != nil }
     private var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
-
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -36,7 +36,7 @@ struct WorkoutEditorView: View {
                     Stepper("Dauer: \(duration) min",
                             value: $duration, in: 5...240, step: 5)
                 }
-
+                
                 Section {
                     if slots.isEmpty {
                         Text("Noch keine Übungen").foregroundStyle(.secondary)
@@ -59,7 +59,7 @@ struct WorkoutEditorView: View {
                         if !slots.isEmpty { EditButton().font(.caption) }
                     }
                 }
-
+                
                 if isEditing {
                     Section {
                         Button(role: .destructive) {
@@ -90,9 +90,9 @@ struct WorkoutEditorView: View {
             .onAppear(perform: hydrate)
         }
     }
-
+    
     // MARK: - Actions
-
+    
     private func hydrate() {
         if let workout {
             name = workout.name
@@ -107,28 +107,30 @@ struct WorkoutEditorView: View {
             workoutRef = w
         }
     }
-
+    
     private func addExercise(_ exercise: Exercise) {
         guard let w = workoutRef else { return }
+        let defaultRest = (try? env.profileRepo.currentProfile().defaultRestSeconds) ?? 90
         let slot = WorkoutExercise(
-            order: slots.count, exercise: exercise, workout: w
+            order: slots.count, exercise: exercise, workout: w,
+            restSeconds: defaultRest
         )
         slots.append(slot)
     }
-
+    
     private func deleteSlots(at offsets: IndexSet) {
         let sorted = slots.sorted { $0.order < $1.order }
         for i in offsets { slots.removeAll { $0.id == sorted[i].id } }
         for (i, s) in slots.sorted(by: { $0.order < $1.order }).enumerated() { s.order = i }
     }
-
+    
     private func moveSlots(from source: IndexSet, to destination: Int) {
         var sorted = slots.sorted { $0.order < $1.order }
         sorted.move(fromOffsets: source, toOffset: destination)
         for (i, s) in sorted.enumerated() { s.order = i }
         slots = sorted
     }
-
+    
     private func save() {
         do {
             if let workout {
@@ -161,7 +163,11 @@ struct WorkoutEditorView: View {
 
 private struct SlotRow: View {
     @Bindable var slot: WorkoutExercise
-
+    
+    private var type: ExerciseTrackingType {
+        slot.exercise?.trackingType ?? .repsWeight
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack {
@@ -169,43 +175,62 @@ private struct SlotRow: View {
                     .foregroundStyle(.blue)
                 Text(slot.exercise?.name ?? "Unbekannt")
                     .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text(type.label)
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.blue.opacity(0.12)))
+                    .foregroundStyle(.blue)
             }
+            Spacer()
+            
+            Stepper("Sätze: \(slot.targetSets)", value: $slot.targetSets, in: 1...20)
+                .font(.caption)
+            
             HStack(spacing: Theme.Spacing.m) {
-                Stepper("Sätze: \(slot.targetSets)",
-                        value: $slot.targetSets, in: 1...20)
-                    .font(.caption)
+                if type.showsReps {
+                    field(label: "Reps", value: Binding(
+                        get: { Double(slot.targetReps ?? 0) },
+                        set: { slot.targetReps = Int($0) == 0 ? nil : Int($0) }),
+                          decimal: false, width: 60)
+                }
+                if type.showsWeight {
+                    field(label: "kg", value: Binding(
+                        get: { slot.targetWeight ?? 0 },
+                        set: { slot.targetWeight = $0 == 0 ? nil : $0 }),
+                          decimal: true, width: 70)
+                }
+                if type.showsDistance {
+                    field(label: "km", value: Binding(
+                        get: { (slot.targetDistanceMeters ?? 0) / 1000 },
+                        set: { slot.targetDistanceMeters = $0 == 0 ? nil : $0 * 1000 }),
+                          decimal: true, width: 70)
+                }
+                if type.showsDuration {
+                    field(label: "Sek.", value: Binding(
+                        get: { Double(slot.targetDurationSeconds ?? 0) },
+                        set: { slot.targetDurationSeconds = Int($0) == 0 ? nil : Int($0) }),
+                          decimal: false, width: 70)
+                }
             }
-            HStack(spacing: Theme.Spacing.m) {
-                HStack {
-                    Text("Reps").font(.caption).foregroundStyle(.secondary)
-                    TextField("10",
-                              value: Binding(
-                                get: { slot.targetReps ?? 0 },
-                                set: { slot.targetReps = $0 == 0 ? nil : $0 }),
-                              format: .number)
-                        .keyboardType(.numberPad)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 60)
-                }
-                HStack {
-                    Text("kg").font(.caption).foregroundStyle(.secondary)
-                    TextField("0",
-                              value: Binding(
-                                get: { slot.targetWeight ?? 0 },
-                                set: { slot.targetWeight = $0 == 0 ? nil : $0 }),
-                              format: .number)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 70)
-                }
-                HStack {
-                    Text("Pause").font(.caption).foregroundStyle(.secondary)
-                    Text("\(slot.restSeconds)s").font(.caption.monospacedDigit())
-                    Stepper("", value: $slot.restSeconds, in: 0...600, step: 15)
-                        .labelsHidden()
-                }
+            
+            HStack {
+                Text("Pause").font(.caption).foregroundStyle(.secondary)
+                Text("\(slot.restSeconds)s").font(.caption.monospacedDigit())
+                Stepper("", value: $slot.restSeconds, in: 0...600, step: 15).labelsHidden()
             }
         }
         .padding(.vertical, 4)
     }
+    
+    private func field(label: String, value: Binding<Double>, decimal: Bool, width: CGFloat) -> some View {
+        HStack {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            TextField("0", value: value, format: .number.precision(.fractionLength(decimal ? 0...2 : 0...0)))
+                .keyboardType(decimal ? .decimalPad : .numberPad)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: width)
+        }
+    }
 }
+

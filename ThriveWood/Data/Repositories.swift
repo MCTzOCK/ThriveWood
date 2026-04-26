@@ -210,11 +210,14 @@ final class SwiftDataExerciseRepository: SwiftDataRepository, ExerciseRepository
         let existing = try context.fetch(
             FetchDescriptor<Exercise>(predicate: #Predicate { $0.isBuiltIn == true })
         )
-        guard existing.isEmpty else { return }
-        for e in BuiltInExercises.all {
-            context.insert(e)
+        let existingNames = Set(existing.map(\.name))
+
+        var added = 0
+        for builtin in BuiltInExercises.all where !existingNames.contains(builtin.name) {
+            context.insert(builtin)
+            added += 1
         }
-        try save()
+        if added > 0 { try save() }
     }
 }
 

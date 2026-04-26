@@ -9,16 +9,17 @@
 
 import Foundation
 import SwiftData
+import UserNotifications
 
 @MainActor
 @Observable
 final class DebugService {
     private let env: AppEnvironment
-
+    
     init(env: AppEnvironment) { self.env = env }
-
+    
     // MARK: - Punkte
-
+    
     /// Vergibt Punkte, indem ein "Debug-Habit" automatisch abgehakt wird.
     /// So bleiben alle Analytics/Scoring-Logiken konsistent.
     @discardableResult
@@ -26,27 +27,27 @@ final class DebugService {
         guard amount > 0 else { return 0 }
         let habit = try ensureDebugHabit()
         let normalized = Calendar.app.startOfDay(day)
-
+        
         // Bestehende Debug-Completion an dem Tag finden (oder neu)
         let completion = try env.completionRepo.completion(for: habit, on: normalized)
-            ?? {
-                let c = HabitCompletion(habit: habit, day: normalized, pointsAwarded: 0)
-                try? env.completionRepo.add(c)
-                return c
-            }()
-
+        ?? {
+            let c = HabitCompletion(habit: habit, day: normalized, pointsAwarded: 0)
+            try? env.completionRepo.add(c)
+            return c
+        }()
+        
         completion.pointsAwarded += amount
         try env.completionRepo.add(completion)   // save
         return amount
     }
-
+    
     /// Verteilt Punkte zufällig über die letzten `days` Tage.
     func grantPoints(_ total: Int, distributedOverLast days: Int) throws {
         guard days > 0, total > 0 else { return }
         let cal = Calendar.app
         let today = cal.startOfDay()
         var remaining = total
-
+        
         for offset in 0..<days {
             guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
             let isLast = offset == days - 1
@@ -57,9 +58,9 @@ final class DebugService {
             if remaining <= 0 { break }
         }
     }
-
+    
     // MARK: - Seed-Daten
-
+    
     /// Erzeugt eine realistische Beispielwelt: Habits + Completions der letzten 60 Tage.
     func seedSampleData() throws {
         // Habits
@@ -79,7 +80,7 @@ final class DebugService {
             try env.habitRepo.create(h)
             habits.append(h)
         }
-
+        
         // Completions – zufällig, aber mit realistischer Streak-Tendenz
         let cal = Calendar.app
         let today = cal.startOfDay()
@@ -93,9 +94,9 @@ final class DebugService {
             }
         }
     }
-
+    
     // MARK: - Zeitreise
-
+    
     /// Hakt alle heute fälligen Habits ab (Streak-Booster).
     func completeAllToday() throws {
         for habit in try env.habitService.habitsDue(on: .now) {
@@ -104,7 +105,7 @@ final class DebugService {
             }
         }
     }
-
+    
     /// Baut eine künstliche Streak von `days` Tagen für einen Habit.
     func buildStreak(for habit: Habit, days: Int) throws {
         let cal = Calendar.app
@@ -117,16 +118,16 @@ final class DebugService {
             }
         }
     }
-
+    
     // MARK: - Reset
-
+    
     /// Löscht alle Completions (Punkte-Reset).
     func resetAllCompletions() throws {
         for c in try env.completionRepo.allCompletions() {
             try env.completionRepo.delete(c)
         }
     }
-
+    
     /// Löscht den kompletten Wald.
     func resetForest() throws {
         let forest = try env.forestRepo.currentForest()
@@ -136,7 +137,7 @@ final class DebugService {
         forest.spentPoints = 0
         try env.forestRepo.update(forest)
     }
-
+    
     /// Full Wipe – alles außer Built-In-Exercises.
     func wipeEverything() throws {
         try resetAllCompletions()
@@ -151,11 +152,11 @@ final class DebugService {
             try env.sessionRepo.delete(s)
         }
     }
-
+    
     // MARK: - Helpers
-
+    
     private static let debugHabitTitle = "🛠 Debug Punkte"
-
+    
     private func ensureDebugHabit() throws -> Habit {
         if let existing = try env.habitRepo.fetchAll(includeArchived: true)
             .first(where: { $0.title == Self.debugHabitTitle }) {
@@ -171,6 +172,26 @@ final class DebugService {
         try env.habitRepo.create(habit)
         return habit
     }
+    
+    func fireTestNotification() async throws {
+        guard let habit = try env.habitRepo.fetchAll(includeArchived: false).first else { return }
+        guard await env.notificationService.ensureAuthorized() else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = habit.title
+        content.body = "Test-Reminder ✨"
+        content.sound = .default
+        content.categoryIdentifier = NotificationService.Category.habitReminder
+        content.userInfo = [NotificationService.UserInfoKey.habitID: habit.id.uuidString]
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let req = UNNotificationRequest(
+            identifier: "debug-\(UUID().uuidString)",
+            content: content, trigger: trigger
+        )
+        try await UNUserNotificationCenter.current().add(req)
+    }
+    
 }
 
 #endif

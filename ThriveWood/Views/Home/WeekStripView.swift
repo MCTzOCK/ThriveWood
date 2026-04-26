@@ -13,8 +13,11 @@ struct WeekStripView: View {
     private let calendar = Calendar.app
 
     private var days: [Date] {
-        let today = calendar.startOfDay()
-        return (-3...3).compactMap { calendar.date(byAdding: .day, value: $0, to: today) }
+        let cal = Calendar.app
+        let today = cal.startOfDay()
+        // Beginn der aktuellen Woche
+        let weekStart = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
+        return (0..<7).compactMap { cal.date(byAdding: .day, value: $0, to: weekStart) }
     }
 
     var body: some View {

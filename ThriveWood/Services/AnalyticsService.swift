@@ -86,7 +86,9 @@ final class AnalyticsService {
         return grouped.keys.sorted().map { day in
             let daySessions = grouped[day] ?? []
             let volume = daySessions.flatMap(\.sets).reduce(0.0) { acc, set in
-                acc + (set.weight ?? 0) * Double(set.reps ?? 0)
+                // Nur Strength-Sets in die kg-Volumen-Statistik
+                guard set.exercise?.trackingType == .repsWeight else { return acc }
+                return acc + (set.weight ?? 0) * Double(set.reps ?? 0)
             }
             let duration = daySessions.reduce(0) { $0 + ($1.durationSeconds ?? 0) }
             return WorkoutVolumeSample(date: day, totalVolume: volume, totalDuration: duration)

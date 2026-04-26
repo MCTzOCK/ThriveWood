@@ -10,6 +10,8 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(NotificationRouter.self) private var router
+    
     @State private var vm: HomeViewModel?
     @State private var showingNewHabit = false
     @State private var editingHabit: Habit?
@@ -46,6 +48,15 @@ struct HomeView: View {
         .task {
             if vm == nil { vm = HomeViewModel(env: env) }
             vm?.load()
+        }
+        .onChange(of: router.pendingHabitID) { _, id in
+            guard let id else { return }
+            
+            if let habit = try? env.habitRepo.fetch(id: id) {
+                editingHabit = habit
+            }
+            
+            router.pendingHabitID = nil
         }
     }
     

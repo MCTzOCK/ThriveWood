@@ -15,10 +15,10 @@ final class Exercise {
     var name: String
     var details: String
     var categoryRaw: String
+    var trackingTypeRaw: String
     var primaryMuscleGroupsRaw: [String]
     var secondaryMuscleGroupsRaw: [String]
     var iconSystemName: String
-    /// `true` für vorinstallierte Stock-Übungen.
     var isBuiltIn: Bool
     var createdAt: Date
 
@@ -27,6 +27,7 @@ final class Exercise {
         name: String,
         details: String = "",
         category: ExerciseCategory = .strength,
+        trackingType: ExerciseTrackingType = .repsWeight,
         primaryMuscleGroups: [MuscleGroup] = [],
         secondaryMuscleGroups: [MuscleGroup] = [],
         iconSystemName: String = "dumbbell.fill",
@@ -37,6 +38,7 @@ final class Exercise {
         self.name = name
         self.details = details
         self.categoryRaw = category.rawValue
+        self.trackingTypeRaw = trackingType.rawValue
         self.primaryMuscleGroupsRaw = primaryMuscleGroups.map(\.rawValue)
         self.secondaryMuscleGroupsRaw = secondaryMuscleGroups.map(\.rawValue)
         self.iconSystemName = iconSystemName
@@ -48,6 +50,10 @@ final class Exercise {
         get { ExerciseCategory(rawValue: categoryRaw) ?? .strength }
         set { categoryRaw = newValue.rawValue }
     }
+    var trackingType: ExerciseTrackingType {
+        get { ExerciseTrackingType(rawValue: trackingTypeRaw) ?? .repsWeight }
+        set { trackingTypeRaw = newValue.rawValue }
+    }
     var primaryMuscleGroups: [MuscleGroup] {
         get { primaryMuscleGroupsRaw.compactMap(MuscleGroup.init(rawValue:)) }
         set { primaryMuscleGroupsRaw = newValue.map(\.rawValue) }
@@ -57,6 +63,7 @@ final class Exercise {
         set { secondaryMuscleGroupsRaw = newValue.map(\.rawValue) }
     }
 }
+
 
 @Model
 final class Workout {
@@ -111,6 +118,7 @@ final class WorkoutExercise {
     var targetReps: Int?
     var targetWeight: Double?
     var targetDurationSeconds: Int?
+    var targetDistanceMeters: Double?
     var restSeconds: Int
     var notes: String
 
@@ -123,9 +131,10 @@ final class WorkoutExercise {
         exercise: Exercise,
         workout: Workout? = nil,
         targetSets: Int = 3,
-        targetReps: Int? = 10,
+        targetReps: Int? = nil,
         targetWeight: Double? = nil,
         targetDurationSeconds: Int? = nil,
+        targetDistanceMeters: Double? = nil,
         restSeconds: Int = 90,
         notes: String = ""
     ) {
@@ -134,11 +143,32 @@ final class WorkoutExercise {
         self.exercise = exercise
         self.workout = workout
         self.targetSets = targetSets
-        self.targetReps = targetReps
-        self.targetWeight = targetWeight
-        self.targetDurationSeconds = targetDurationSeconds
         self.restSeconds = restSeconds
         self.notes = notes
+
+        // Sinnvolle Defaults je nach Tracking-Typ
+        switch exercise.trackingType {
+        case .repsWeight:
+            self.targetReps = targetReps ?? 10
+            self.targetWeight = targetWeight
+            self.targetDurationSeconds = nil
+            self.targetDistanceMeters = nil
+        case .reps:
+            self.targetReps = targetReps ?? 12
+            self.targetWeight = nil
+            self.targetDurationSeconds = nil
+            self.targetDistanceMeters = nil
+        case .duration:
+            self.targetReps = nil
+            self.targetWeight = nil
+            self.targetDurationSeconds = targetDurationSeconds ?? 60
+            self.targetDistanceMeters = nil
+        case .distanceDuration:
+            self.targetReps = nil
+            self.targetWeight = nil
+            self.targetDurationSeconds = targetDurationSeconds ?? 1200
+            self.targetDistanceMeters = targetDistanceMeters ?? 3000
+        }
     }
 }
 
@@ -224,5 +254,58 @@ final class SetEntry {
         self.isWarmup = isWarmup
         self.isCompleted = isCompleted
         self.completedAt = completedAt
+    }
+
+    /// Volumen-Berechnung je nach Tracking-Typ.
+    /// - Strength: kg × reps
+    /// - Reps: reps (als Pseudo-Volumen)
+    /// - Duration: Sekunden
+    /// - Distance/Duration: Meter
+    var volumeValue: Double {
+        guard let type = exercise?.trackingType else { return 0 }
+        switch type {
+        case .repsWeight:
+            return (weight ?? 0) * Double(reps ?? 0)
+        case .reps:
+            return Double(reps ?? 0)
+        case .duration:
+            return Double(durationSeconds ?? 0)
+        case .distanceDuration:
+            return distanceMeters ?? 0
+        }
+    }
+
+    /// Kompakte Beschreibung für Zusammenfassungen.
+    var summaryText: String {
+        guard let type = exercise?.trackingType else { return "" }
+        switch type {
+        case .repsWeight:
+            let r = reps ?? 0
+            let w = weight ?? 0
+            return w > 0 ? "\(r) × \(w.clean) kg" : "\(r) Reps"
+        case .reps:
+            return "\(reps ?? 0) Reps"
+        case .duration:
+            return formatDuration(durationSeconds ?? 0)
+        case .distanceDuration:
+            let d = (distanceMeters ?? 0) / 1000
+            return String(format: "%.2f km · %@", d, formatDuration(durationSeconds ?? 0))
+        }
+    }
+
+    private func formatDuration(_ seconds: Int) -> String {
+        let h = seconds / 3600, m = (seconds % 3600) / 60, s = seconds % 60
+        return h > 0
+            ? String(format: "%d:%02d:%02d", h, m, s)
+            : String(format: "%d:%02d", m, s)
+    }
+}
+
+extension Double {
+    /// Entfernt unnötige Nachkommastellen ("70.0" → "70", "70.5" → "70.5")
+    var clean: String {
+        truncatingRemainder(dividingBy: 1) == 0
+            ? String(format: "%.0f", self)
+            : String(format: "%.1f", self)
     }
 }
