@@ -61,10 +61,13 @@ struct AnalyticsView: View {
                     .padding(.horizontal, Theme.Spacing.l)
                 }
 
-                if !vm.workoutVolume.isEmpty {
-                    WorkoutVolumeCard(samples: vm.workoutVolume)
+                if let totals = vm.workoutTotals,
+                   !vm.workoutMetrics.isEmpty,
+                   totals.totalSessions > 0 {
+                    WorkoutStatsCard(samples: vm.workoutMetrics, totals: totals)
                         .padding(.horizontal, Theme.Spacing.l)
                 }
+
 
                 if vm.habitPerformances.isEmpty {
                     ContentUnavailableView(

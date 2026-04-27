@@ -48,16 +48,6 @@ struct ForestView: View {
             }
             .padding(.vertical, Theme.Spacing.l)
         }
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.85, green: 0.93, blue: 0.98),
-                    Color(red: 0.78, green: 0.90, blue: 0.82)
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        )
         .sheet(isPresented: $vm.showingSpeciesPicker) {
             SpeciesPickerSheet(vm: vm)
                 .presentationDetents([.medium, .large])

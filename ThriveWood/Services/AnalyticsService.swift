@@ -28,11 +28,35 @@ struct WorkoutVolumeSample: Identifiable, Hashable {
     let totalDuration: Int    // Sekunden
 }
 
+struct WorkoutMetricsSample: Identifiable, Hashable {
+    var id: Date { date }
+    let date: Date
+    let volumeKg: Double      // Strength: weight × reps
+    let totalReps: Int        // Strength + Bodyweight
+    let durationSeconds: Int  // Aktive Trainingszeit
+    let distanceMeters: Double // Cardio
+    let sessionCount: Int
+}
+
+struct WorkoutTotals {
+    let totalVolumeKg: Double
+    let totalReps: Int
+    let totalDurationSeconds: Int
+    let totalDistanceMeters: Double
+    let totalSessions: Int
+
+    var hasStrength: Bool { totalVolumeKg > 0 }
+    var hasReps: Bool     { totalReps > 0 }
+    var hasDuration: Bool { totalDurationSeconds > 0 }
+    var hasDistance: Bool { totalDistanceMeters > 0 }
+}
+
+
 @MainActor
 @Observable
 final class AnalyticsService {
     private let completions: any HabitCompletionRepository
-    private let sessionsRepo: any WorkoutSessionRepository
+    let sessionsRepo: any WorkoutSessionRepository
     let completionsRepository: HabitCompletionRepository
 
     init(completions: any HabitCompletionRepository, sessions: any WorkoutSessionRepository) {
@@ -106,4 +130,54 @@ final class AnalyticsService {
             }
             .max { ($0.0 * Double($0.1)) < ($1.0 * Double($1.1)) }
     }
+    
+    
+    func workoutMetrics(in range: ClosedRange<Date>) throws -> [WorkoutMetricsSample] {
+            let sessions = try sessionsRepo.sessions(in: range).filter { $0.endedAt != nil }
+            let grouped = Dictionary(grouping: sessions) { Calendar.app.startOfDay($0.startedAt) }
+
+            return grouped.keys.sorted().map { day in
+                let daySessions = grouped[day] ?? []
+                let allSets = daySessions.flatMap(\.sets).filter(\.isCompleted)
+
+                let volume = allSets.reduce(0.0) { acc, set in
+                    guard set.exercise?.trackingType == .repsWeight else { return acc }
+                    return acc + (set.weight ?? 0) * Double(set.reps ?? 0)
+                }
+                let reps = allSets.reduce(0) { acc, set in
+                    guard let t = set.exercise?.trackingType,
+                          t == .reps || t == .repsWeight else { return acc }
+                    return acc + (set.reps ?? 0)
+                }
+                let duration = allSets.reduce(0) { acc, set in
+                    guard let t = set.exercise?.trackingType,
+                          t == .duration || t == .distanceDuration else { return acc }
+                    return acc + (set.durationSeconds ?? 0)
+                }
+                let distance = allSets.reduce(0.0) { acc, set in
+                    guard set.exercise?.trackingType == .distanceDuration else { return acc }
+                    return acc + (set.distanceMeters ?? 0)
+                }
+
+                return WorkoutMetricsSample(
+                    date: day,
+                    volumeKg: volume,
+                    totalReps: reps,
+                    durationSeconds: duration,
+                    distanceMeters: distance,
+                    sessionCount: daySessions.count
+                )
+            }
+        }
+
+        func workoutTotals(in range: ClosedRange<Date>) throws -> WorkoutTotals {
+            let samples = try workoutMetrics(in: range)
+            return WorkoutTotals(
+                totalVolumeKg: samples.reduce(0) { $0 + $1.volumeKg },
+                totalReps: samples.reduce(0) { $0 + $1.totalReps },
+                totalDurationSeconds: samples.reduce(0) { $0 + $1.durationSeconds },
+                totalDistanceMeters: samples.reduce(0) { $0 + $1.distanceMeters },
+                totalSessions: samples.reduce(0) { $0 + $1.sessionCount }
+            )
+        }
 }

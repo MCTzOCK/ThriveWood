@@ -96,7 +96,7 @@ extension AnalyticsService {
     func weekdayDistribution(in range: ClosedRange<Date>) throws -> [WeekdayDistribution] {
         let comps = try completionsRepository.completions(in: range)
         let cal = Calendar.app
-        let symbols = cal.veryShortWeekdaySymbols
+        let symbols = cal.shortWeekdaySymbols
 
         var buckets: [Int: (count: Int, points: Int)] = [:]
         for c in comps {

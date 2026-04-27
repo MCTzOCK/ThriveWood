@@ -39,19 +39,25 @@ struct TreeShapeView: View {
 
     // MARK: Trunk
     private func trunk(size: CGFloat, scale: CGFloat, color: Color) -> some View {
-        let h = size * 0.40 * scale
-        let w = size * 0.10 * scale
-        return RoundedRectangle(cornerRadius: w * 0.3)
-            .fill(color)
+        let h = size * 0.42 * scale
+        let w = size * 0.11 * scale
+        return RoundedRectangle(cornerRadius: w * 0.35)
+            .fill(
+                LinearGradient(
+                    colors: [color, color.opacity(0.75)],
+                    startPoint: .leading, endPoint: .trailing
+                )
+            )
             .frame(width: w, height: h)
-            .offset(y: 0)
+            .shadow(color: .black.opacity(0.15), radius: 2, x: 1, y: 1)
     }
+
 
     // MARK: Canopy
     @ViewBuilder
     private func canopy(size: CGFloat, scale: CGFloat, style: TreeStyle) -> some View {
-        let canopySize = size * 0.80 * scale
-        let offset = size * 0.30 * scale // über dem Stamm
+        let canopySize = size * 0.85 * scale
+        let offset = size * 0.32 * scale
 
         let shape = canopyShape(style.canopyShape)
         let gradient = LinearGradient(
@@ -60,29 +66,46 @@ struct TreeShapeView: View {
         )
 
         ZStack {
+            // Schatten-Layer (nur bei layered Trees)
             if style.layered {
                 shape
-                    //.fill(style.canopyColors.last ?? .green)
-                    .frame(width: canopySize * 1.05, height: canopySize * 1.05)
-                    .offset(y: -offset + 4)
-                    .opacity(0.85)
+                    .fill(style.canopyColors.last ?? .green)
+                    .frame(width: canopySize * 1.04, height: canopySize * 1.04)
+                    .offset(y: -offset + 6)
+                    .opacity(0.55)
+                    .blur(radius: 1)
             }
+            // Haupt-Krone
             shape
-                //.fill(gradient)
+                .fill(gradient)
                 .frame(width: canopySize, height: canopySize)
                 .offset(y: -offset)
+                .shadow(color: .black.opacity(0.10), radius: 3, y: 2)
+
+            // Highlight-Layer für Tiefe
+            shape
+                .fill(
+                    LinearGradient(
+                        colors: [.white.opacity(0.18), .clear],
+                        startPoint: .topLeading,
+                        endPoint: .center
+                    )
+                )
+                .frame(width: canopySize, height: canopySize)
+                .offset(y: -offset)
+                .blendMode(.plusLighter)
         }
     }
 
-    @ViewBuilder
-    private func canopyShape(_ shape: TreeStyle.CanopyShape) -> some View {
+
+    private func canopyShape(_ shape: TreeStyle.CanopyShape) -> AnyShape {
         switch shape {
-        case .round:    Circle()
-        case .triangle: TriangleCanopy()
-        case .teardrop: TeardropCanopy()
-        case .cloud:    CloudCanopy()
-        case .umbrella: UmbrellaCanopy()
-        case .weeping:  WeepingCanopy()
+        case .round:    AnyShape(Circle())
+        case .triangle: AnyShape(TriangleCanopy())
+        case .teardrop: AnyShape(TeardropCanopy())
+        case .cloud:    AnyShape(CloudCanopy())
+        case .umbrella: AnyShape(UmbrellaCanopy())
+        case .weeping:  AnyShape(WeepingCanopy())
         }
     }
 

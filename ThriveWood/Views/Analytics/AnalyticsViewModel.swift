@@ -26,6 +26,8 @@ final class AnalyticsViewModel {
     var selectedHabitID: UUID?
     var heatmap: [HabitHeatmapCell] = []
     var workoutVolume: [WorkoutVolumeSample] = []
+    var workoutMetrics: [WorkoutMetricsSample] = []
+    var workoutTotals: WorkoutTotals?
 
     let errors = ErrorState()
 
@@ -57,6 +59,8 @@ final class AnalyticsViewModel {
             ).sorted { $0.completionRate > $1.completionRate }
 
             workoutVolume = try env.analyticsService.workoutVolume(in: r)
+            workoutMetrics = try env.analyticsService.workoutMetrics(in: r)
+            workoutTotals = try env.analyticsService.workoutTotals(in: r)
 
             if selectedHabitID == nil { selectedHabitID = habitPerformances.first?.habitID }
             loadHeatmap()

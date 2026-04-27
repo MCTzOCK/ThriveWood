@@ -90,8 +90,8 @@ struct ForestGridView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.55, green: 0.75, blue: 0.42),
-                            Color(red: 0.42, green: 0.62, blue: 0.30)
+                            Color.brown,
+                            Color.brown.opacity(0.8),
                         ],
                         startPoint: .top, endPoint: .bottom
                     )
