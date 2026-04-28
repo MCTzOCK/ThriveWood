@@ -83,7 +83,7 @@ struct HeatmapCard: View {
             .frame(width: cellSize, height: cellSize)
             .overlay(
                 RoundedRectangle(cornerRadius: 3)
-                    .strokeBorder(Color.primary.opacity(cell == nil ? 0 : 0.04), lineWidth: 1)
+                    .strokeBorder(Color.accentColor.opacity(cell == nil ? 0 : 0.04), lineWidth: 1)
             )
     }
 
@@ -98,7 +98,7 @@ struct HeatmapCard: View {
         case 4...5: 0.8
         default: 1.0
         }
-        return Color.green.opacity(intensity)
+        return Color.accentColor.opacity(intensity)
     }
 
     private var legend: some View {
@@ -106,7 +106,7 @@ struct HeatmapCard: View {
             Text("Weniger").font(.caption2).foregroundStyle(.secondary)
             ForEach([0.12, 0.25, 0.45, 0.65, 0.85, 1.0], id: \.self) { op in
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(op <= 0.12 ? Color.secondary.opacity(0.12) : Color.green.opacity(op))
+                    .fill(op <= 0.12 ? Color.secondary.opacity(0.12) : Color.accentColor.opacity(op))
                     .frame(width: 12, height: 12)
             }
             Text("Mehr").font(.caption2).foregroundStyle(.secondary)

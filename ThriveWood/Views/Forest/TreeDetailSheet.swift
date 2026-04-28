@@ -61,7 +61,7 @@ struct TreeDetailSheet: View {
                             .background(
                                 Capsule().fill(
                                     vm.availablePoints >= waterCost
-                                    ? Color.blue
+                                    ? Color.accentColor
                                     : Color.gray.opacity(0.4)
                                 )
                             )
@@ -153,14 +153,14 @@ struct GrowthProgressBar: View {
                 } else {
                     Text("Maximale Stufe erreicht 🎉")
                         .font(.caption)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(.tint)
                 }
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.green.opacity(0.15))
+                    Capsule().fill(Color.accentColor.opacity(0.15))
                     Capsule()
-                        .fill(LinearGradient(colors: [.green, .mint],
+                        .fill(LinearGradient(colors: [.accentColor, .mint],
                                              startPoint: .leading, endPoint: .trailing))
                         .frame(width: geo.size.width * progress)
                         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: progress)

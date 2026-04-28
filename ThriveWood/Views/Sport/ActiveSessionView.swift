@@ -19,6 +19,7 @@ struct ActiveSessionView: View {
     @State private var elapsedNow: Date = .now
     @State private var showingFinish = false
     @State private var showingCancel = false
+    @State private var showingAddSheet = false
     @State private var notes: String = ""
     @State private var rpe: Int = 7
     @State private var errors = ErrorState()
@@ -92,7 +93,7 @@ struct ActiveSessionView: View {
                 ToolbarItem(placement: .principal) {
                     Text(elapsed)
                         .font(.headline.monospacedDigit())
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(.tint)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Fertig") { showingFinish = true }
@@ -105,6 +106,11 @@ struct ActiveSessionView: View {
                     finish()
                 }
                 .presentationDetents([.medium])
+            }
+            .sheet(isPresented: $showingAddSheet) {
+                ExerciseLibraryView(onSelect: { ex in
+                    addSet(for: ex)
+                })
             }
             .confirmationDialog(
                 "Workout wirklich abbrechen?",
@@ -172,8 +178,8 @@ struct ActiveSessionView: View {
     }
 
     private func addExercise() {
-        // Für freies Training öffnen wir die Library separat (hier: kleine Abkürzung).
-        // In Produktion als Sheet wie beim Editor.
+        // Für freies Training öffnen wir die Library.
+        showingAddSheet = true
     }
 
     private func toggleComplete(_ set: SetEntry, for exercise: Exercise) {
@@ -219,12 +225,12 @@ struct AddExerciseButton: View {
                 Text("Übung hinzufügen")
             }
             .font(.headline)
-            .foregroundStyle(.blue)
+            .foregroundStyle(.tint)
             .frame(maxWidth: .infinity)
             .padding(Theme.Spacing.m)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.m)
-                    .strokeBorder(Color.blue.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [6]))
+                    .strokeBorder(Color.accentColor.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [6]))
             )
         }
         .buttonStyle(.plain)

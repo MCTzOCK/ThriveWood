@@ -57,7 +57,7 @@ struct SpeciesPickerSheet: View {
                         RoundedRectangle(cornerRadius: Theme.Radius.m)
                             .fill(
                                 LinearGradient(
-                                    colors: [Color.green.opacity(0.2), Color.mint.opacity(0.1)],
+                                    colors: [Color.accentColor.opacity(0.2), Color.mint.opacity(0.1)],
                                     startPoint: .top, endPoint: .bottom
                                 )
                             )
@@ -99,7 +99,7 @@ struct SpeciesPickerSheet: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Radius.m)
                         .strokeBorder(
-                            unlocked && affordable ? Color.green.opacity(0.4) : .clear,
+                            unlocked && affordable ? Color.accentColor.opacity(0.4) : .clear,
                             lineWidth: 1.5
                         )
                 )

@@ -52,8 +52,8 @@ struct WeekdayDistributionCard: View {
                 )
                 .foregroundStyle(
                     entry.item.points == maxPoints && entry.item.points > 0
-                    ? Color.green
-                    : Color.green.opacity(0.45)
+                    ? Color.accentColor
+                    : Color.accentColor.opacity(0.45)
                 )
                 .clipShape(
                     UnevenRoundedRectangle(

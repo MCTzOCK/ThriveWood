@@ -85,7 +85,7 @@ struct SettingsView: View {
                 Stepper(value: $profile.dailyPointGoal, in: 1...50) {
                     HStack {
                         Image(systemName: "target")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(.tint)
                         Text("Tagesziel")
                         Spacer()
                         Text("\(profile.dailyPointGoal) P")
@@ -99,7 +99,7 @@ struct SettingsView: View {
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "calendar").foregroundStyle(.blue)
+                        Image(systemName: "calendar").foregroundStyle(.tint)
                         Text("Wochenbeginn")
                     }
                 }
@@ -114,14 +114,14 @@ struct SettingsView: View {
                     Text("Pounds (lb)").tag(WeightUnit.pounds.rawValue)
                 } label: {
                     HStack {
-                        Image(systemName: "scalemass.fill").foregroundStyle(.purple)
+                        Image(systemName: "scalemass.fill").foregroundStyle(.tint)
                         Text("Gewichtseinheit")
                     }
                 }
 
                 Stepper(value: $profile.defaultRestSeconds, in: 0...600, step: 15) {
                     HStack {
-                        Image(systemName: "timer").foregroundStyle(.orange)
+                        Image(systemName: "timer").foregroundStyle(.tint)
                         Text("Standard-Pause")
                         Spacer()
                         Text(formatRest(profile.defaultRestSeconds))

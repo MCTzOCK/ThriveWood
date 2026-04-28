@@ -172,15 +172,15 @@ private struct SlotRow: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack {
                 Image(systemName: slot.exercise?.iconSystemName ?? "dumbbell.fill")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.tint)
                 Text(slot.exercise?.name ?? "Unbekannt")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text(type.label)
                     .font(.caption2.weight(.semibold))
                     .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(Capsule().fill(Color.blue.opacity(0.12)))
-                    .foregroundStyle(.blue)
+                    .background(Capsule().fill(Color.accentColor.opacity(0.12)))
+                    .foregroundStyle(.tint)
             }
             Spacer()
             

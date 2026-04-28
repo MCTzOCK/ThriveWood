@@ -57,14 +57,14 @@ struct WeekStripView: View {
                     .font(.headline)
                     .foregroundStyle(isSelected ? .white : .primary)
                 Circle()
-                    .fill(isToday ? Color.green : .clear)
+                    .fill(isToday ? Color.accentColor : Color.clear)
                     .frame(width: 4, height: 4)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.s)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                    .fill(isSelected ? Color.green : Color(.secondarySystemGroupedBackground))
+                    .fill(isSelected ? Color.accentColor : Color(.secondarySystemGroupedBackground))
             )
             .animation(.easeInOut(duration: 0.2), value: isSelected)
             .accessibilityElement(children: .combine)

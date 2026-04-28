@@ -54,7 +54,7 @@ struct ExerciseSummaryCard: View {
         } label: {
             HStack(spacing: Theme.Spacing.m) {
                 Image(systemName: exercise.iconSystemName)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.tint)
                     .frame(width: 36, height: 36)
                     .background(Circle().fill(Color.blue.opacity(0.12)))
                 VStack(alignment: .leading, spacing: 2) {

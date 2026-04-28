@@ -72,7 +72,7 @@ struct QuickStartCard: View {
             }
             .padding(Theme.Spacing.l)
             .background(
-                LinearGradient(colors: [.green, .mint],
+                LinearGradient(colors: [.accentColor, .mint],
                                startPoint: .leading, endPoint: .trailing)
             )
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m))
@@ -201,9 +201,9 @@ struct SessionRow: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
             Image(systemName: "calendar")
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.blue.opacity(0.12)))
+                .background(Circle().fill(Color.accentColor.opacity(0.12)))
             VStack(alignment: .leading, spacing: 2) {
                 Text(session.workout?.name ?? "Freies Training")
                     .font(.subheadline.weight(.semibold))

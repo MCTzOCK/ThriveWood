@@ -1,5 +1,5 @@
 //
-//  WorkoutMetric.swift
+//  WorkoutStatsCard.swift
 //  ThriveWood
 //
 //  Created by Ben Siebert on 27.04.26.

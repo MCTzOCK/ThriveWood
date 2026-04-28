@@ -17,7 +17,7 @@ struct ForestStatsHeader: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.m) {
             HStack(spacing: Theme.Spacing.l) {
-                StatBlock(icon: "leaf.fill", tint: .green,
+                StatBlock(icon: "leaf.fill", tint: .accentColor,
                           value: "\(available)", label: "Verfügbar")
                 Divider().frame(height: 36)
                 StatBlock(icon: "tree.fill", tint: .brown,
@@ -35,13 +35,13 @@ struct ForestStatsHeader: View {
                     Spacer()
                     Text("\(Int(coverage * 100))%")
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(.tint)
                 }
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Color.green.opacity(0.15))
+                        Capsule().fill(Color.accentColor.opacity(0.15))
                         Capsule()
-                            .fill(LinearGradient(colors: [.green, .mint],
+                            .fill(LinearGradient(colors: [.accentColor, .mint],
                                                  startPoint: .leading, endPoint: .trailing))
                             .frame(width: geo.size.width * coverage)
                             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: coverage)

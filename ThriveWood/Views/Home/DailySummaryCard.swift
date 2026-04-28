@@ -32,7 +32,7 @@ struct DailySummaryCard: View {
                 Text(progress >= 1 ? "Ziel erreicht! 🌱" : "Weiter so!")
                     .font(.headline)
                 HStack(spacing: 4) {
-                    Image(systemName: "leaf.fill").foregroundStyle(.green)
+                    Image(systemName: "leaf.fill").foregroundStyle(.tint)
                     Text("\(availablePoints) Punkte verfügbar")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -53,11 +53,11 @@ struct ProgressRing: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color.green.opacity(0.15), lineWidth: lineWidth)
+                .stroke(Color.accentColor.opacity(0.15), lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: max(0.001, progress))
                 .stroke(
-                    AngularGradient(colors: [.green, .mint, .green],
+                    AngularGradient(colors: [.accentColor, .mint, .accentColor],
                                     center: .center),
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )

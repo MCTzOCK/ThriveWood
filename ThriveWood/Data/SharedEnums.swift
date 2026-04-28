@@ -170,7 +170,7 @@ enum AppAppearance: String, Codable, CaseIterable, Identifiable {
 }
 
 enum AccentTheme: String, Codable, CaseIterable, Identifiable {
-    case forest, ocean, sunset, lavender, rose, mono
+    case forest, ocean, sunset, lavender, rose
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -179,7 +179,6 @@ enum AccentTheme: String, Codable, CaseIterable, Identifiable {
         case .sunset: "Sonne"
         case .lavender: "Lavendel"
         case .rose: "Rosé"
-        case .mono: "Monochrom"
         }
     }
     var color: Color {
@@ -189,7 +188,6 @@ enum AccentTheme: String, Codable, CaseIterable, Identifiable {
         case .sunset: .orange
         case .lavender: .purple
         case .rose: .pink
-        case .mono: .primary
         }
     }
 }

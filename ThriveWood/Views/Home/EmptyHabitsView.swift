@@ -15,7 +15,7 @@ struct EmptyHabitsView: View {
         VStack(spacing: Theme.Spacing.l) {
             Image(systemName: "leaf.circle.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(Color.green.gradient)
+                .foregroundStyle(Color.accentColor.gradient)
             Text("Starte deinen Wald")
                 .font(.title3.weight(.semibold))
             Text("Lege deinen ersten Habit an und sammle Punkte, um Bäume zu pflanzen.")
@@ -27,7 +27,7 @@ struct EmptyHabitsView: View {
                     .font(.headline)
                     .padding(.horizontal, Theme.Spacing.xl)
                     .padding(.vertical, Theme.Spacing.m)
-                    .background(Capsule().fill(Color.green))
+                    .background(Capsule().fill(Color.accentColor))
                     .foregroundStyle(.white)
             }
         }

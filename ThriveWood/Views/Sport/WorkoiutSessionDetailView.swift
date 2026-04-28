@@ -292,7 +292,7 @@ struct WorkoutSessionDetailView: View {
                     draftRPE = session.perceivedExertion ?? 7
                     isEditing = true
                 } label: {
-                    Image(systemName: "pencil").foregroundStyle(.blue)
+                    Image(systemName: "pencil").foregroundStyle(.tint)
                 }
             }
             if session.notes.isEmpty {

@@ -64,10 +64,10 @@ struct HabitRowView: View {
             Image(systemName: "leaf.fill").font(.caption2)
             Text("\(habit.points.rawValue)").font(.caption.weight(.semibold))
         }
-        .foregroundStyle(.green)
+        .foregroundStyle(.tint)
         .padding(.horizontal, Theme.Spacing.s)
         .padding(.vertical, 2)
-        .background(Capsule().fill(Color.green.opacity(0.12)))
+        .background(Capsule().fill(Color.accentColor.opacity(0.12)))
     }
 
     private var streakBadge: some View {
@@ -85,10 +85,10 @@ struct HabitRowView: View {
         Button(action: onToggle) {
             ZStack {
                 Circle()
-                    .strokeBorder(isCompleted ? Color.green : Color.secondary.opacity(0.4), lineWidth: 2)
+                    .strokeBorder(isCompleted ? Color.accentColor : Color.secondary.opacity(0.4), lineWidth: 2)
                     .frame(width: 30, height: 30)
                 if isCompleted {
-                    Circle().fill(Color.green).frame(width: 30, height: 30)
+                    Circle().fill(Color.accentColor).frame(width: 30, height: 30)
                     Image(systemName: "checkmark")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white)

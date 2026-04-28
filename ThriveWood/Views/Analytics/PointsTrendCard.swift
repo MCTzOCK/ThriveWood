@@ -51,7 +51,7 @@ struct PointsTrendCard: View {
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color.green.opacity(0.4), Color.green.opacity(0.05)],
+                            colors: [Color.accentColor.opacity(0.4), Color.accentColor.opacity(0.05)],
                             startPoint: .top, endPoint: .bottom
                         )
                     )
@@ -61,7 +61,7 @@ struct PointsTrendCard: View {
                         y: .value("Punkte", s.points)
                     )
                     .interpolationMethod(.catmullRom)
-                    .foregroundStyle(Color.green)
+                    .foregroundStyle(Color.accentColor)
                     .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
                 }
 

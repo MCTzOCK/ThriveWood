@@ -44,7 +44,7 @@ struct NotificationsSection: View {
                 } label: {
                     Label("Test-Mitteilung in 5s", systemImage: "bell.badge.fill")
                 }
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
                 #endif
             }
         } header: {
@@ -78,7 +78,7 @@ struct NotificationsSection: View {
 
     private var notDeterminedBanner: some View {
         HStack(spacing: Theme.Spacing.m) {
-            Image(systemName: "info.circle.fill").foregroundStyle(.blue)
+            Image(systemName: "info.circle.fill").foregroundStyle(.tint)
             Text("Du wirst beim Aktivieren eines Reminders nach Erlaubnis gefragt.")
                 .font(.caption).foregroundStyle(.secondary)
         }
