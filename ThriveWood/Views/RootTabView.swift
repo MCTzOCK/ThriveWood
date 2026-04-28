@@ -16,8 +16,12 @@ struct RootTabView: View {
     @Environment(AppEnvironment.self) private var env
     @Query private var profiles: [UserProfile]
     @State private var selection: AppTab = .home
+    @State private var showOnboarding = false
 
     private var profile: UserProfile? { profiles.first }
+    private var needsOnboarding: Bool {
+        profile?.onboardingCompletedAt == nil
+    }
 
     var body: some View {
         TabView(selection: $selection) {
@@ -46,6 +50,14 @@ struct RootTabView: View {
         .onChange(of: selection) { _, _ in Haptics.selection() }
         .task {
             _ = try? env.profileRepo.currentProfile()
+        }
+        .onAppear {
+            if needsOnboarding { showOnboarding = true }
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView(isRerun: false) {
+                showOnboarding = false
+            }
         }
     }
 }

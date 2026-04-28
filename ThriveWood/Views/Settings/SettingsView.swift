@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showingResetConfirm = false
     @State private var showingDebug = false
     @State private var showingIconPicker = false
+    @State private var showOnboarding = false
     @State private var errors = ErrorState()
 
     var body: some View {
@@ -143,7 +144,17 @@ struct SettingsView: View {
                 onTestFire: testNotification,
                 onRefresh: { await loadAll() }
             )
+            
+            // MARK: Onboarding
 
+            Section("Onboarding") {
+                Button {
+                    showOnboarding = true
+                } label: {
+                    Label("Onboarding wiederholen", systemImage: "arrow.counterclockwise")
+                }
+            }
+            
             // MARK: Über
             AboutSection()
 
@@ -202,6 +213,11 @@ struct SettingsView: View {
             Button("Abbrechen", role: .cancel) {}
         } message: {
             Text("Habits, Wald, Trainings und Verlauf werden unwiderruflich entfernt.")
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView(isRerun: true) {
+                showOnboarding = false
+            }
         }
     }
 
