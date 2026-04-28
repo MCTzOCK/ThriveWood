@@ -28,6 +28,7 @@ final class AppEnvironment {
     let workoutService: WorkoutService
     let analyticsService: AnalyticsService
     let notificationService: NotificationService
+    let healthService: HealthKitService
     
 #if DEBUG
     var debugService: DebugService!
@@ -60,6 +61,7 @@ final class AppEnvironment {
         self.workoutService = WorkoutService(workouts: workoutRepo, sessions: sessionRepo, exercises: exerciseRepo, profile: profileRepo)
         self.analyticsService = AnalyticsService(completions: completionRepo, sessions: sessionRepo)
         self.notificationService = NotificationService.shared
+        self.healthService = HealthKitService.shared
         
         // Seed & Bootstrap
         try? exerciseRepo.seedBuiltInsIfNeeded()

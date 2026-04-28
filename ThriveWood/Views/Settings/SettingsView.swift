@@ -155,6 +155,34 @@ struct SettingsView: View {
                 }
             }
             
+            Section {
+                if !env.healthService.isAvailable {
+                    HStack(spacing: Theme.Spacing.m) {
+                        Image(systemName: "heart.slash").foregroundStyle(.red)
+                        Text("HealthKit ist auf diesem Gerät nicht verfügbar.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                } else {
+                    HStack {
+                        Image(systemName: "heart.fill").foregroundStyle(.red)
+                        Toggle("Apple Health Sync", isOn: Binding(
+                            get: { env.healthService.isAuthorized },
+                            set: { newValue in
+                                if newValue {
+                                    Task { await env.healthService.requestAuthorization() }
+                                }
+                            }
+                        ))
+                    }
+                }
+            } header: {
+                Text("Apple Health")
+            } footer: {
+                Text("Workouts werden automatisch in Apple Health gespeichert. Schritte und Kalorien erscheinen in der Analyse.")
+            }
+
+            
+            
             // MARK: Über
             AboutSection()
 

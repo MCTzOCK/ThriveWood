@@ -68,6 +68,10 @@ struct AnalyticsView: View {
                         .padding(.horizontal, Theme.Spacing.l)
                 }
 
+                if env.healthService.isAuthorized {
+                    StepsCard(range: vm.range.dateRange())
+                        .padding(.horizontal, Theme.Spacing.l)
+                }
 
                 if vm.habitPerformances.isEmpty {
                     ContentUnavailableView(
