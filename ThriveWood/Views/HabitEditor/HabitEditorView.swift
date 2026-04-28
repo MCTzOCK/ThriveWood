@@ -31,6 +31,12 @@ struct HabitEditorView: View {
     @State private var errors = ErrorState()
     @State private var isSaving = false
     
+    @State private var trackingMode: HabitTrackingMode = .simple
+    @State private var targetValue: Double = 2000
+    @State private var incrementValue: Double = 200
+    @State private var unitLabel: String = "ml"
+    @State private var selectedUnit: HabitUnit = .milliliters
+    
     private let iconOptions: [String] = [
         "leaf.fill","drop.fill","flame.fill","figure.run","book.fill",
         "moon.fill","sun.max.fill","heart.fill","brain.head.profile",
@@ -45,6 +51,7 @@ struct HabitEditorView: View {
         NavigationStack {
             Form {
                 detailsSection
+                trackingModeSection
                 appearanceSection
                 pointsSection
                 scheduleSection
@@ -190,6 +197,12 @@ struct HabitEditorView: View {
         selectedWeekdays = Set(habit.activeWeekdays.compactMap(Weekday.init(rawValue:)))
         remindersOn = habit.reminderTime != nil
         if let t = habit.reminderTime { reminderTime = t }
+        trackingMode = habit.trackingMode
+        targetValue = habit.targetValue
+        incrementValue = habit.incrementValue
+        unitLabel = habit.unitLabel
+        selectedUnit = HabitUnit.allCases.first { $0.rawValue == habit.unitLabel } ?? .custom
+        
     }
     
     private func save() {
@@ -209,6 +222,11 @@ struct HabitEditorView: View {
                     habit.frequency = frequency
                     habit.activeWeekdays = weekdays.map(\.rawValue)
                     habit.reminderTime = reminder
+                    habit.trackingMode = trackingMode
+                    habit.targetValue = trackingMode == .measurable ? targetValue : 1
+                    habit.incrementValue = trackingMode == .measurable ? incrementValue : 1
+                    habit.unitLabel = trackingMode == .measurable ? unitLabel : ""
+                    
                     try await env.saveHabit(habit, isNew: false)
                 } else {
                     let new = Habit(
@@ -220,7 +238,11 @@ struct HabitEditorView: View {
                         frequency: frequency,
                         activeWeekdays: weekdays,
                         reminderTime: reminder,
-                        sortOrder: Int.max
+                        sortOrder: Int.max,
+                        trackingMode: trackingMode,
+                        targetValue: trackingMode == .measurable ? targetValue : 1,
+                        incrementValue: trackingMode == .measurable ? incrementValue : 1,
+                        unitLabel: trackingMode == .measurable ? unitLabel : ""
                     )
                     try await env.saveHabit(new, isNew: true)
                 }
@@ -230,6 +252,206 @@ struct HabitEditorView: View {
                 Haptics.warning()
                 errors.show(error)
             }
+        }
+    }
+    
+    private var trackingModeSection: some View {
+        Section {
+            Picker("Tracking", selection: $trackingMode.animation()) {
+                ForEach(HabitTrackingMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: trackingMode) { _, newMode in
+                if newMode == .simple {
+                    targetValue = 1; incrementValue = 1; unitLabel = ""
+                } else if targetValue <= 1 {
+                    applyPreset(.water)
+                }
+            }
+            
+            if trackingMode == .measurable {
+                measurableConfig
+            }
+        } header: {
+            Text("Tracking-Modus")
+        } footer: {
+            Text(trackingMode == .simple
+                 ? "Einmal antippen = erledigt."
+                 : "Fortschritt wird schrittweise gezählt. Punkte werden anteilig vergeben."
+            )
+        }
+    }
+    
+    @ViewBuilder
+    private var measurableConfig: some View {
+        // Vorlagen
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Vorlage wählen").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(MeasurablePreset.allCases) { preset in
+                        Button {
+                            Haptics.selection()
+                            applyPreset(preset)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: preset.icon).font(.caption)
+                                Text(preset.label).font(.caption.weight(.semibold))
+                            }
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(
+                                Capsule().fill(
+                                    isPresetActive(preset)
+                                    ? Color.accentColor : Color(.tertiarySystemFill)
+                                )
+                            )
+                            .foregroundStyle(isPresetActive(preset) ? .white : .primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        
+        // Zielwert
+        HStack {
+            Text("Tagesziel").font(.subheadline)
+            Spacer()
+            TextField("0", value: $targetValue, format: .number)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 80)
+                .textFieldStyle(.roundedBorder)
+            Text(unitLabel).font(.subheadline).foregroundStyle(.secondary)
+                .frame(width: 50, alignment: .leading)
+        }
+        
+        // Schrittgröße
+        HStack {
+            Text("Pro Schritt").font(.subheadline)
+            Spacer()
+            TextField("0", value: $incrementValue, format: .number)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 80)
+                .textFieldStyle(.roundedBorder)
+            Text(unitLabel).font(.subheadline).foregroundStyle(.secondary)
+                .frame(width: 50, alignment: .leading)
+        }
+        
+        // Einheit
+        HStack {
+            Text("Einheit").font(.subheadline)
+            Spacer()
+            Picker("", selection: $selectedUnit) {
+                ForEach(HabitUnit.allCases) { u in
+                    Text(u == .custom ? "Eigene" : u.rawValue).tag(u)
+                }
+            }
+            .pickerStyle(.menu)
+            .onChange(of: selectedUnit) { _, u in
+                if u != .custom { unitLabel = u.rawValue }
+            }
+        }
+        
+        if selectedUnit == .custom {
+            HStack {
+                Text("Eigene Einheit").font(.subheadline)
+                Spacer()
+                TextField("z.B. Portionen", text: $unitLabel)
+                    .multilineTextAlignment(.trailing)
+                    .frame(width: 120)
+                    .textFieldStyle(.roundedBorder)
+            }
+        }
+        
+        // Vorschau
+        HStack(spacing: Theme.Spacing.s) {
+            Image(systemName: "info.circle").foregroundStyle(.tint)
+            let steps = targetValue > 0 && incrementValue > 0
+            ? Int(ceil(targetValue / incrementValue)) : 0
+            Text("\(steps) Schritte à \(formatValue(incrementValue)) \(unitLabel) bis zum Ziel")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    
+    private func applyPreset(_ preset: MeasurablePreset) {
+        targetValue = preset.target
+        incrementValue = preset.increment
+        selectedUnit = preset.unit
+        unitLabel = preset.unit == .custom ? "" : preset.unit.rawValue
+    }
+    
+    private func isPresetActive(_ preset: MeasurablePreset) -> Bool {
+        targetValue == preset.target
+        && incrementValue == preset.increment
+        && selectedUnit == preset.unit
+    }
+    
+    
+    private func formatValue(_ v: Double) -> String {
+        v.truncatingRemainder(dividingBy: 1) == 0
+        ? String(format: "%.0f", v)
+        : String(format: "%.1f", v)
+    }
+    
+    
+}
+
+
+enum MeasurablePreset: String, CaseIterable, Identifiable {
+    case water, reading, exercise, meditation, steps, custom
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .water:      "Wasser"
+        case .reading:    "Lesen"
+        case .exercise:   "Bewegung"
+        case .meditation: "Meditation"
+        case .steps:      "Schritte"
+        case .custom:     "Eigene"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .water: "drop.fill"
+        case .reading: "book.fill"
+        case .exercise: "figure.walk"
+        case .meditation: "brain.head.profile"
+        case .steps: "shoeprints.fill"
+        case .custom: "slider.horizontal.3"
+        }
+    }
+    var target: Double {
+        switch self {
+        case .water: 2000
+        case .reading: 30
+        case .exercise: 30
+        case .meditation: 20
+        case .steps: 10000
+        case .custom: 10
+        }
+    }
+    var increment: Double {
+        switch self {
+        case .water: 200
+        case .reading: 5
+        case .exercise: 5
+        case .meditation: 5
+        case .steps: 1000
+        case .custom: 1
+        }
+    }
+    var unit: HabitUnit {
+        switch self {
+        case .water: .milliliters
+        case .reading: .pages
+        case .exercise: .minutes
+        case .meditation: .minutes
+        case .steps: .steps
+        case .custom: .custom
         }
     }
 }

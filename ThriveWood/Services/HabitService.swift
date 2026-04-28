@@ -5,9 +5,8 @@
 //  Created by Ben Siebert on 22.04.26.
 //
 
-
 import Foundation
-import SwiftData
+import SwiftUI
 
 @MainActor
 @Observable
@@ -20,11 +19,13 @@ final class HabitService {
         self.completions = completions
     }
 
-    // MARK: Abhaken
+    // MARK: - Einfache Habits (Toggle)
 
-    /// Toggle: legt eine Completion an oder entfernt sie. Gibt die resultierende Punktdifferenz zurück.
     @discardableResult
     func toggle(_ habit: Habit, on day: Date = .now) throws -> Int {
+        guard habit.trackingMode == .simple else {
+            return try increment(habit, on: day)
+        }
         let normalizedDay = Calendar.app.startOfDay(day)
         if let existing = try completions.completion(for: habit, on: normalizedDay) {
             let delta = -existing.pointsAwarded
@@ -37,11 +38,80 @@ final class HabitService {
         }
     }
 
-    func isCompleted(_ habit: Habit, on day: Date = .now) throws -> Bool {
-        try completions.completion(for: habit, on: day) != nil
+    // MARK: - Messbare Habits (Increment / Decrement / Set)
+
+    /// Erhöht den Fortschritt um `incrementValue`. Gibt die Punktedifferenz zurück.
+    @discardableResult
+    func increment(_ habit: Habit, by amount: Double? = nil, on day: Date = .now) throws -> Int {
+        let step = amount ?? habit.incrementValue
+        return try adjustValue(habit, delta: step, on: day)
     }
 
-    // MARK: Abfragen
+    /// Verringert den Fortschritt um `incrementValue`. Gibt die Punktedifferenz zurück.
+    @discardableResult
+    func decrement(_ habit: Habit, by amount: Double? = nil, on day: Date = .now) throws -> Int {
+        let step = amount ?? habit.incrementValue
+        return try adjustValue(habit, delta: -step, on: day)
+    }
+
+    /// Setzt den Fortschritt auf einen exakten Wert.
+    @discardableResult
+    func setValue(_ habit: Habit, value: Double, on day: Date = .now) throws -> Int {
+        let normalizedDay = Calendar.app.startOfDay(day)
+        let completion = try ensureCompletion(for: habit, on: normalizedDay)
+        let oldPoints = completion.pointsAwarded
+        completion.currentValue = max(0, min(value, habit.targetValue * 1.5))
+        completion.completedAt = .now
+        completion.recalculatePoints()
+        try completions.add(completion)
+        return completion.pointsAwarded - oldPoints
+    }
+
+    private func adjustValue(_ habit: Habit, delta: Double, on day: Date) throws -> Int {
+        let normalizedDay = Calendar.app.startOfDay(day)
+        let completion = try ensureCompletion(for: habit, on: normalizedDay)
+        let oldPoints = completion.pointsAwarded
+        let newValue = completion.currentValue + delta
+
+        if newValue <= 0 && delta < 0 {
+            // Letzter Schritt rückgängig → Completion löschen
+            let diff = -oldPoints
+            try completions.delete(completion)
+            return diff
+        }
+
+        completion.currentValue = max(0, newValue)
+        completion.completedAt = .now
+        completion.recalculatePoints()
+        try completions.add(completion)
+        return completion.pointsAwarded - oldPoints
+    }
+
+    /// Gibt die vorhandene Completion zurück oder erstellt eine neue mit currentValue = 0.
+    private func ensureCompletion(for habit: Habit, on day: Date) throws -> HabitCompletion {
+        if let existing = try completions.completion(for: habit, on: day) {
+            return existing
+        }
+        let new = HabitCompletion(habit: habit, day: day, currentValue: 0)
+        return new
+    }
+
+    // MARK: - Status-Abfragen
+
+    func isCompleted(_ habit: Habit, on day: Date = .now) throws -> Bool {
+        guard let c = try completions.completion(for: habit, on: day) else { return false }
+        return c.isComplete
+    }
+
+    func currentProgress(_ habit: Habit, on day: Date = .now) throws -> (value: Double, target: Double, progress: Double) {
+        let target = habit.targetValue
+        guard let c = try completions.completion(for: habit, on: day) else {
+            return (0, target, 0)
+        }
+        return (c.currentValue, target, c.progress)
+    }
+
+    // MARK: - Bestehende Methoden (unverändert)
 
     func activeHabits() throws -> [Habit] {
         try habits.fetchAll(includeArchived: false)
@@ -52,13 +122,10 @@ final class HabitService {
         return try activeHabits().filter { habit in
             switch habit.frequency {
             case .daily: true
-            case .weekly: habit.activeWeekdays.contains(weekday)
-            case .custom: habit.activeWeekdays.contains(weekday)
+            case .weekly, .custom: habit.activeWeekdays.contains(weekday)
             }
         }
     }
-
-    // MARK: Punkte
 
     func pointsEarned(on day: Date = .now) throws -> Int {
         let start = Calendar.app.startOfDay(day)
@@ -75,17 +142,16 @@ final class HabitService {
         try completions.allCompletions().reduce(0) { $0 + $1.pointsAwarded }
     }
 
-    // MARK: Streaks
-
     func currentStreak(for habit: Habit, asOf day: Date = .now) throws -> Int {
         let end = Calendar.app.startOfDay(day)
         let start = Calendar.app.date(byAdding: .day, value: -365, to: end) ?? end
         let all = try completions.completions(for: habit, in: start...end)
-        let days = Set(all.map { Calendar.app.startOfDay($0.day) })
+        // Nur vollständig abgeschlossene Tage zählen für den Streak
+        let completedDays = Set(all.filter(\.isComplete).map { Calendar.app.startOfDay($0.day) })
 
         var streak = 0
         var cursor = end
-        while days.contains(cursor) {
+        while completedDays.contains(cursor) {
             streak += 1
             guard let prev = Calendar.app.date(byAdding: .day, value: -1, to: cursor) else { break }
             cursor = prev
@@ -94,11 +160,9 @@ final class HabitService {
     }
 
     func longestStreak(for habit: Habit) throws -> Int {
-        let all = try completions.completions(
-            for: habit,
-            in: Date.distantPast...Date.distantFuture
-        )
-        let days = all.map { Calendar.app.startOfDay($0.day) }.sorted()
+        let all = try completions.completions(for: habit, in: Date.distantPast...Date.distantFuture)
+        let days = all.filter(\.isComplete)
+            .map { Calendar.app.startOfDay($0.day) }.sorted()
         guard !days.isEmpty else { return 0 }
 
         var longest = 1, current = 1
@@ -110,12 +174,9 @@ final class HabitService {
         return longest
     }
 
-    // MARK: Completion-Rate
-
-    /// 0...1 für gegebenen Zeitraum (nur Tage zählen, an denen der Habit fällig war).
     func completionRate(for habit: Habit, in range: ClosedRange<Date>) throws -> Double {
         let comps = try completions.completions(for: habit, in: range)
-        let completedDays = Set(comps.map { Calendar.app.startOfDay($0.day) })
+        let completedDays = Set(comps.filter(\.isComplete).map { Calendar.app.startOfDay($0.day) })
 
         var dueDays = 0
         var cursor = Calendar.app.startOfDay(range.lowerBound)

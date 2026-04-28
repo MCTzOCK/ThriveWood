@@ -191,3 +191,37 @@ enum AccentTheme: String, Codable, CaseIterable, Identifiable {
         }
     }
 }
+
+enum HabitTrackingMode: String, Codable, CaseIterable, Identifiable {
+    /// Einfaches Abhaken (erledigt / nicht erledigt)
+    case simple
+    /// Zählbar mit Zielwert (z.B. 2000ml Wasser, 10.000 Schritte, 5 Seiten lesen)
+    case measurable
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .simple:     "Abhaken"
+        case .measurable: "Messbar"
+        }
+    }
+}
+
+/// Vordefinierte Einheiten für messbare Habits.
+enum HabitUnit: String, Codable, CaseIterable, Identifiable {
+    case milliliters = "ml"
+    case liters      = "l"
+    case glasses     = "Gläser"
+    case steps       = "Schritte"
+    case minutes     = "min"
+    case hours       = "Std"
+    case pages       = "Seiten"
+    case times       = "Mal"
+    case pieces      = "Stück"
+    case kilometers  = "km"
+    case calories    = "kcal"
+    case custom      = ""
+
+    var id: String { rawValue }
+}
