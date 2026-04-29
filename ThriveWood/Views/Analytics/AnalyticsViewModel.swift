@@ -15,7 +15,7 @@ final class AnalyticsViewModel {
     private let env: AppEnvironment
 
     // UI-State
-    var range: AnalyticsRange = .month
+    var range: AnalyticsRange = .week
     var isLoading: Bool = false
 
     // Daten

@@ -12,6 +12,7 @@ import Charts
 struct AnalyticsView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var vm: AnalyticsViewModel?
+    @State private var showingPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -33,9 +34,26 @@ struct AnalyticsView: View {
         @Bindable var vm = vm
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
+                Picker("Zeitraum", selection: $vm.range) {
+                    Text("7T").tag(AnalyticsRange.week)
+                    ForEach([AnalyticsRange.month, .quarter, .year]) { r in
+                        HStack {
+                            Text(r.rawValue)
+                        }.tag(r)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: vm.range) { _, newRange in
+                    if newRange != .week && !env.entitlements.canAccessFullAnalytics {
+                        vm.range = .week
+                        showingPaywall = true
+                    }
+                    vm.load()
+                }
+                /*
                 RangePicker(range: $vm.range)
                     .padding(.horizontal, Theme.Spacing.l)
-                    .onChange(of: vm.range) { _, _ in vm.load() }
+                    .onChange(of: vm.range) { _, _ in vm.load() }*/
 
                 if let summary = vm.summary {
                     SummaryGrid(summary: summary)
@@ -84,6 +102,7 @@ struct AnalyticsView: View {
             }
             .padding(.vertical, Theme.Spacing.l)
         }
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .background(Color(.systemGroupedBackground))
         .refreshable { vm.load() }
         .errorAlert(vm.errors)

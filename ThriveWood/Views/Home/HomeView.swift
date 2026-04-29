@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var editingHabit: Habit?
     
     @State private var showingDebug: Bool = false
+    @State private var showingPaywall = false
     
     
     var body: some View {
@@ -39,6 +40,7 @@ struct HomeView: View {
                 HabitEditorView(habit: habit)
                     .onDisappear { vm?.load() }
             }
+            .sheet(isPresented: $showingPaywall) { PaywallView() }
             .sheet(isPresented: $showingDebug) {
 #if DEBUG
                 DebugMenuView()
@@ -127,7 +129,13 @@ struct HomeView: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
-            Button { showingNewHabit = true } label: {
+            Button {
+                if env.entitlements.canCreateHabit {
+                    showingNewHabit = true
+                } else {
+                    showingPaywall = true
+                }
+            } label: {
                 Image(systemName: "plus.circle.fill").font(.title2)
             }
             .accessibilityLabel("Neuer Habit")

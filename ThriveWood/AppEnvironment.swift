@@ -29,6 +29,9 @@ final class AppEnvironment {
     let analyticsService: AnalyticsService
     let notificationService: NotificationService
     let healthService: HealthKitService
+    let storeService: StoreService
+    
+    var entitlements: EntitlementService
     
 #if DEBUG
     var debugService: DebugService!
@@ -62,6 +65,10 @@ final class AppEnvironment {
         self.analyticsService = AnalyticsService(completions: completionRepo, sessions: sessionRepo)
         self.notificationService = NotificationService.shared
         self.healthService = HealthKitService.shared
+        let storeService = StoreService()
+        self.storeService = storeService
+        self.entitlements = EntitlementService(store: storeService, habitRepo: habitRepo, workoutRepo: workoutRepo)
+        
         
         // Seed & Bootstrap
         try? exerciseRepo.seedBuiltInsIfNeeded()
