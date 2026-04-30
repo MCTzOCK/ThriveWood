@@ -171,6 +171,7 @@ enum AppAppearance: String, Codable, CaseIterable, Identifiable {
 
 enum AccentTheme: String, Codable, CaseIterable, Identifiable {
     case forest, ocean, sunset, lavender, rose
+    static var availableInFree: [AccentTheme] = [.forest]
     var id: String { rawValue }
     var label: String {
         switch self {

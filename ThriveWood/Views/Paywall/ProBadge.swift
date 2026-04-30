@@ -25,4 +25,11 @@ struct ProBadge: ViewModifier {
 
 extension View {
     func proBadge() -> some View { modifier(ProBadge()) }
+    func proBadgeCond(condition: Bool) -> some View {
+        if condition {
+            return AnyView(modifier(ProBadge()))
+        } else {
+            return AnyView(self)
+        }
+    }
 }

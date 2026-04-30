@@ -10,6 +10,8 @@ import SwiftUI
 
 struct AppIconPickerView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppEnvironment.self) private var env
+    @State private var showingPaywall = false
 
     struct IconOption: Identifiable, Hashable {
         let id: String?           // nil = primary
@@ -31,7 +33,12 @@ struct AppIconPickerView: View {
         NavigationStack {
             List(options) { option in
                 Button {
-                    setIcon(option.id)
+                    if option.id == nil || env.entitlements.canUseCustomIcons {
+                        Haptics.selection()
+                        setIcon(option.id)
+                    } else {
+                        showingPaywall = true
+                    }
                 } label: {
                     HStack(spacing: Theme.Spacing.m) {
                         Image(option.previewName)
@@ -39,6 +46,7 @@ struct AppIconPickerView: View {
                             .frame(width: 56, height: 56)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.tertiary))
+                            .proBadgeCond(condition: option.id != nil)
                         Text(option.displayName).foregroundStyle(.primary)
                         Spacer()
                         if option.id == current {
@@ -55,6 +63,7 @@ struct AppIconPickerView: View {
                     Button("Fertig") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showingPaywall) { PaywallView() }
         }
     }
 

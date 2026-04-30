@@ -15,6 +15,7 @@ struct SportView: View {
     @State private var editingWorkout: Workout?
     @State private var presentedSession: WorkoutSession?
     @State private var detailSession: WorkoutSession?
+    @State private var showingPaywall = false
     
     var body: some View {
         NavigationStack {
@@ -28,7 +29,13 @@ struct SportView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingNewWorkout = true } label: {
+                    Button {
+                        if env.entitlements.canCreateWorkout {
+                            showingNewWorkout = true
+                        } else {
+                            showingPaywall = true
+                        }
+                    } label: {
                         Image(systemName: "plus.circle.fill").font(.title2)
                     }
                 }
@@ -39,6 +46,7 @@ struct SportView: View {
             .sheet(item: $editingWorkout) { w in
                 WorkoutEditorView(workout: w).onDisappear { vm?.load() }
             }
+            .sheet(isPresented: $showingPaywall) { PaywallView() }
             .fullScreenCover(item: $presentedSession) { session in
                 ActiveSessionView(session: session).onDisappear { vm?.load() }
             }

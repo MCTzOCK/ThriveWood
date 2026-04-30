@@ -52,6 +52,7 @@ struct PaywallView: View {
             } message: {
                 Text(error?.localizedDescription ?? "")
             }
+            .colorScheme(.dark)
         }
     }
 
@@ -87,7 +88,7 @@ struct PaywallView: View {
                           text: "Birke, Ahorn, Kirsche, Mammutbaum und mehr")
             ProFeatureRow(icon: "chart.bar.xaxis", color: .blue,
                           title: "Volle Analyse",
-                          text: "30/90/365-Tage-Zeiträume, Heatmaps & Leaderboard")
+                          text: "30/90/365-Tage-Zeiträume")
             ProFeatureRow(icon: "dumbbell.fill", color: .purple,
                           title: "Unbegrenzte Workouts",
                           text: "Erstelle so viele Trainingspläne wie du brauchst")

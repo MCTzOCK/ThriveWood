@@ -14,6 +14,8 @@ struct DebugMenuView: View {
     @State private var errors = ErrorState()
     @State private var amount: Int = 10
 
+    @State private var showingPaywall = false
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -39,6 +41,41 @@ struct DebugMenuView: View {
                     }
                 }
 
+                Section("In-App Purchases") {
+                    HStack {
+                        Text("Pro-Status")
+                        Spacer()
+                        Text(env.storeService.isProUser ? "✅ Pro" : "❌ Free")
+                            .foregroundStyle(env.storeService.isProUser ? .green : .secondary)
+                    }
+                    HStack {
+                        Text("Aktive Produkte")
+                        Spacer()
+                        Text(env.storeService.purchasedIDs.isEmpty
+                             ? "Keine"
+                             : env.storeService.purchasedIDs.joined(separator: "\n"))
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    Button("🔄 Produkte neu laden") {
+                        Task { await env.storeService.loadProducts() }
+                    }
+                    Button("🔄 Status aktualisieren") {
+                        Task { await env.storeService.refreshPurchaseState() }
+                    }
+                    Button("💳 Paywall öffnen") {
+                        showingPaywall = true
+                    }
+                    Button("🗑️ Alle Käufe zurücksetzen", role: .destructive) {
+                        Task {
+                            await env.storeService.debugResetAllPurchases()
+                            Haptics.success()
+                        }
+                    }
+                }
+
+                
                 Section("Zurücksetzen") {
                     Button("Alle Completions löschen", role: .destructive) {
                         run { try env.debugService.resetAllCompletions() }
@@ -53,6 +90,7 @@ struct DebugMenuView: View {
             }
             .navigationTitle("Debug")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showingPaywall) { PaywallView() }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fertig") { dismiss() }

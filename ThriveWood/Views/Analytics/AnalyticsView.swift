@@ -43,6 +43,7 @@ struct AnalyticsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .padding(.horizontal, Theme.Spacing.l)
                 .onChange(of: vm.range) { _, newRange in
                     if newRange != .week && !env.entitlements.canAccessFullAnalytics {
                         vm.range = .week

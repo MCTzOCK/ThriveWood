@@ -122,3 +122,25 @@ enum StoreError: LocalizedError {
     var errorDescription: String? { "Kauf konnte nicht verifiziert werden." }
 }
 
+
+#if DEBUG
+extension StoreService {
+    /// Finalisiert alle aktiven Transactions → StoreKit behandelt sie als „abgeschlossen".
+    /// Bei nächstem `refreshPurchaseState()` ist der User wieder Free.
+    func debugResetAllPurchases() async {
+        for await result in Transaction.currentEntitlements {
+            if let tx = try? checkVerified(result) {
+                await tx.finish()
+            }
+        }
+        // Danach alle unfinished auch aufräumen
+        for await result in Transaction.unfinished {
+            if let tx = try? checkVerified(result) {
+                await tx.finish()
+            }
+        }
+        purchasedIDs.removeAll()
+        isProUser = false
+    }
+}
+#endif

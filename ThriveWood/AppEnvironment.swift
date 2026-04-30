@@ -30,6 +30,7 @@ final class AppEnvironment {
     let notificationService: NotificationService
     let healthService: HealthKitService
     let storeService: StoreService
+    private(set) var backupService: BackupService!
     
     var entitlements: EntitlementService
     
@@ -69,7 +70,6 @@ final class AppEnvironment {
         self.storeService = storeService
         self.entitlements = EntitlementService(store: storeService, habitRepo: habitRepo, workoutRepo: workoutRepo)
         
-        
         // Seed & Bootstrap
         try? exerciseRepo.seedBuiltInsIfNeeded()
         _ = try? profileRepo.currentProfile()
@@ -78,10 +78,12 @@ final class AppEnvironment {
         if let profile = try? profileRepo.currentProfile() {
             AppCalendarConfig.shared.update(weekStartsOn: profile.weekStartsOn)
         }
-        
+      
 #if DEBUG
         self.debugService = DebugService(env: self)
 #endif
+        self.backupService = BackupService(env: self)
+        
     }
     
     func saveHabit(_ habit: Habit, isNew: Bool) async throws {

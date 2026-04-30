@@ -12,7 +12,7 @@ import SwiftUI
 @MainActor
 @Observable
 final class ForestViewModel {
-    private let env: AppEnvironment
+    let env: AppEnvironment
 
     // Grid-Größe
     let gridWidth: Int = 6

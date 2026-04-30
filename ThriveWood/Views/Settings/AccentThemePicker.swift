@@ -10,6 +10,8 @@ import SwiftUI
 
 struct AccentThemePicker: View {
     @Binding var selection: AccentTheme
+    @State private var showingPaywall = false
+    @Environment(AppEnvironment.self) private var env
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: 12)]
 
@@ -18,14 +20,27 @@ struct AccentThemePicker: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(AccentTheme.allCases) { theme in
                     Button {
+                        if !env.entitlements.canUseThemes && !AccentTheme.availableInFree.contains(theme) {
+                            showingPaywall = true
+                            return
+                        }
+                        
                         Haptics.selection()
                         selection = theme
+                    
                     } label: {
                         VStack(spacing: 10) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(theme.color.gradient)
-                                    .frame(height: 80)
+                                if AccentTheme.availableInFree.contains(theme) {
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(theme.color.gradient)
+                                        .frame(height: 80)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(theme.color.gradient)
+                                        .frame(height: 80)
+                                        .proBadge()
+                                }
                                 if theme == selection {
                                     Image(systemName: "checkmark")
                                         .font(.title2.bold())
@@ -54,5 +69,6 @@ struct AccentThemePicker: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Akzentfarbe")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
     }
 }

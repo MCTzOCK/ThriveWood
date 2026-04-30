@@ -17,6 +17,8 @@ struct SettingsView: View {
     @State private var showingIconPicker = false
     @State private var showOnboarding = false
     @State private var errors = ErrorState()
+    @State private var showingImport = false
+    @State private var showingExport = false
 
     var body: some View {
         NavigationStack {
@@ -29,6 +31,26 @@ struct SettingsView: View {
             }
             .navigationTitle("Einstellungen")
             .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showingExport) {
+                if env.entitlements.canExportData {
+                    ExportSheet()
+                } else {
+                    PaywallView()
+                }
+            }
+            .sheet(isPresented: $showingImport) {
+                /*ImportSheet {
+                    await loadAll()
+                }*/
+                
+                if env.entitlements.canExportData {
+                    ImportSheet {
+                        await loadAll()
+                    }
+                } else {
+                    PaywallView()
+                }
+            }
         }
         .task { await loadAll() }
         .errorAlert(errors)
@@ -45,6 +67,8 @@ struct SettingsView: View {
                                  totalEarned: env.scoringService.totalsCached.earned,
                                  totalSpent: env.scoringService.totalsCached.spent)
 
+            SubscriptionStatusSection()
+            
             // MARK: Erscheinungsbild
             Section("Erscheinungsbild") {
                 Picker("Modus", selection: $profile.appearanceRaw) {
@@ -179,6 +203,24 @@ struct SettingsView: View {
                 Text("Apple Health")
             } footer: {
                 Text("Workouts werden automatisch in Apple Health gespeichert. Schritte und Kalorien erscheinen in der Analyse.")
+            }
+
+            Section {
+                Button {
+                    showingExport = true
+                } label: {
+                    Label("Daten exportieren", systemImage: "square.and.arrow.up")
+                }
+
+                Button {
+                    showingImport = true
+                } label: {
+                    Label("Daten importieren", systemImage: "square.and.arrow.down")
+                }
+            } header: {
+                Text("Daten")
+            } footer: {
+                Text("Erstelle ein vollständiges JSON-Backup aller Habits, Workouts, Sessions und deines Waldes.")
             }
 
             
