@@ -112,7 +112,10 @@ struct HomeView: View {
                         progress: vm.habitProgress[habit.id],
                         onToggle: { vm.toggle(habit) },
                         onIncrement: { vm.incrementMeasurable(habit) },
-                        onDecrement: { vm.decrementMeasurable(habit) }
+                        onDecrement: { vm.decrementMeasurable(habit) },
+                        onEdit: {
+                            editingHabit = habit
+                        }
                     )
                     .contextMenu {
                         Button("Bearbeiten", systemImage: "pencil") { editingHabit = habit }

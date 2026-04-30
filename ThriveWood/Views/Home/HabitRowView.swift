@@ -14,6 +14,7 @@ struct HabitRowView: View {
     let onToggle: () -> Void
     let onIncrement: () -> Void
     let onDecrement: () -> Void
+    let onEdit: () -> Void
 
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
@@ -34,7 +35,7 @@ struct HabitRowView: View {
                 }
             }
             Spacer(minLength: 0)
-
+            
             if habit.isMeasurable {
                 measurableControls
             } else {
@@ -47,6 +48,19 @@ struct HabitRowView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(habit.title)
         .accessibilityValue(accessibilityValueText)
+    }
+    
+    private var settingsButton: some View {
+        Button {
+            onEdit()
+        } label: {
+            Image(systemName: "gear")
+                .font(.caption.weight(.bold))
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(Color(.tertiarySystemFill)))
+                .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Icon
@@ -91,6 +105,7 @@ struct HabitRowView: View {
 
     private var measurableControls: some View {
         HStack(spacing: 8) {
+            settingsButton
             Button {
                 onDecrement()
             } label: {
@@ -122,22 +137,25 @@ struct HabitRowView: View {
     // MARK: - Simple Toggle
 
     private var simpleToggleButton: some View {
-        Button(action: onToggle) {
-            ZStack {
-                Circle()
-                    .strokeBorder(isCompleted ? Color.accentColor : Color.secondary.opacity(0.4), lineWidth: 2)
-                    .frame(width: 30, height: 30)
-                if isCompleted {
-                    Circle().fill(Color.accentColor).frame(width: 30, height: 30)
-                    Image(systemName: "checkmark")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .transition(.scale.combined(with: .opacity))
+        HStack(spacing: 8) {
+            settingsButton
+            Button(action: onToggle) {
+                ZStack {
+                    Circle()
+                        .strokeBorder(isCompleted ? Color.accentColor : Color.secondary.opacity(0.4), lineWidth: 2)
+                        .frame(width: 30, height: 30)
+                    if isCompleted {
+                        Circle().fill(Color.accentColor).frame(width: 30, height: 30)
+                        Image(systemName: "checkmark")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .transition(.scale.combined(with: .opacity))
+                    }
                 }
             }
+            .buttonStyle(.plain)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isCompleted)
         }
-        .buttonStyle(.plain)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isCompleted)
     }
 
     // MARK: - Badges (unverändert)
