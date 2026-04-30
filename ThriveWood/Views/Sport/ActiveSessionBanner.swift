@@ -108,7 +108,7 @@ struct WorkoutsSection: View {
             } else {
                 VStack(spacing: Theme.Spacing.s) {
                     ForEach(workouts) { w in
-                        WorkoutCard(workout: w, onStart: { onStart(w) })
+                        WorkoutCard(workout: w, onStart: { onStart(w) }, onEdit: { onEdit(w) })
                             .contextMenu {
                                 Button("Bearbeiten", systemImage: "pencil") { onEdit(w) }
                                 Button("Archivieren", systemImage: "archivebox", role: .destructive) {
@@ -125,6 +125,7 @@ struct WorkoutsSection: View {
 struct WorkoutCard: View {
     let workout: Workout
     let onStart: () -> Void
+    let onEdit: () -> Void
     
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
@@ -145,14 +146,24 @@ struct WorkoutCard: View {
                 .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Button(action: { Haptics.impact(); onStart() }) {
-                Image(systemName: "play.fill")
-                    .font(.callout.weight(.bold))
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(Circle().fill(workout.color.color))
+            HStack(spacing: 8) {
+                Button(action: { Haptics.impact(); onEdit() }) {
+                    Image(systemName: "gear")
+                        .font(.callout.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .background(Circle().fill(Color(.tertiarySystemFill)))
+                }
+                .buttonStyle(.plain)
+                Button(action: { Haptics.impact(); onStart() }) {
+                    Image(systemName: "play.fill")
+                        .font(.callout.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .background(Circle().fill(workout.color.color))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(Theme.Spacing.m)
         .cardStyle()
