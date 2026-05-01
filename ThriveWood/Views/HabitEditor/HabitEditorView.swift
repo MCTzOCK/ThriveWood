@@ -37,11 +37,66 @@ struct HabitEditorView: View {
     @State private var unitLabel: String = "ml"
     @State private var selectedUnit: HabitUnit = .milliliters
     
+    @State private var didHydrate = false
+    
     private let iconOptions: [String] = [
-        "leaf.fill","drop.fill","flame.fill","figure.run","book.fill",
-        "moon.fill","sun.max.fill","heart.fill","brain.head.profile",
-        "cup.and.saucer.fill","dumbbell.fill","bed.double.fill","pencil",
-        "music.note","fork.knife","pills.fill","camera.fill"
+        // MARK: - Gesundheit & Körperpflege
+        "heart.fill", "brain.head.profile", "pills.fill", "cross.case.fill",
+        "eye.fill", "ear.fill", "lungs.fill", "comb.fill",
+        "shower.fill", "bathtub.fill", "hands.sparkles.fill", "drop.fill",
+
+        // MARK: - Fitness & Sport
+        "figure.run", "figure.walk", "figure.yoga", "figure.pool.swim",
+        "dumbbell.fill", "bicycle", "tennis.racket", "soccerball",
+        "basketball.fill", "volleyball.fill", "skis", "snowboard",
+        "medal.fill", "trophy.fill", "stopwatch.fill",
+
+        // MARK: - Ernährung & Trinken
+        "cup.and.saucer.fill", "fork.knife", "carrot.fill", "takeoutbag.and.cup.and.straw.fill",
+        "wineglass.fill", "mug.fill", "birthday.cake.fill", "refrigerator.fill",
+        
+        // MARK: - Schlaf & Erholung
+        "bed.double.fill", "moon.fill", "moon.stars.fill", "moon.zzz.fill",
+        "sun.max.fill", "cloud.sun.fill", "sparkles", "wind",
+
+        // MARK: - Lernen & Bildung
+        "book.fill", "text.book.closed.fill", "graduationcap.fill",
+        "pencil", "highlighter", "character.book.closed.fill", "globe",
+        "lightbulb.fill", "magnifyingglass", "brain",
+
+        // MARK: - Arbeit & Produktivität
+        "briefcase.fill", "folder.fill", "tray.fill", "calendar",
+        "clock.fill", "laptopcomputer", "display", "keyboard",
+        "printer.fill", "paperclip", "list.bullet.clipboard.fill",
+
+        // MARK: - Finanzen & Sparen
+        "eurosign.circle.fill", "banknote.fill", "creditcard.fill",
+        "chart.pie.fill", "chart.xyaxis.line", "bag.fill", "cart.fill",
+
+        // MARK: - Hobbys, Kunst & Freizeit
+        "music.note", "guitars.fill", "headphones", "mic.fill",
+        "camera.fill", "paintbrush.fill", "paintbrush.pointed.fill",
+        "gamecontroller.fill", "puzzlepiece.fill", "tv.fill", "film.fill",
+        "ticket.fill", "popcorn.fill", "theatermasks.fill",
+
+        // MARK: - Natur & Garten
+        "leaf.fill", "tree.fill", "pawprint.fill", "cat.fill", "dog.fill",
+        "bird.fill", "fish.fill", "ant.fill", "ladybug.fill", "camera.macro",
+
+        // MARK: - Haushalt & Alltag
+        "house.fill", "trash.fill", "hammer.fill", "wrench.and.screwdriver.fill",
+        "washer.fill", "tshirt.fill", "shoe.fill", "key.fill", "lock.fill",
+
+        // MARK: - Soziales & Kommunikation
+        "person.fill", "person.2.fill", "person.3.fill", "message.fill",
+        "bubble.left.and.bubble.right.fill", "phone.fill", "envelope.fill",
+        "video.fill", "hand.thumbsup.fill", "heart.text.square.fill",
+
+        // MARK: - Reisen & Transport
+        "airplane", "car.fill", "bus.fill", "tram.fill", "train.side.front.car",
+        "sailboat.fill", "tent.fill", "map.fill", "location.fill", "suitcase.fill",
+        
+        "x.circle.fill"
     ]
     
     private var isEditing: Bool { habit != nil }
@@ -71,7 +126,11 @@ struct HabitEditorView: View {
                 }
             }
             .errorAlert(errors)
-            .onAppear(perform: hydrate)
+            .onAppear {
+                guard !didHydrate else { return }
+                didHydrate = true
+                hydrate()
+            }
         }
     }
     

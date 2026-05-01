@@ -50,6 +50,7 @@ struct ThriveWoodApp: App {
                     NotificationRouter.shared.env = e
                     e.notificationService.bootstrap()
                     env = e
+                    await e.storeService.refreshPurchaseState()
                 }
             }
         }
