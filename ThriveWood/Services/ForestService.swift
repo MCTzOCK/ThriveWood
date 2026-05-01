@@ -7,6 +7,7 @@
 
 
 import Foundation
+import WidgetKit
 
 @MainActor
 @Observable
@@ -67,6 +68,7 @@ final class ForestService {
 
         forest.spentPoints += cost
         try forestRepo.update(forest)
+        WidgetCenter.shared.reloadAllTimelines()
         return tree
     }
 
@@ -84,6 +86,7 @@ final class ForestService {
         let forest = try currentForest()
         forest.spentPoints += cost
         try forestRepo.update(forest)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: Remove

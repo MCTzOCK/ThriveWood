@@ -29,6 +29,9 @@ struct AboutSection: View {
             Link(destination: URL(string: "https://mctzock.github.io/ios-apps-pages/legal/notice")!) {
                 Label("Impressum", systemImage: "doc.text.fill")
             }
+            Link(destination: URL(string: "https://mctzock.github.io/ios-apps-pages/legal/terms")!) {
+                Label("AGBs", systemImage: "doc.text.fill")
+            }
             Link(destination: URL(string: "mailto:hello@ben-siebert.de")!) {
                 Label("Feedback senden", systemImage: "envelope.fill")
             }

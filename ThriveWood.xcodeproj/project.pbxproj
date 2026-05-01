@@ -6,11 +6,67 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B579DB3D2FA47EC90053BC85 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */; };
+		B579DB3F2FA47EC90053BC85 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */; };
+		B579DB4C2FA47ECA0053BC85 /* ThriveWoodWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B579DB4A2FA47ECA0053BC85 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B536FCB12F98EBE1009E5384 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B579DB392FA47EC90053BC85;
+			remoteInfo = ThriveWoodWidgetsExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B579DB512FA47ECA0053BC85 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B579DB4C2FA47ECA0053BC85 /* ThriveWoodWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		B536FCB92F98EBE1009E5384 /* ThriveWood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThriveWood.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ThriveWoodWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		B579DB522FA47EF20053BC85 /* ThriveWoodWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ThriveWoodWidgetsExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B579DB502FA47ECA0053BC85 /* Exceptions for "ThriveWoodWidgets" folder in "ThriveWoodWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B579DB392FA47EC90053BC85 /* ThriveWoodWidgetsExtension */;
+		};
+		B579DB542FA47F0D0053BC85 /* Exceptions for "ThriveWood" folder in "ThriveWoodWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Data/Models/ForestDomain.swift,
+				Data/Models/HabitDomain.swift,
+				Data/Models/SportDomain.swift,
+				Data/Models/UserProfile.swift,
+				Data/SharedEnums.swift,
+				Data/ThriveWoodSchemaV1.swift,
+				Helpers/DesignSystem.swift,
+				Helpers/Extensions.swift,
+				SharedModelContainer.swift,
+			);
+			target = B579DB392FA47EC90053BC85 /* ThriveWoodWidgetsExtension */;
+		};
 		B5EC94562F9DFB1000F4B649 /* Exceptions for "ThriveWood" folder in "ThriveWood" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -25,8 +81,17 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				B5EC94562F9DFB1000F4B649 /* Exceptions for "ThriveWood" folder in "ThriveWood" target */,
+				B579DB542FA47F0D0053BC85 /* Exceptions for "ThriveWood" folder in "ThriveWoodWidgetsExtension" target */,
 			);
 			path = ThriveWood;
+			sourceTree = "<group>";
+		};
+		B579DB402FA47EC90053BC85 /* ThriveWoodWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B579DB502FA47ECA0053BC85 /* Exceptions for "ThriveWoodWidgets" folder in "ThriveWoodWidgetsExtension" target */,
+			);
+			path = ThriveWoodWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -39,13 +104,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B579DB372FA47EC90053BC85 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B579DB3F2FA47EC90053BC85 /* SwiftUI.framework in Frameworks */,
+				B579DB3D2FA47EC90053BC85 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		B536FCB02F98EBE1009E5384 = {
 			isa = PBXGroup;
 			children = (
+				B579DB522FA47EF20053BC85 /* ThriveWoodWidgetsExtension.entitlements */,
 				B536FCBB2F98EBE1009E5384 /* ThriveWood */,
+				B579DB402FA47EC90053BC85 /* ThriveWoodWidgets */,
+				B579DB3B2FA47EC90053BC85 /* Frameworks */,
 				B536FCBA2F98EBE1009E5384 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,8 +131,18 @@
 			isa = PBXGroup;
 			children = (
 				B536FCB92F98EBE1009E5384 /* ThriveWood.app */,
+				B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B579DB3B2FA47EC90053BC85 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */,
+				B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -68,10 +155,12 @@
 				B536FCB52F98EBE1009E5384 /* Sources */,
 				B536FCB62F98EBE1009E5384 /* Frameworks */,
 				B536FCB72F98EBE1009E5384 /* Resources */,
+				B579DB512FA47ECA0053BC85 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B579DB4B2FA47ECA0053BC85 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B536FCBB2F98EBE1009E5384 /* ThriveWood */,
@@ -82,6 +171,28 @@
 			productName = ThriveWood;
 			productReference = B536FCB92F98EBE1009E5384 /* ThriveWood.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B579DB392FA47EC90053BC85 /* ThriveWoodWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B579DB4D2FA47ECA0053BC85 /* Build configuration list for PBXNativeTarget "ThriveWoodWidgetsExtension" */;
+			buildPhases = (
+				B579DB362FA47EC90053BC85 /* Sources */,
+				B579DB372FA47EC90053BC85 /* Frameworks */,
+				B579DB382FA47EC90053BC85 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B579DB402FA47EC90053BC85 /* ThriveWoodWidgets */,
+			);
+			name = ThriveWoodWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = ThriveWoodWidgetsExtension;
+			productReference = B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -94,6 +205,9 @@
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					B536FCB82F98EBE1009E5384 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					B579DB392FA47EC90053BC85 = {
 						CreatedOnToolsVersion = 26.4.1;
 					};
 				};
@@ -113,12 +227,20 @@
 			projectRoot = "";
 			targets = (
 				B536FCB82F98EBE1009E5384 /* ThriveWood */,
+				B579DB392FA47EC90053BC85 /* ThriveWoodWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		B536FCB72F98EBE1009E5384 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B579DB382FA47EC90053BC85 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -135,7 +257,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B579DB362FA47EC90053BC85 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B579DB4B2FA47ECA0053BC85 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B579DB392FA47EC90053BC85 /* ThriveWoodWidgetsExtension */;
+			targetProxy = B579DB4A2FA47ECA0053BC85 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		B536FCC42F98EBE2009E5384 /* Debug */ = {
@@ -345,6 +482,76 @@
 			};
 			name = Release;
 		};
+		B579DB4E2FA47ECA0053BC85 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U5XU7Z3LFF;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ThriveWoodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bensiebert.ThriveWood.ThriveWoodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B579DB4F2FA47ECA0053BC85 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U5XU7Z3LFF;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ThriveWoodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bensiebert.ThriveWood.ThriveWoodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -362,6 +569,15 @@
 			buildConfigurations = (
 				B536FCC72F98EBE2009E5384 /* Debug */,
 				B536FCC82F98EBE2009E5384 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B579DB4D2FA47ECA0053BC85 /* Build configuration list for PBXNativeTarget "ThriveWoodWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B579DB4E2FA47ECA0053BC85 /* Debug */,
+				B579DB4F2FA47ECA0053BC85 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

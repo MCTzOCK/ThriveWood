@@ -171,8 +171,8 @@ struct PaywallView: View {
         VStack(spacing: 4) {
             Text("Abonnements verlängern sich automatisch, sofern nicht mindestens 24 Stunden vor Ende der aktuellen Laufzeit gekündigt.")
             HStack(spacing: Theme.Spacing.l) {
-                Link("Datenschutz", destination: URL(string: "https://example.com/privacy")!)
-                Link("AGB", destination: URL(string: "https://example.com/terms")!)
+                Link("Datenschutz", destination: URL(string: "https://mctzock.github.io/ios-apps-pages/legal/privacy")!)
+                Link("AGB", destination: URL(string: "https://mctzock.github.io/ios-apps-pages/legal/terms")!)
             }
         }
         .font(.caption2)

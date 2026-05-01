@@ -7,6 +7,7 @@
 
 
 import Foundation
+import WidgetKit
 
 @MainActor
 @Observable
@@ -112,6 +113,7 @@ final class WorkoutService {
         }
         
         self.activeSession = nil
+        WidgetCenter.shared.reloadAllTimelines()
     }
     
     func cancelSession() throws {

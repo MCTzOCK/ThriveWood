@@ -10,27 +10,7 @@ import SwiftData
 
 @main
 struct ThriveWoodApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema(ThriveWoodSchemaV1.models)
-        let modelConfiguration = ModelConfiguration(
-            "ThriveWood",
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            allowsSave: true,
-            cloudKitDatabase: .automatic
-        )
-
-        do {
-            return try ModelContainer(
-                for: schema,
-                migrationPlan: ThriveWoodMigrationPlan.self,
-                configurations: [modelConfiguration]
-            )
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-    
+    var sharedModelContainer = SharedModelContainer.shared
     @State private var env: AppEnvironment?
 
     var body: some Scene {

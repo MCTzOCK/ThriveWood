@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import WidgetKit
 
 @MainActor
 @Observable
@@ -30,6 +31,7 @@ final class HabitService {
         if let existing = try completions.completion(for: habit, on: normalizedDay) {
             let delta = -existing.pointsAwarded
             try completions.delete(existing)
+            WidgetCenter.shared.reloadAllTimelines()
             return delta
         } else {
             let c = HabitCompletion(habit: habit, day: normalizedDay)
@@ -44,6 +46,7 @@ final class HabitService {
     @discardableResult
     func increment(_ habit: Habit, by amount: Double? = nil, on day: Date = .now) throws -> Int {
         let step = amount ?? habit.incrementValue
+        WidgetCenter.shared.reloadAllTimelines()
         return try adjustValue(habit, delta: step, on: day)
     }
 
@@ -51,6 +54,7 @@ final class HabitService {
     @discardableResult
     func decrement(_ habit: Habit, by amount: Double? = nil, on day: Date = .now) throws -> Int {
         let step = amount ?? habit.incrementValue
+        WidgetCenter.shared.reloadAllTimelines()
         return try adjustValue(habit, delta: -step, on: day)
     }
 
