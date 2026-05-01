@@ -87,7 +87,7 @@ struct ActiveSessionView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Abbrechen", role: .destructive) { showingCancel = true }
+                    Button("Schließen", role: .destructive) { dismiss() }
                         .foregroundStyle(.red)
                 }
                 ToolbarItem(placement: .principal) {

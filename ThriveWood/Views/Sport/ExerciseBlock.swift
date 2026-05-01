@@ -41,13 +41,9 @@ struct ExerciseBlock: View {
             .foregroundStyle(.secondary)
 
             ForEach(Array(sets.enumerated()), id: \.element.id) { idx, set in
-                SetRow(index: idx + 1, set_: set, unit: unit, onComplete: { onComplete(set) })
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) { onDelete(set) } label: {
-                            Label("Löschen", systemImage: "trash")
-                        }
-                    }
+                SetRow(index: idx + 1, set_: set, unit: unit, onComplete: { onComplete(set) }, onDelete: { onDelete(set) })
             }
+            
 
             Button(action: onAddSet) {
                 HStack {
@@ -75,6 +71,7 @@ struct SetRow: View {
     @Bindable var set_: SetEntry
     let unit: WeightUnit
     let onComplete: () -> Void
+    let onDelete: () -> Void
 
     private var type: ExerciseTrackingType {
         set_.exercise?.trackingType ?? .repsWeight
@@ -86,6 +83,7 @@ struct SetRow: View {
             inputs
             Spacer(minLength: 0)
             completeButton
+            deleteButton
         }
         .animation(.snappy, value: set_.isCompleted)
     }
@@ -147,6 +145,15 @@ struct SetRow: View {
             Image(systemName: set_.isCompleted ? "checkmark.circle.fill" : "circle")
                 .font(.title2)
                 .foregroundStyle(set_.isCompleted ? .green : .secondary)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var deleteButton: some View {
+        Button(action: onDelete) {
+            Image(systemName: "trash.fill")
+                .font(.title2)
+                .foregroundStyle(.red)
         }
         .buttonStyle(.plain)
     }
