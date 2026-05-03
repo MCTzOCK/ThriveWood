@@ -212,4 +212,48 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             title: response.notification.request.content.title
         )
     }
+    
+    func scheduleDaily(
+        id: String,
+        title: String,
+        body: String,
+        hour: Int,
+        minute: Int
+    ) async {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+
+        var components = DateComponents()
+        components.hour = hour
+        components.minute = minute
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+
+        do {
+            try await center.add(request)
+        } catch {
+            print("Notification scheduling failed: \(error)")
+        }
+    }
+
+    func cancelNotifications(for prefix: String) {
+        center.getPendingNotificationRequests { requests in
+            let ids = requests
+                .map(\.identifier)
+                .filter { $0.hasPrefix(prefix) }
+            self.center.removePendingNotificationRequests(withIdentifiers: ids)
+        }
+    }
+
+    func cancelNotification(id: String) {
+        center.removePendingNotificationRequests(withIdentifiers: [id])
+    }
+
+    func cancelAllNotifications() {
+        center.removeAllPendingNotificationRequests()
+    }
+
 }

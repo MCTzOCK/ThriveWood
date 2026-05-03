@@ -15,7 +15,7 @@ import SwiftData
 class SwiftDataRepository {
     let context: ModelContext
     init(context: ModelContext) { self.context = context }
-
+    
     func save() throws {
         guard context.hasChanges else { return }
         do { try context.save() }
@@ -29,40 +29,40 @@ class SwiftDataRepository {
 final class SwiftDataHabitRepository: SwiftDataRepository, HabitRepository {
     func fetchAll(includeArchived: Bool = false) throws -> [Habit] {
         let predicate: Predicate<Habit> = includeArchived
-            ? #Predicate { _ in true }
-            : #Predicate { $0.archivedAt == nil }
+        ? #Predicate { _ in true }
+        : #Predicate { $0.archivedAt == nil }
         let descriptor = FetchDescriptor<Habit>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.sortOrder), SortDescriptor(\.createdAt)]
         )
         return try context.fetch(descriptor)
     }
-
+    
     func fetch(id: UUID) throws -> Habit? {
         var d = FetchDescriptor<Habit>(predicate: #Predicate { $0.id == id })
         d.fetchLimit = 1
         return try context.fetch(d).first
     }
-
+    
     func create(_ habit: Habit) throws {
         guard !habit.title.trimmingCharacters(in: .whitespaces).isEmpty
         else { throw RepositoryError.invalidInput("Titel darf nicht leer sein.") }
         context.insert(habit)
         try save()
     }
-
+    
     func update(_ habit: Habit) throws { try save() }
-
+    
     func archive(_ habit: Habit) throws {
         habit.archivedAt = .now
         try save()
     }
-
+    
     func delete(_ habit: Habit) throws {
         context.delete(habit)
         try save()
     }
-
+    
     func reorder(_ habits: [Habit]) throws {
         for (index, habit) in habits.enumerated() { habit.sortOrder = index }
         try save()
@@ -82,7 +82,7 @@ final class SwiftDataHabitCompletionRepository: SwiftDataRepository, HabitComple
         d.fetchLimit = 1
         return try context.fetch(d).first
     }
-
+    
     func completions(for habit: Habit, in range: ClosedRange<Date>) throws -> [HabitCompletion] {
         let start = Calendar.app.startOfDay(range.lowerBound)
         let end   = Calendar.app.startOfDay(range.upperBound)
@@ -95,7 +95,7 @@ final class SwiftDataHabitCompletionRepository: SwiftDataRepository, HabitComple
         )
         return try context.fetch(d)
     }
-
+    
     func completions(in range: ClosedRange<Date>) throws -> [HabitCompletion] {
         let start = Calendar.app.startOfDay(range.lowerBound)
         let end   = Calendar.app.startOfDay(range.upperBound)
@@ -105,16 +105,16 @@ final class SwiftDataHabitCompletionRepository: SwiftDataRepository, HabitComple
         )
         return try context.fetch(d)
     }
-
+    
     func allCompletions() throws -> [HabitCompletion] {
         try context.fetch(FetchDescriptor<HabitCompletion>(sortBy: [SortDescriptor(\.day)]))
     }
-
+    
     func add(_ completion: HabitCompletion) throws {
         context.insert(completion)
         try save()
     }
-
+    
     func delete(_ completion: HabitCompletion) throws {
         context.delete(completion)
         try save()
@@ -133,7 +133,7 @@ final class SwiftDataForestRepository: SwiftDataRepository, ForestRepository {
         try save()
         return forest
     }
-
+    
     func update(_ forest: Forest) throws { try save() }
 }
 
@@ -149,7 +149,7 @@ final class SwiftDataTreeRepository: SwiftDataRepository, TreeRepository {
         )
         return try context.fetch(d)
     }
-
+    
     func tree(at x: Int, y: Int, in forest: Forest) throws -> TreeEntity? {
         let forestID = forest.id
         var d = FetchDescriptor<TreeEntity>(
@@ -160,7 +160,7 @@ final class SwiftDataTreeRepository: SwiftDataRepository, TreeRepository {
         d.fetchLimit = 1
         return try context.fetch(d).first
     }
-
+    
     func add(_ tree: TreeEntity) throws { context.insert(tree); try save() }
     func update(_ tree: TreeEntity) throws { try save() }
     func delete(_ tree: TreeEntity) throws { context.delete(tree); try save() }
@@ -173,13 +173,13 @@ final class SwiftDataExerciseRepository: SwiftDataRepository, ExerciseRepository
     func fetchAll() throws -> [Exercise] {
         try context.fetch(FetchDescriptor<Exercise>(sortBy: [SortDescriptor(\.name)]))
     }
-
+    
     func fetch(id: UUID) throws -> Exercise? {
         var d = FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == id })
         d.fetchLimit = 1
         return try context.fetch(d).first
     }
-
+    
     func search(_ query: String) throws -> [Exercise] {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return try fetchAll() }
@@ -189,29 +189,29 @@ final class SwiftDataExerciseRepository: SwiftDataRepository, ExerciseRepository
         )
         return try context.fetch(d)
     }
-
+    
     func create(_ exercise: Exercise) throws {
         guard !exercise.name.trimmingCharacters(in: .whitespaces).isEmpty
         else { throw RepositoryError.invalidInput("Name darf nicht leer sein.") }
         context.insert(exercise)
         try save()
     }
-
+    
     func update(_ exercise: Exercise) throws { try save() }
-
+    
     func delete(_ exercise: Exercise) throws {
         guard !exercise.isBuiltIn
         else { throw RepositoryError.invalidInput("Standard-Übungen können nicht gelöscht werden.") }
         context.delete(exercise)
         try save()
     }
-
+    
     func seedBuiltInsIfNeeded() throws {
         let existing = try context.fetch(
             FetchDescriptor<Exercise>(predicate: #Predicate { $0.isBuiltIn == true })
         )
         let existingNames = Set(existing.map(\.name))
-
+        
         var added = 0
         for builtin in BuiltInExercises.all where !existingNames.contains(builtin.name) {
             context.insert(builtin)
@@ -227,35 +227,35 @@ final class SwiftDataExerciseRepository: SwiftDataRepository, ExerciseRepository
 final class SwiftDataWorkoutRepository: SwiftDataRepository, WorkoutRepository {
     func fetchAll(includeArchived: Bool = false) throws -> [Workout] {
         let predicate: Predicate<Workout> = includeArchived
-            ? #Predicate { _ in true }
-            : #Predicate { $0.archivedAt == nil }
+        ? #Predicate { _ in true }
+        : #Predicate { $0.archivedAt == nil }
         let d = FetchDescriptor<Workout>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.sortOrder), SortDescriptor(\.createdAt)]
         )
         return try context.fetch(d)
     }
-
+    
     func fetch(id: UUID) throws -> Workout? {
         var d = FetchDescriptor<Workout>(predicate: #Predicate { $0.id == id })
         d.fetchLimit = 1
         return try context.fetch(d).first
     }
-
+    
     func create(_ workout: Workout) throws {
         guard !workout.name.trimmingCharacters(in: .whitespaces).isEmpty
         else { throw RepositoryError.invalidInput("Name darf nicht leer sein.") }
         context.insert(workout)
         try save()
     }
-
+    
     func update(_ workout: Workout) throws { try save() }
-
+    
     func archive(_ workout: Workout) throws {
         workout.archivedAt = .now
         try save()
     }
-
+    
     func delete(_ workout: Workout) throws {
         context.delete(workout)
         try save()
@@ -271,13 +271,13 @@ final class SwiftDataWorkoutSessionRepository: SwiftDataRepository, WorkoutSessi
             FetchDescriptor<WorkoutSession>(sortBy: [SortDescriptor(\.startedAt, order: .reverse)])
         )
     }
-
+    
     func fetch(id: UUID) throws -> WorkoutSession? {
         var d = FetchDescriptor<WorkoutSession>(predicate: #Predicate { $0.id == id })
         d.fetchLimit = 1
         return try context.fetch(d).first
     }
-
+    
     func activeSession() throws -> WorkoutSession? {
         var d = FetchDescriptor<WorkoutSession>(
             predicate: #Predicate { $0.endedAt == nil },
@@ -286,7 +286,7 @@ final class SwiftDataWorkoutSessionRepository: SwiftDataRepository, WorkoutSessi
         d.fetchLimit = 1
         return try context.fetch(d).first
     }
-
+    
     func sessions(in range: ClosedRange<Date>) throws -> [WorkoutSession] {
         let lo = range.lowerBound, hi = range.upperBound
         let d = FetchDescriptor<WorkoutSession>(
@@ -295,7 +295,7 @@ final class SwiftDataWorkoutSessionRepository: SwiftDataRepository, WorkoutSessi
         )
         return try context.fetch(d)
     }
-
+    
     func create(_ session: WorkoutSession) throws { context.insert(session); try save() }
     func update(_ session: WorkoutSession) throws { try save() }
     func delete(_ session: WorkoutSession) throws { context.delete(session); try save() }
@@ -313,6 +313,264 @@ final class SwiftDataUserProfileRepository: SwiftDataRepository, UserProfileRepo
         try save()
         return profile
     }
-
+    
     func update(_ profile: UserProfile) throws { try save() }
+}
+
+// MARK: - Food Repository
+
+protocol FoodRepository {
+    func fetchAll() throws -> [Food]
+    func search(query: String) throws -> [Food]
+    func fetch(barcode: String) throws -> Food?
+    func fetch(id: UUID) throws -> Food?
+    func create(_ food: Food) throws
+    func update(_ food: Food) throws
+    func delete(_ food: Food) throws
+    func recentFoods(limit: Int) throws -> [Food]
+    func favoriteFoods() throws -> [Food]
+    func incrementUsage(_ food: Food) throws
+}
+
+final class SwiftDataFoodRepository: FoodRepository {
+    private let context: ModelContext
+    init(context: ModelContext) { self.context = context }
+    
+    func fetchAll() throws -> [Food] {
+        try context.fetch(FetchDescriptor<Food>(sortBy: [SortDescriptor(\.name)]))
+    }
+    
+    func search(query: String) throws -> [Food] {
+        let q = query.lowercased()
+        let all = try fetchAll()
+        return all.filter {
+            $0.name.lowercased().contains(q) ||
+            ($0.brand?.lowercased().contains(q) ?? false)
+        }
+    }
+    
+    func fetch(barcode: String) throws -> Food? {
+        try context.fetch(FetchDescriptor<Food>(
+            predicate: #Predicate { $0.barcode == barcode }
+        )).first
+    }
+    
+    func fetch(id: UUID) throws -> Food? {
+        try context.fetch(FetchDescriptor<Food>(
+            predicate: #Predicate { $0.id == id }
+        )).first
+    }
+    
+    func create(_ food: Food) throws {
+        context.insert(food)
+        try save()
+    }
+    
+    func update(_ food: Food) throws { try save() }
+    
+    func delete(_ food: Food) throws {
+        context.delete(food)
+        try save()
+    }
+    
+    func recentFoods(limit: Int) throws -> [Food] {
+        let all = try fetchAll()
+        return Array(all.filter { $0.usageCount > 0 }
+            .sorted { $0.usageCount > $1.usageCount }
+            .prefix(limit))
+    }
+    
+    func favoriteFoods() throws -> [Food] {
+        try context.fetch(FetchDescriptor<Food>(
+            predicate: #Predicate { $0.isFavorite == true },
+            sortBy: [SortDescriptor(\.name)]
+        ))
+    }
+    
+    func incrementUsage(_ food: Food) throws {
+        food.usageCount += 1
+        try save()
+    }
+    
+    private func save() throws { try context.save() }
+}
+
+// MARK: - FoodEntry Repository
+
+protocol FoodEntryRepository {
+    func entries(on day: Date) throws -> [FoodEntry]
+    func entries(in range: ClosedRange<Date>) throws -> [FoodEntry]
+    func add(_ entry: FoodEntry) throws
+    func update(_ entry: FoodEntry) throws
+    func delete(_ entry: FoodEntry) throws
+}
+
+final class SwiftDataFoodEntryRepository: FoodEntryRepository {
+    private let context: ModelContext
+    init(context: ModelContext) { self.context = context }
+    
+    func entries(on day: Date) throws -> [FoodEntry] {
+        let start = Calendar.current.startOfDay(for: day)
+        let all = try context.fetch(FetchDescriptor<FoodEntry>())
+        return all.filter { Calendar.current.isDate($0.day, inSameDayAs: start) }
+            .sorted { $0.loggedAt < $1.loggedAt }
+    }
+    
+    func entries(in range: ClosedRange<Date>) throws -> [FoodEntry] {
+        let all = try context.fetch(FetchDescriptor<FoodEntry>())
+        return all.filter { range.contains($0.day) }
+    }
+    
+    func add(_ entry: FoodEntry) throws {
+        context.insert(entry)
+        try context.save()
+    }
+    
+    func update(_ entry: FoodEntry) throws { try context.save() }
+    
+    func delete(_ entry: FoodEntry) throws {
+        context.delete(entry)
+        try context.save()
+    }
+}
+
+// MARK: - Supplement Repository
+
+protocol SupplementRepository {
+    func fetchAll(includeArchived: Bool) throws -> [Supplement]
+    func fetch(id: UUID) throws -> Supplement?
+    func create(_ supplement: Supplement) throws
+    func update(_ supplement: Supplement) throws
+    func archive(_ supplement: Supplement) throws
+    func delete(_ supplement: Supplement) throws
+}
+
+final class SwiftDataSupplementRepository: SupplementRepository {
+    private let context: ModelContext
+    init(context: ModelContext) { self.context = context }
+    
+    func fetchAll(includeArchived: Bool) throws -> [Supplement] {
+        var all = try context.fetch(FetchDescriptor<Supplement>(
+            sortBy: [SortDescriptor(\.sortOrder)]
+        ))
+        if !includeArchived { all = all.filter { !$0.isArchived } }
+        return all
+    }
+    
+    func fetch(id: UUID) throws -> Supplement? {
+        try context.fetch(FetchDescriptor<Supplement>(
+            predicate: #Predicate { $0.id == id }
+        )).first
+    }
+    
+    func create(_ supplement: Supplement) throws {
+        context.insert(supplement)
+        try context.save()
+    }
+    
+    func update(_ supplement: Supplement) throws { try context.save() }
+    
+    func archive(_ supplement: Supplement) throws {
+        supplement.archivedAt = .now
+        try context.save()
+    }
+    
+    func delete(_ supplement: Supplement) throws {
+        context.delete(supplement)
+        try context.save()
+    }
+}
+
+// MARK: - SupplementEntry Repository
+
+protocol SupplementEntryRepository {
+    func entries(on day: Date) throws -> [SupplementEntry]
+    func entry(for supplement: Supplement, on day: Date, dose: Int) throws -> SupplementEntry?
+    func add(_ entry: SupplementEntry) throws
+    func delete(_ entry: SupplementEntry) throws
+}
+
+final class SwiftDataSupplementEntryRepository: SupplementEntryRepository {
+    private let context: ModelContext
+    
+    init(context: ModelContext) {
+        self.context = context
+    }
+    
+    func entries(on day: Date) throws -> [SupplementEntry] {
+        let start = Calendar.current.startOfDay(for: day)
+        let all = try context.fetch(FetchDescriptor<SupplementEntry>())
+        return all.filter { Calendar.current.isDate($0.day, inSameDayAs: start) }
+    }
+    
+    func entry(for supplement: Supplement, on day: Date, dose: Int) throws -> SupplementEntry? {
+        let start = Calendar.current.startOfDay(for: day)
+        let all = try context.fetch(FetchDescriptor<SupplementEntry>())
+        return all.first {
+            $0.supplement?.id == supplement.id &&
+            Calendar.current.isDate($0.day, inSameDayAs: start) &&
+            $0.doseNumber == dose
+        }
+    }
+    
+    func add(_ entry: SupplementEntry) throws {
+        context.insert(entry)
+        try context.save()
+    }
+    
+    func delete(_ entry: SupplementEntry) throws {
+        context.delete(entry)
+        try context.save()
+    }
+}
+
+protocol MealTemplateRepository {
+    func fetchAll() throws -> [MealTemplate]
+    func fetch(id: UUID) throws -> MealTemplate?
+    func create(_ template: MealTemplate) throws
+    func update(_ template: MealTemplate) throws
+    func delete(_ template: MealTemplate) throws
+    func deleteItem(_ item: MealTemplateItem) throws
+    func incrementUsage(_ template: MealTemplate) throws
+}
+
+final class SwiftDataMealTemplateRepository: MealTemplateRepository {
+    private let context: ModelContext
+    init(context: ModelContext) { self.context = context }
+    
+    func fetchAll() throws -> [MealTemplate] {
+        try context.fetch(FetchDescriptor<MealTemplate>(
+            sortBy: [SortDescriptor(\.usageCount, order: .reverse)]
+        ))
+    }
+    
+    func fetch(id: UUID) throws -> MealTemplate? {
+        try context.fetch(FetchDescriptor<MealTemplate>(
+            predicate: #Predicate { $0.id == id }
+        )).first
+    }
+    
+    func create(_ template: MealTemplate) throws {
+        context.insert(template)
+        try context.save()
+    }
+    
+    func update(_ template: MealTemplate) throws {
+        try context.save()
+    }
+    
+    func delete(_ template: MealTemplate) throws {
+        context.delete(template)
+        try context.save()
+    }
+    
+    func deleteItem(_ item: MealTemplateItem) throws {
+        context.delete(item)
+        // Kein save() hier - wird beim Template-Update gemacht
+    }
+    
+    func incrementUsage(_ template: MealTemplate) throws {
+        template.usageCount += 1
+        try context.save()
+    }
 }

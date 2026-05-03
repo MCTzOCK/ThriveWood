@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import OpenFoodFactsSDK
 
 @main
 struct ThriveWoodApp: App {
@@ -32,6 +33,9 @@ struct ThriveWoodApp: App {
                     env = e
                     await e.storeService.refreshPurchaseState()
                 }
+                OFFConfig.shared.apiEnv = .production
+                OFFConfig.shared.country = .GERMANY
+                OFFConfig.shared.productsLanguage = .GERMAN
             }
         }
         .modelContainer(sharedModelContainer)

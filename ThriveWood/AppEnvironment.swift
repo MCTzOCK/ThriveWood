@@ -21,6 +21,13 @@ final class AppEnvironment {
     let sessionRepo: any WorkoutSessionRepository
     let profileRepo: any UserProfileRepository
     
+    let foodRepo: FoodRepository
+    let foodEntryRepo: FoodEntryRepository
+    let supplementRepo: SupplementRepository
+    let supplementEntryRepo: SupplementEntryRepository
+    let templateRepo: MealTemplateRepository
+    
+    
     // Services
     let habitService: HabitService
     let scoringService: ScoringService
@@ -31,6 +38,8 @@ final class AppEnvironment {
     let healthService: HealthKitService
     let storeService: StoreService
     private(set) var backupService: BackupService!
+    let nutritionService: NutritionService
+    let supplementService: SupplementService
     
     var entitlements: EntitlementService
     
@@ -56,6 +65,12 @@ final class AppEnvironment {
         self.workoutRepo = workoutRepo
         self.sessionRepo = sessionRepo
         self.profileRepo = profileRepo
+        self.foodRepo = SwiftDataFoodRepository(context: context)
+        self.foodEntryRepo = SwiftDataFoodEntryRepository(context: context)
+        self.supplementRepo = SwiftDataSupplementRepository(context: context)
+        self.supplementEntryRepo = SwiftDataSupplementEntryRepository(context: context)
+        self.templateRepo = SwiftDataMealTemplateRepository(context: context)
+        
         
         let habitService = HabitService(habits: habitRepo, completions: completionRepo)
         let scoring = ScoringService(habitService: habitService, forestRepo: forestRepo)
@@ -69,16 +84,28 @@ final class AppEnvironment {
         let storeService = StoreService()
         self.storeService = storeService
         self.entitlements = EntitlementService(store: storeService, habitRepo: habitRepo, workoutRepo: workoutRepo)
+        self.nutritionService = NutritionService(
+            foodRepo: foodRepo,
+            entryRepo: foodEntryRepo,
+            profileRepo: profileRepo,
+            templateRepo: templateRepo
+        )
+        self.supplementService = SupplementService(
+            supplementRepo: supplementRepo,
+            entryRepo: supplementEntryRepo,
+            notificationService: notificationService
+        )
+        
         
         // Seed & Bootstrap
         try? exerciseRepo.seedBuiltInsIfNeeded()
         _ = try? profileRepo.currentProfile()
         _ = try? forestRepo.currentForest()
-      
+        
         if let profile = try? profileRepo.currentProfile() {
             AppCalendarConfig.shared.update(weekStartsOn: profile.weekStartsOn)
         }
-      
+        
 #if DEBUG
         self.debugService = DebugService(env: self)
 #endif

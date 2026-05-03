@@ -53,5 +53,7 @@
 	</dict>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>ThriveWood erinnert dich an deine Habits, damit dein Wald wächst.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ThriveWood nutzt deine Kamera um Barcodes zu scannen</string>
 </dict>
 </plist>

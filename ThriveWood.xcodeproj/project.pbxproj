@@ -10,6 +10,7 @@
 		B579DB3D2FA47EC90053BC85 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */; };
 		B579DB3F2FA47EC90053BC85 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */; };
 		B579DB4C2FA47ECA0053BC85 /* ThriveWoodWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B579DB952FA78F7F0053BC85 /* OpenFoodFactsSDK in Frameworks */ = {isa = PBXBuildFile; productRef = B579DB942FA78F7F0053BC85 /* OpenFoodFactsSDK */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,8 +56,10 @@
 		B579DB542FA47F0D0053BC85 /* Exceptions for "ThriveWood" folder in "ThriveWoodWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Data/Models/FoodDomain.swift,
 				Data/Models/ForestDomain.swift,
 				Data/Models/HabitDomain.swift,
+				Data/Models/MealDomain.swift,
 				Data/Models/SportDomain.swift,
 				Data/Models/UserProfile.swift,
 				Data/SharedEnums.swift,
@@ -101,6 +104,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B579DB952FA78F7F0053BC85 /* OpenFoodFactsSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,6 +172,7 @@
 			);
 			name = ThriveWood;
 			packageProductDependencies = (
+				B579DB942FA78F7F0053BC85 /* OpenFoodFactsSDK */,
 			);
 			productName = ThriveWood;
 			productReference = B536FCB92F98EBE1009E5384 /* ThriveWood.app */;
@@ -222,6 +227,9 @@
 			);
 			mainGroup = B536FCB02F98EBE1009E5384;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B579DB932FA78F7F0053BC85 /* XCRemoteSwiftPackageReference "openfoodfacts-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B536FCBA2F98EBE1009E5384 /* Products */;
 			projectDirPath = "";
@@ -584,6 +592,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B579DB932FA78F7F0053BC85 /* XCRemoteSwiftPackageReference "openfoodfacts-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/openfoodfacts/openfoodfacts-swift";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B579DB942FA78F7F0053BC85 /* OpenFoodFactsSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B579DB932FA78F7F0053BC85 /* XCRemoteSwiftPackageReference "openfoodfacts-swift" */;
+			productName = OpenFoodFactsSDK;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B536FCB12F98EBE1009E5384 /* Project object */;
 }

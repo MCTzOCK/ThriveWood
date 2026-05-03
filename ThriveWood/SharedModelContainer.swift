@@ -22,11 +22,16 @@ enum SharedModelContainer {
         Workout.self,
         WorkoutExercise.self,
         WorkoutSession.self,
-        SetEntry.self
+        SetEntry.self,
+        Food.self,
+        FoodEntry.self,
+        Supplement.self,
+        SupplementEntry.self,
+        MealTemplate.self,
+        MealTemplateItem.self
     ])
 
     static let shared: ModelContainer = {
-        let schema = Schema(ThriveWoodSchemaV1.models)
         let modelConfiguration = ModelConfiguration(
             "ThriveWood",
             schema: schema,

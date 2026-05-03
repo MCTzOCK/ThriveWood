@@ -226,3 +226,116 @@ enum HabitUnit: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 }
+
+enum FoodCategory: String, Codable, CaseIterable, Identifiable {
+    case fruits, vegetables, grains, protein, dairy, fats, beverages, snacks, prepared, other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .fruits: "Obst"
+        case .vegetables: "Gemüse"
+        case .grains: "Getreide & Brot"
+        case .protein: "Protein"
+        case .dairy: "Milchprodukte"
+        case .fats: "Fette & Öle"
+        case .beverages: "Getränke"
+        case .snacks: "Snacks"
+        case .prepared: "Fertiggerichte"
+        case .other: "Sonstiges"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .fruits: "apple.fill"
+        case .vegetables: "carrot.fill"
+        case .grains: "takeoutbag.and.cup.and.straw.fill"
+        case .protein: "fish.fill"
+        case .dairy: "mug.fill"
+        case .fats: "drop.fill"
+        case .beverages: "cup.and.saucer.fill"
+        case .snacks: "birthday.cake.fill"
+        case .prepared: "fork.knife"
+        case .other: "questionmark.circle.fill"
+        }
+    }
+}
+
+enum MealType: String, Codable, CaseIterable, Identifiable {
+    case breakfast, lunch, dinner, snacks
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .breakfast: "Frühstück"
+        case .lunch: "Mittagessen"
+        case .dinner: "Abendessen"
+        case .snacks: "Snacks"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .breakfast: "sunrise.fill"
+        case .lunch: "sun.max.fill"
+        case .dinner: "moon.fill"
+        case .snacks: "carrot.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .breakfast: .orange
+        case .lunch: .yellow
+        case .dinner: .indigo
+        case .snacks: .green
+        }
+    }
+}
+
+struct NutritionValues: Equatable {
+    var calories: Double
+    var protein: Double
+    var carbs: Double
+    var fat: Double
+    var fiber: Double
+    var sugar: Double
+    var sodium: Double // mg
+
+    static let zero = NutritionValues(calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0)
+
+    static func + (lhs: NutritionValues, rhs: NutritionValues) -> NutritionValues {
+        NutritionValues(
+            calories: lhs.calories + rhs.calories,
+            protein: lhs.protein + rhs.protein,
+            carbs: lhs.carbs + rhs.carbs,
+            fat: lhs.fat + rhs.fat,
+            fiber: lhs.fiber + rhs.fiber,
+            sugar: lhs.sugar + rhs.sugar,
+            sodium: lhs.sodium + rhs.sodium
+        )
+    }
+}
+
+struct NutritionGoals: Codable {
+    var calories: Double
+    var protein: Double
+    var carbs: Double
+    var fat: Double
+
+    static let `default` = NutritionGoals(calories: 2000, protein: 120, carbs: 250, fat: 65)
+}
+
+enum SupplementError: LocalizedError {
+    case cannotModifyPastEntries
+    
+    var errorDescription: String? {
+        switch self {
+        case .cannotModifyPastEntries:
+            return "Vergangene Einnahmen können nicht mehr geändert werden."
+        }
+    }
+}

@@ -27,6 +27,7 @@ final class UserProfile {
     var quietHoursEnd: Date
     var defaultRestSeconds: Int
     var iCloudSyncEnabled: Bool
+    var nutritionGoalsData: Data?
 
     init(
         id: UUID = UUID(),
@@ -75,4 +76,17 @@ final class UserProfile {
         get { AccentTheme(rawValue: accentThemeRaw) ?? .forest }
         set { accentThemeRaw = newValue.rawValue }
     }
+    
+    var nutritionGoals: NutritionGoals {
+        get {
+            guard let data = nutritionGoalsData,
+                  let goals = try? JSONDecoder().decode(NutritionGoals.self, from: data)
+            else { return .default }
+            return goals
+        }
+        set {
+            nutritionGoalsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
 }

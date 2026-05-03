@@ -131,6 +131,13 @@ struct HomeView: View {
     
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            NavigationLink {
+                SettingsView()
+            } label: {
+                Image(systemName: "gearshape.fill").font(.title2)
+            }
+        }
         ToolbarItem(placement: .topBarTrailing) {
             Button {
                 if env.entitlements.canCreateHabit {
