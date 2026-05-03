@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import OpenFoodFactsSDK
 
 actor OpenFoodFactsService {
     static let shared = OpenFoodFactsService()

@@ -10,7 +10,6 @@
 		B579DB3D2FA47EC90053BC85 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */; };
 		B579DB3F2FA47EC90053BC85 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */; };
 		B579DB4C2FA47ECA0053BC85 /* ThriveWoodWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B579DB952FA78F7F0053BC85 /* OpenFoodFactsSDK in Frameworks */ = {isa = PBXBuildFile; productRef = B579DB942FA78F7F0053BC85 /* OpenFoodFactsSDK */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,7 +103,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B579DB952FA78F7F0053BC85 /* OpenFoodFactsSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,7 +170,6 @@
 			);
 			name = ThriveWood;
 			packageProductDependencies = (
-				B579DB942FA78F7F0053BC85 /* OpenFoodFactsSDK */,
 			);
 			productName = ThriveWood;
 			productReference = B536FCB92F98EBE1009E5384 /* ThriveWood.app */;
@@ -228,7 +225,6 @@
 			mainGroup = B536FCB02F98EBE1009E5384;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				B579DB932FA78F7F0053BC85 /* XCRemoteSwiftPackageReference "openfoodfacts-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B536FCBA2F98EBE1009E5384 /* Products */;
@@ -413,7 +409,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -445,6 +441,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
@@ -456,7 +453,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -488,6 +485,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
@@ -498,7 +496,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
@@ -533,7 +531,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
@@ -592,25 +590,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		B579DB932FA78F7F0053BC85 /* XCRemoteSwiftPackageReference "openfoodfacts-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/openfoodfacts/openfoodfacts-swift";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		B579DB942FA78F7F0053BC85 /* OpenFoodFactsSDK */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B579DB932FA78F7F0053BC85 /* XCRemoteSwiftPackageReference "openfoodfacts-swift" */;
-			productName = OpenFoodFactsSDK;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B536FCB12F98EBE1009E5384 /* Project object */;
 }
