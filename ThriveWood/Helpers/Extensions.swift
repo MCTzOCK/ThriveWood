@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 extension Calendar {
     /// App-weiter Kalender. Liest den Wochenbeginn aus dem aktuellen UserProfile.
@@ -40,5 +41,29 @@ final class AppCalendarConfig: @unchecked Sendable {
 
     func update(weekStartsOn: Weekday) {
         firstWeekday = weekStartsOn.rawValue
+    }
+}
+
+
+// MARK: - Safe subscript helper
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
+}
+
+
+extension View {
+    func cardStyle() -> some View {
+        self
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
+    }
+    
+    func errorAlert(_ state: ErrorState) -> some View {
+        modifier(ErrorAlertModifier(state: state))
     }
 }

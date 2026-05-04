@@ -39,10 +39,6 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showingImport) {
-                /*ImportSheet {
-                    await loadAll()
-                }*/
-                
                 if env.entitlements.canExportData {
                     ImportSheet {
                         await loadAll()

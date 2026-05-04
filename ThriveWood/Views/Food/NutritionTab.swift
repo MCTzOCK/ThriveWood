@@ -11,9 +11,10 @@ import SwiftUI
 struct NutritionTab: View {
     @Environment(AppEnvironment.self) private var env
     @State private var selectedDate: Date = .now
-    @State private var selectedSegment: NutritionSegment = .food
+    @State private var selectedSegment: NutritionSegment = .supplements
     @State private var showAddFood = false
     @State private var showAddSupplement = false
+    @State private var showingPaywall = false
 
     enum NutritionSegment: String, CaseIterable {
         case food = "Ernährung"
@@ -33,22 +34,30 @@ struct NutritionTab: View {
 
                 switch selectedSegment {
                 case .food:
-                    FoodDiaryView(selectedDate: $selectedDate)
+                    //FoodDiaryView(selectedDate: $selectedDate)
+                    // content coming soon
+                    ContentUnavailableView(
+                        "In Kürze verfügbar",
+                        systemImage: "fork.knife.circle",
+                        description: Text("Die Ernährungsübersicht ist derzeit in Entwicklung.")
+                    )
                 case .supplements:
                     SupplementListView(selectedDate: $selectedDate)
                 }
             }
             .navigationTitle("Ernährung")
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        if selectedSegment == .food {
-                            showAddFood = true
-                        } else {
-                            showAddSupplement = true
+                if selectedSegment == .supplements {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            if env.entitlements.canCreateSupplement {
+                                showAddSupplement = true
+                            } else {
+                                showingPaywall = true
+                            }
+                        } label: {
+                            Image(systemName: "plus")
                         }
-                    } label: {
-                        Image(systemName: "plus")
                     }
                 }
             }
@@ -57,6 +66,9 @@ struct NutritionTab: View {
             }
             .sheet(isPresented: $showAddSupplement) {
                 SupplementEditorView(supplement: nil)
+            }
+            .sheet(isPresented: $showingPaywall) {
+                PaywallView()
             }
             .background(Color(uiColor: .systemGroupedBackground))
         }

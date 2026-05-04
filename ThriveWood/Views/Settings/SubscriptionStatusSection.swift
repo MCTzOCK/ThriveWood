@@ -129,6 +129,12 @@ struct SubscriptionStatusSection: View {
                     current: currentWorkoutCount,
                     limit: EntitlementService.freeWorkoutLimit
                 )
+                LimitRow(
+                    icon: "pills.fill",
+                    label: "Supplements",
+                    current: currentSupplementCount,
+                    limit: EntitlementService.freeSupplementLimit
+                )
             }
 
             Divider()
@@ -192,6 +198,10 @@ struct SubscriptionStatusSection: View {
 
     private var currentWorkoutCount: Int {
         (try? env.workoutRepo.fetchAll(includeArchived: false).count) ?? 0
+    }
+    
+    private var currentSupplementCount: Int {
+        (try? env.supplementRepo.fetchAll(includeArchived: false).count) ?? 0
     }
 }
 

@@ -7,33 +7,6 @@
 
 import SwiftUI
 
-extension HabitColor {
-    var color: Color {
-        switch self {
-        case .green:  .green
-        case .mint:   .mint
-        case .teal:   .teal
-        case .blue:   .blue
-        case .indigo: .indigo
-        case .purple: .purple
-        case .pink:   .pink
-        case .red:    .red
-        case .orange: .orange
-        case .yellow: .yellow
-        case .brown:  .brown
-        case .gray:   .gray
-        }
-    }
-
-    var gradient: LinearGradient {
-        LinearGradient(
-            colors: [color, color.opacity(0.65)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-}
-
 enum Theme {
     enum Spacing {
         static let xs: CGFloat = 4
@@ -53,16 +26,6 @@ enum Theme {
     }
 }
 
-extension View {
-    func cardStyle() -> some View {
-        self
-            .background(
-                RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
-            .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
-    }
-}
 
 enum Haptics {
     static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) {
@@ -98,11 +61,5 @@ struct ErrorAlertModifier: ViewModifier {
         } message: {
             Text(state.message ?? "Unbekannter Fehler.")
         }
-    }
-}
-
-extension View {
-    func errorAlert(_ state: ErrorState) -> some View {
-        modifier(ErrorAlertModifier(state: state))
     }
 }

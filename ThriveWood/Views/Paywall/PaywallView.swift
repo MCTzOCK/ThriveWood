@@ -81,7 +81,7 @@ struct PaywallView: View {
     private var featureList: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             ProFeatureRow(icon: "infinity", color: .green,
-                          title: "Unbegrenzte Habits",
+                          title: "Unbegrenzte Habits & Supplements",
                           text: "Keine Limits – tracke so viele Gewohnheiten wie du willst")
             ProFeatureRow(icon: "tree.fill", color: .brown,
                           title: "Alle 8 Baumarten",
@@ -92,6 +92,9 @@ struct PaywallView: View {
             ProFeatureRow(icon: "dumbbell.fill", color: .purple,
                           title: "Unbegrenzte Workouts",
                           text: "Erstelle so viele Trainingspläne wie du brauchst")
+            ProFeatureRow(icon: "trophy.fill", color: .yellow,
+                          title: "Muskel Rankings",
+                          text: "Level deine Muskeln auf und erhalte Vorschläge")
             ProFeatureRow(icon: "paintpalette.fill", color: .pink,
                           title: "Themes & App-Icons",
                           text: "6 Akzentfarben, alternative Icons und Dark Mode")

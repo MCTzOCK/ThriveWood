@@ -15,11 +15,13 @@ final class EntitlementService {
     private let store: StoreService
     private let habitRepo: any HabitRepository
     private let workoutRepo: any WorkoutRepository
+    private let supplementRepo: any SupplementRepository
 
-    init(store: StoreService, habitRepo: any HabitRepository, workoutRepo: any WorkoutRepository) {
+    init(store: StoreService, habitRepo: any HabitRepository, workoutRepo: any WorkoutRepository, supplementRepo: any SupplementRepository) {
         self.store = store
         self.habitRepo = habitRepo
         self.workoutRepo = workoutRepo
+        self.supplementRepo = supplementRepo
     }
 
     var isPro: Bool { store.isProUser }
@@ -28,12 +30,19 @@ final class EntitlementService {
 
     static let freeHabitLimit = 3
     static let freeWorkoutLimit = 2
+    static let freeSupplementLimit = 2
     static let freeSpecies: Set<TreeSpecies> = [.oak]
 
     var canCreateHabit: Bool {
         guard !isPro else { return true }
         let count = (try? habitRepo.fetchAll(includeArchived: false).count) ?? 0
         return count < Self.freeHabitLimit
+    }
+    
+    var canCreateSupplement: Bool {
+        guard !isPro else { return true }
+        let count = (try? supplementRepo.fetchAll(includeArchived: false).count) ?? 0
+        return count < Self.freeSupplementLimit
     }
 
     var canCreateWorkout: Bool {

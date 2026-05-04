@@ -29,7 +29,7 @@ struct HomeView: View {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .navigationTitle("Heute")
+            .navigationTitle("Habits")
             .navigationBarTitleDisplayMode(.large)
             .toolbar { toolbar }
             .sheet(isPresented: $showingNewHabit) {
@@ -135,7 +135,7 @@ struct HomeView: View {
             NavigationLink {
                 SettingsView()
             } label: {
-                Image(systemName: "gearshape.fill").font(.title2)
+                Image(systemName: "gearshape.fill")
             }
         }
         ToolbarItem(placement: .topBarTrailing) {
@@ -146,7 +146,7 @@ struct HomeView: View {
                     showingPaywall = true
                 }
             } label: {
-                Image(systemName: "plus.circle.fill").font(.title2)
+                Image(systemName: "plus")
             }
             .accessibilityLabel("Neuer Habit")
         }

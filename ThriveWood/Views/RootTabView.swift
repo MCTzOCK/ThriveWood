@@ -26,7 +26,7 @@ struct RootTabView: View {
     var body: some View {
         TabView(selection: $selection) {
             HomeView()
-                .tabItem { Label("Home", systemImage: "checklist") }
+                .tabItem { Label("Habits", systemImage: "checklist") }
                 .tag(AppTab.home)
 
             ForestView()

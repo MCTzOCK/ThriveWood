@@ -40,6 +40,7 @@ final class AppEnvironment {
     private(set) var backupService: BackupService!
     let nutritionService: NutritionService
     let supplementService: SupplementService
+    let muscleRankingService: MuscleRankingService
     
     var entitlements: EntitlementService
     
@@ -83,7 +84,7 @@ final class AppEnvironment {
         self.healthService = HealthKitService.shared
         let storeService = StoreService()
         self.storeService = storeService
-        self.entitlements = EntitlementService(store: storeService, habitRepo: habitRepo, workoutRepo: workoutRepo)
+        self.entitlements = EntitlementService(store: storeService, habitRepo: habitRepo, workoutRepo: workoutRepo, supplementRepo: supplementRepo)
         self.nutritionService = NutritionService(
             foodRepo: foodRepo,
             entryRepo: foodEntryRepo,
@@ -95,6 +96,7 @@ final class AppEnvironment {
             entryRepo: supplementEntryRepo,
             notificationService: notificationService
         )
+        self.muscleRankingService = MuscleRankingService(sessionRepo: sessionRepo)
         
         
         // Seed & Bootstrap

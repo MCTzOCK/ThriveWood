@@ -51,10 +51,6 @@ struct AnalyticsView: View {
                     }
                     vm.load()
                 }
-                /*
-                RangePicker(range: $vm.range)
-                    .padding(.horizontal, Theme.Spacing.l)
-                    .onChange(of: vm.range) { _, _ in vm.load() }*/
 
                 if let summary = vm.summary {
                     SummaryGrid(summary: summary)

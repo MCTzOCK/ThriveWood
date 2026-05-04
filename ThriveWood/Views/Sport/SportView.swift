@@ -36,7 +36,22 @@ struct SportView: View {
                             showingPaywall = true
                         }
                     } label: {
-                        Image(systemName: "plus.circle.fill").font(.title2)
+                        Image(systemName: "plus")
+                    }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    if env.entitlements.isPro {
+                        NavigationLink {
+                            MuscleRankingScreen()
+                        } label: {
+                            Image(systemName: "trophy")
+                        }
+                    } else {
+                        Button {
+                            showingPaywall = true
+                        } label: {
+                            Image(systemName: "trophy")
+                        }
                     }
                 }
             }
