@@ -21,6 +21,9 @@ final class Exercise {
     var iconSystemName: String
     var isBuiltIn: Bool
     var createdAt: Date
+    
+    var images: [String] = []
+    var instructions: [String] = []
 
     init(
         id: UUID = UUID(),
@@ -44,6 +47,35 @@ final class Exercise {
         self.iconSystemName = iconSystemName
         self.isBuiltIn = isBuiltIn
         self.createdAt = createdAt
+    }
+    
+    
+    init(
+        id: UUID = UUID(),
+        name: String,
+        details: String = "",
+        category: ExerciseCategory = .strength,
+        trackingType: ExerciseTrackingType = .repsWeight,
+        primaryMuscleGroups: [MuscleGroup] = [],
+        secondaryMuscleGroups: [MuscleGroup] = [],
+        iconSystemName: String = "dumbbell.fill",
+        isBuiltIn: Bool = false,
+        createdAt: Date = .now,
+        images: [String],
+        instructions: [String]
+    ) {
+        self.id = id
+        self.name = name
+        self.details = details
+        self.categoryRaw = category.rawValue
+        self.trackingTypeRaw = trackingType.rawValue
+        self.primaryMuscleGroupsRaw = primaryMuscleGroups.map(\.rawValue)
+        self.secondaryMuscleGroupsRaw = secondaryMuscleGroups.map(\.rawValue)
+        self.iconSystemName = iconSystemName
+        self.isBuiltIn = isBuiltIn
+        self.createdAt = createdAt
+        self.images = images
+        self.instructions = instructions
     }
 
     var category: ExerciseCategory {
