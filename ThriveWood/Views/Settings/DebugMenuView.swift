@@ -86,6 +86,9 @@ struct DebugMenuView: View {
                     Button("🔥 Alles löschen", role: .destructive) {
                         run { try env.debugService.wipeEverything() }
                     }
+                    Button("Sport - Alles Löschen", role: .destructive) {
+                        run { try env.debugService.wipeAllSportData() }
+                    }
                 }
             }
             .navigationTitle("Debug")

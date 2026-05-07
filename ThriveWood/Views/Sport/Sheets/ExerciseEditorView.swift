@@ -206,6 +206,7 @@ struct ExerciseEditorView: View {
         case .mobility:     .duration
         case .stretching:   .duration
         case .balance:      .duration
+        case .other:        .repsWeight
         }
     }
 

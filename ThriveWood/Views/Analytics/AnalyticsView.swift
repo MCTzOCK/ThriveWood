@@ -87,15 +87,6 @@ struct AnalyticsView: View {
                     StepsCard(range: vm.range.dateRange())
                         .padding(.horizontal, Theme.Spacing.l)
                 }
-
-                if vm.habitPerformances.isEmpty {
-                    ContentUnavailableView(
-                        "Noch keine Daten",
-                        systemImage: "chart.bar.xaxis",
-                        description: Text("Hake deine ersten Habits ab, um Auswertungen zu sehen.")
-                    )
-                    .padding(.top, Theme.Spacing.xl)
-                }
             }
             .padding(.vertical, Theme.Spacing.l)
         }

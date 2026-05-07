@@ -18,9 +18,27 @@ final class HealthKitService {
     
     private(set) var isAvailable: Bool = HKHealthStore.isHealthDataAvailable()
     private(set) var isAuthorized: Bool = false
+    
+    init() {
+        checkAuthorizationStatus()
+    }
+    
+    func checkAuthorizationStatus() {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            isAuthorized = false
+            return
+        }
+        
+        // Prüfe Write-Permission für Workouts als Indikator
+        let workoutType = HKObjectType.workoutType()
+        let status = store.authorizationStatus(for: workoutType)
+        
+        isAuthorized = status == .sharingAuthorized
+    }
 
+    
     // MARK: - Typen, die wir lesen / schreiben wollen
-
+    
     private var readTypes: Set<HKObjectType> {
         Set([
             HKQuantityType(.stepCount),

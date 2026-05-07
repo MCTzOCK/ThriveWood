@@ -12,6 +12,7 @@ struct ExerciseLibraryView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
     let onSelect: (Exercise) -> Void
+    let asSheet: Bool
 
     @State private var exercises: [Exercise] = []
     @State private var search: String = ""
@@ -38,7 +39,7 @@ struct ExerciseLibraryView: View {
                 categoryChips
                 List {
                     ForEach(grouped, id: \.0) { muscle, list in
-                        Section(muscle.id.capitalized) {
+                        Section(muscle.label) {
                             ForEach(list) { e in
                                 Button {
                                     Haptics.selection()
@@ -47,7 +48,7 @@ struct ExerciseLibraryView: View {
                                 } label: {
                                     HStack(spacing: Theme.Spacing.m) {
                                         Image(systemName: e.iconSystemName)
-                                            .foregroundStyle(.blue)
+                                            .foregroundStyle(.tint)
                                             .frame(width: 32)
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(e.name).font(.subheadline.weight(.semibold))
@@ -56,8 +57,10 @@ struct ExerciseLibraryView: View {
                                                 .font(.caption).foregroundStyle(.secondary)
                                         }
                                         Spacer()
-                                        Image(systemName: "plus.circle.fill")
-                                            .foregroundStyle(.green)
+                                        if asSheet || e.isBuiltIn {
+                                            Image(systemName: asSheet ? "plus.circle.fill" : "info.circle.fill")
+                                                .foregroundStyle(.tint)
+                                        }
                                     }
                                 }
                                 .buttonStyle(.plain)
@@ -67,16 +70,18 @@ struct ExerciseLibraryView: View {
                 }
                 .listStyle(.insetGrouped)
             }
-            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always))
+            .searchable(text: $search, placement: asSheet ? .navigationBarDrawer(displayMode: .always) : .toolbar)
             .navigationTitle("Übungen")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(asSheet ? .inline : .large)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingNew = true } label: {
-                        Image(systemName: "plus")
+                if asSheet {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Schließen") { dismiss() }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { showingNew = true } label: {
+                            Image(systemName: "plus")
+                        }
                     }
                 }
             }
@@ -127,7 +132,7 @@ struct ExerciseLibraryView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .background(
-                        Capsule().fill(isSelected ? Color.blue : Color(.secondarySystemGroupedBackground))
+                        Capsule().fill(isSelected ? Color.accentColor : Color(.secondarySystemGroupedBackground))
                     )
                     .foregroundStyle(isSelected ? .white : .primary)
             }

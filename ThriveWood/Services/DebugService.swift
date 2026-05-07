@@ -192,6 +192,11 @@ final class DebugService {
         try await UNUserNotificationCenter.current().add(req)
     }
     
+    func wipeAllSportData() throws {
+        try env.workoutRepo.fetchAll(includeArchived: true).forEach { try? env.workoutRepo.delete($0) }
+        try env.sessionRepo.fetchAll().forEach { try? env.sessionRepo.delete($0) }
+        try env.exerciseRepo.fetchAll().forEach { try? env.exerciseRepo.delete($0) }
+    }
 }
 
 #endif

@@ -16,15 +16,29 @@ struct SportView: View {
     @State private var presentedSession: WorkoutSession?
     @State private var detailSession: WorkoutSession?
     @State private var showingPaywall = false
+    @State private var selectedPage: SportPage = .workouts
+    @State private var showingExerciseDetails = false
+    @State private var selectedExercise: Exercise?
+    
+    private enum SportPage {
+        case workouts
+        case library
+    }
     
     var body: some View {
         NavigationStack {
-            Group {
+            VStack {
+                pagePicker()
                 if let vm {
-                    content(vm: vm)
+                    if selectedPage == .workouts {
+                        content(vm: vm)
+                    } else {
+                        libraryContent(vm: vm)
+                    }
                 }
                 else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Sport")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -62,6 +76,10 @@ struct SportView: View {
                 WorkoutEditorView(workout: w).onDisappear { vm?.load() }
             }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
+            
+            .sheet(item: $selectedExercise) { e in
+                ExerciseDetailsSheet(exercise: e)
+            }
             .fullScreenCover(item: $presentedSession) { session in
                 ActiveSessionView(session: session).onDisappear { vm?.load() }
             }
@@ -70,6 +88,28 @@ struct SportView: View {
             if vm == nil { vm = SportViewModel(env: env) }
             vm?.load()
         }
+    }
+    
+    @ViewBuilder
+    private func pagePicker() -> some View {
+        Picker(selection: $selectedPage) {
+            Text("Workouts").tag(SportPage.workouts)
+            Text("Bibliothek").tag(SportPage.library)
+        } label: {
+            Text("Seite auswählen")
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal)
+        .padding(.bottom, 4)
+    }
+    
+    @ViewBuilder
+    private func libraryContent(vm: SportViewModel) -> some View {
+        ExerciseLibraryView(onSelect: { exercise in
+            print(exercise)
+            selectedExercise = exercise
+            showingExerciseDetails = true
+        }, asSheet: false)
     }
     
     @ViewBuilder

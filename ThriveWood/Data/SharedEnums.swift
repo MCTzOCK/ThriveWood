@@ -341,7 +341,7 @@ enum MuscleCategory: String, CaseIterable {
 
 
 enum ExerciseCategory: String, Codable, CaseIterable, Identifiable {
-    case strength, cardio, mobility, stretching, plyometrics, balance
+    case strength, cardio, mobility, stretching, plyometrics, balance, other
     var id: String {
         switch self {
         case .strength: "Kraft"
@@ -350,6 +350,7 @@ enum ExerciseCategory: String, Codable, CaseIterable, Identifiable {
         case .stretching: "Dehnen"
         case .plyometrics: "Plyometrisch"
         case .balance: "Balance"
+        case .other: "Andere"
         }
     }
 }

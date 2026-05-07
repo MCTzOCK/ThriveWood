@@ -110,7 +110,7 @@ struct ActiveSessionView: View {
             .sheet(isPresented: $showingAddSheet) {
                 ExerciseLibraryView(onSelect: { ex in
                     addSet(for: ex)
-                })
+                }, asSheet: true)
             }
             .confirmationDialog(
                 "Workout wirklich abbrechen?",

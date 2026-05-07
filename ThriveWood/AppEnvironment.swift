@@ -130,4 +130,5 @@ final class AppEnvironment {
         try await notificationService.cancelReminders(for: habit)
         try habitRepo.delete(habit)
     }
+    
 }
