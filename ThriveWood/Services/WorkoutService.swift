@@ -16,6 +16,7 @@ final class WorkoutService {
     private let sessions: any WorkoutSessionRepository
     private let exercises: any ExerciseRepository
     private let profileRepo: any UserProfileRepository
+    private let env: AppEnvironment
     private let healthService = HealthKitService.shared
     
     /// Aktive Session wird live im State gehalten – Views können direkt binden.
@@ -25,13 +26,15 @@ final class WorkoutService {
         workouts: any WorkoutRepository,
         sessions: any WorkoutSessionRepository,
         exercises: any ExerciseRepository,
-        profile: any UserProfileRepository
+        profile: any UserProfileRepository,
+        env: AppEnvironment
     ) {
         self.workouts = workouts
         self.sessions = sessions
         self.exercises = exercises
         self.activeSession = try? sessions.activeSession()
         self.profileRepo = profile
+        self.env = env
     }
     
     // MARK: Plan
@@ -96,6 +99,17 @@ final class WorkoutService {
         }
         
         self.activeSession = session
+        
+        let totalSets = session.workout?.exercises.reduce(0) { $0 + $1.targetSets } ?? 0
+        
+        env.workoutLiveActivity.start(
+            workoutName: session.workout?.name ?? "Freies Training",
+            workoutIcon: "dumbbell.fill",
+            firstExercise: session.workout?.exercises.first?.exercise?.name ?? "Übung",
+            totalExercises: session.workout?.exercises.count ?? 0,
+            totalSets: totalSets
+        )
+        
         return session
     }
     
@@ -114,6 +128,17 @@ final class WorkoutService {
         
         self.activeSession = nil
         WidgetCenter.shared.reloadAllTimelines()
+        
+        let completedSets = session.sets.filter(\.isCompleted).count
+        let totalSets = session.workout?.exercises.reduce(0) { $0 + $1.targetSets } ?? 0
+        let elapsed = Int(Date().timeIntervalSince(session.startedAt))
+        
+        env.workoutLiveActivity.endWithSummary(
+            completedSets: completedSets,
+            totalSets: totalSets,
+            elapsedSeconds: elapsed
+        )
+
     }
     
     func cancelSession() throws {

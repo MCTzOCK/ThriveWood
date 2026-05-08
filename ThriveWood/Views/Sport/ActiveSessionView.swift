@@ -199,6 +199,27 @@ struct ActiveSessionView: View {
         } else {
             Haptics.impact(.light)
         }
+        
+        let completedSets = session.sets.filter(\.isCompleted).count
+        let totalSets = session.workout?.exercises.reduce(0) { $0 + $1.targetSets } ?? 0
+        let exerciseIndex = session.workout?.exercises.firstIndex(where: { $0.exercise?.id == exercise.id }) ?? 0
+        let elapsed = Int(Date().timeIntervalSince(session.startedAt))
+        
+        let setInfo: String? = {
+            guard let weight = set.weight, let reps = set.reps else { return nil }
+            return "\(Int(weight))kg × \(reps)"
+        }()
+        
+        env.workoutLiveActivity.update(
+            currentExercise: set.exercise?.name ?? "",
+            exerciseIndex: exerciseIndex,
+            totalExercises: session.workout?.exercises.count ?? 0,
+            completedSets: completedSets,
+            totalSets: totalSets,
+            elapsedSeconds: elapsed,
+            lastSetInfo: setInfo
+        )
+
     }
 
     private func deleteSet(_ set: SetEntry) {

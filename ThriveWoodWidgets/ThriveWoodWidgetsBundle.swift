@@ -15,5 +15,6 @@ struct ThriveWoodWidgetBundle: WidgetBundle {
         HabitStreakWidget()
         ForestWidget()
         WorkoutWidget()
+        WorkoutLiveActivity()
     }
 }

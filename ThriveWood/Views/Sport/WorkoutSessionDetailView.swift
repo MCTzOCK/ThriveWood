@@ -146,7 +146,6 @@ struct WorkoutSessionDetailView: View {
                         successHUDVisible = true
                     }
                     
-                    // Overlay nach 2 Sekunden automatisch ausblenden
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         withAnimation(.spring()) {
                             successHUDVisible = false

@@ -32,7 +32,7 @@ final class AppEnvironment {
     let habitService: HabitService
     let scoringService: ScoringService
     let forestService: ForestService
-    let workoutService: WorkoutService
+    private(set) var workoutService: WorkoutService!
     let analyticsService: AnalyticsService
     let notificationService: NotificationService
     let healthService: HealthKitService
@@ -43,6 +43,9 @@ final class AppEnvironment {
     let muscleRankingService: MuscleRankingService
     
     var entitlements: EntitlementService
+    
+    let workoutLiveActivity = WorkoutLiveActivityManager()
+    
     
 #if DEBUG
     var debugService: DebugService!
@@ -78,7 +81,6 @@ final class AppEnvironment {
         self.habitService = habitService
         self.scoringService = scoring
         self.forestService = ForestService(forestRepo: forestRepo, treeRepo: treeRepo, scoring: scoring)
-        self.workoutService = WorkoutService(workouts: workoutRepo, sessions: sessionRepo, exercises: exerciseRepo, profile: profileRepo)
         self.analyticsService = AnalyticsService(completions: completionRepo, sessions: sessionRepo)
         self.notificationService = NotificationService.shared
         self.healthService = HealthKitService.shared
@@ -112,7 +114,7 @@ final class AppEnvironment {
         self.debugService = DebugService(env: self)
 #endif
         self.backupService = BackupService(env: self)
-        
+        self.workoutService = WorkoutService(workouts: workoutRepo, sessions: sessionRepo, exercises: exerciseRepo, profile: profileRepo, env: self)
     }
     
     func saveHabit(_ habit: Habit, isNew: Bool) async throws {
