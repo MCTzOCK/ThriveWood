@@ -41,6 +41,7 @@ final class AppEnvironment {
     let nutritionService: NutritionService
     let supplementService: SupplementService
     let muscleRankingService: MuscleRankingService
+    let aiService: AIService
     
     var entitlements: EntitlementService
     
@@ -99,6 +100,7 @@ final class AppEnvironment {
             notificationService: notificationService
         )
         self.muscleRankingService = MuscleRankingService(sessionRepo: sessionRepo)
+        self.aiService = AIService()
         
         
         // Seed & Bootstrap

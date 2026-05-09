@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import Charts
+import FoundationModels
 
 
 struct WorkoutSessionDetailView: View {
@@ -22,7 +23,8 @@ struct WorkoutSessionDetailView: View {
     @State private var showDeleteConfirm = false
     @State private var errors = ErrorState()
     @State private var successHUDVisible = false
-
+    @State private var aiAvailable = SystemLanguageModel.default.availability
+    
     // MARK: - Derived
 
     private var sortedExercises: [(Exercise, [SetEntry])] {
@@ -154,6 +156,14 @@ struct WorkoutSessionDetailView: View {
                     
                 } label: {
                     Label("In Health speichern", systemImage: "heart.text.square")
+                }
+                
+                if aiAvailable == .available{
+                    NavigationLink {
+                        WorkoutAnalysisView(session: session)
+                    } label: {
+                        Label("KI-Analyse", systemImage: "sparkles")
+                    }
                 }
                 
                 Divider()

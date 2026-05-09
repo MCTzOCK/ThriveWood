@@ -19,6 +19,7 @@ struct SportView: View {
     @State private var selectedPage: SportPage = .workouts
     @State private var showingExerciseDetails = false
     @State private var selectedExercise: Exercise?
+    @State private var searchText: String = ""
     
     private enum SportPage {
         case workouts
@@ -129,7 +130,7 @@ struct SportView: View {
                 .padding(.horizontal, Theme.Spacing.l)
                 
                 WorkoutsSection(
-                    workouts: vm.workouts,
+                    workouts: vm.workouts.filter { searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased()) },
                     onStart: { w in
                         if let s = vm.startSession(for: w) { presentedSession = s }
                     },
@@ -153,5 +154,6 @@ struct SportView: View {
         .navigationDestination(item: $detailSession) { session in
             WorkoutSessionDetailView(session: session)
         }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
     }
 }

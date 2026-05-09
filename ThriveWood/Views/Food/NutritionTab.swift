@@ -59,6 +59,15 @@ struct NutritionTab: View {
                             Image(systemName: "plus")
                         }
                     }
+                    if env.aiService.isAvailable() {
+                        ToolbarItem(placement: .topBarLeading) {
+                            NavigationLink {
+                                SupplementAnalysisView()
+                            } label: {
+                                Image(systemName: "sparkles")
+                            }
+                        }
+                    }
                 }
             }
             .sheet(isPresented: $showAddFood) {
