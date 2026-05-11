@@ -26,6 +26,7 @@ final class AppEnvironment {
     let supplementRepo: SupplementRepository
     let supplementEntryRepo: SupplementEntryRepository
     let templateRepo: MealTemplateRepository
+    let trainingsPlanRepo: TrainingsPlanRepository
     
     
     // Services
@@ -42,6 +43,7 @@ final class AppEnvironment {
     let supplementService: SupplementService
     let muscleRankingService: MuscleRankingService
     let aiService: AIService
+    let trainingsPlanService: TrainingsPlanService
     
     var entitlements: EntitlementService
     
@@ -61,6 +63,8 @@ final class AppEnvironment {
         let workoutRepo    = SwiftDataWorkoutRepository(context: context)
         let sessionRepo    = SwiftDataWorkoutSessionRepository(context: context)
         let profileRepo    = SwiftDataUserProfileRepository(context: context)
+        self.trainingsPlanRepo = TrainingsPlanRepository(modelContext: context)
+
         
         self.habitRepo = habitRepo
         self.completionRepo = completionRepo
@@ -101,6 +105,7 @@ final class AppEnvironment {
         )
         self.muscleRankingService = MuscleRankingService(sessionRepo: sessionRepo)
         self.aiService = AIService()
+        self.trainingsPlanService = TrainingsPlanService(repo: trainingsPlanRepo)
         
         
         // Seed & Bootstrap

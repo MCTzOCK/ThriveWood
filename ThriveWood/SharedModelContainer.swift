@@ -28,7 +28,9 @@ enum SharedModelContainer {
         Supplement.self,
         SupplementEntry.self,
         MealTemplate.self,
-        MealTemplateItem.self
+        MealTemplateItem.self,
+        TrainingsPlan.self,
+        TrainingsPlanDay.self
     ])
 
     static let shared: ModelContainer = {

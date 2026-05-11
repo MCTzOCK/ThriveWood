@@ -78,10 +78,11 @@ struct ExerciseLibraryView: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Schließen") { dismiss() }
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button { showingNew = true } label: {
-                            Image(systemName: "plus")
-                        }
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showingNew = true } label: {
+                        Image(systemName: "plus")
                     }
                 }
             }

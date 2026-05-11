@@ -574,3 +574,155 @@ final class SwiftDataMealTemplateRepository: MealTemplateRepository {
         try context.save()
     }
 }
+
+
+// MARK: Training Plans
+
+@MainActor
+final class TrainingsPlanRepository {
+    private let modelContext: ModelContext
+    
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
+    
+    // MARK: - Fetch
+    
+    func fetchAll() throws -> [TrainingsPlan] {
+        let descriptor = FetchDescriptor<TrainingsPlan>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        return try modelContext.fetch(descriptor)
+    }
+    
+    func fetchActive() throws -> TrainingsPlan? {
+        var descriptor = FetchDescriptor<TrainingsPlan>(
+            predicate: #Predicate { $0.isActive == true }
+        )
+        descriptor.fetchLimit = 1
+        return try modelContext.fetch(descriptor).first
+    }
+    
+    func fetch(by id: UUID) throws -> TrainingsPlan? {
+        let descriptor = FetchDescriptor<TrainingsPlan>(
+            predicate: #Predicate { $0.id == id }
+        )
+        return try modelContext.fetch(descriptor).first
+    }
+    
+    // MARK: - Create
+    
+    func create(
+        name: String,
+        details: String = "",
+        color: String = "#4CAF50"
+    ) throws -> TrainingsPlan {
+        let plan = TrainingsPlan(
+            name: name,
+            details: details,
+            color: color
+        )
+        
+        // Alle Wochentage als leere Tage hinzufügen
+        for weekday in TPWeekday.allCases {
+            let day = TrainingsPlanDay(
+                weekday: weekday,
+                plan: plan
+            )
+            plan.days.append(day)
+            modelContext.insert(day)
+        }
+        
+        modelContext.insert(plan)
+        try modelContext.save()
+        return plan
+    }
+    
+    // MARK: - Update
+    
+    func update(_ plan: TrainingsPlan) throws {
+        try modelContext.save()
+    }
+    
+    func setActive(_ plan: TrainingsPlan) throws {
+        // Alle anderen deaktivieren
+        let allPlans = try fetchAll()
+        for p in allPlans {
+            p.isActive = false
+        }
+        
+        // Diesen aktivieren
+        plan.isActive = true
+        try modelContext.save()
+    }
+    
+    func assignWorkout(_ workout: Workout?, to weekday: TPWeekday, in plan: TrainingsPlan) throws {
+        guard let day = plan.days.first(where: { $0.weekday == weekday }) else {
+            throw RepositoryError.notFound
+        }
+        
+        day.workout = workout
+        day.isRestDay = workout == nil
+        try modelContext.save()
+    }
+    
+    func setRestDay(_ weekday: TPWeekday, in plan: TrainingsPlan, isRest: Bool) throws {
+        guard let day = plan.days.first(where: { $0.weekday == weekday }) else {
+            throw RepositoryError.notFound
+        }
+        
+        day.isRestDay = isRest
+        if isRest {
+            day.workout = nil
+        }
+        try modelContext.save()
+    }
+    
+    func updateDayNotes(_ notes: String, for weekday: TPWeekday, in plan: TrainingsPlan) throws {
+        guard let day = plan.days.first(where: { $0.weekday == weekday }) else {
+            throw RepositoryError.notFound
+        }
+        
+        day.notes = notes
+        try modelContext.save()
+    }
+    
+    // MARK: - Delete
+    
+    func delete(_ plan: TrainingsPlan) throws {
+        modelContext.delete(plan)
+        try modelContext.save()
+    }
+    
+    // MARK: - Helpers
+    
+    /// Workout für heute (aus aktivem Plan)
+    func todaysWorkout() throws -> Workout? {
+        guard let activePlan = try fetchActive() else { return nil }
+        return activePlan.workout(for: .today)
+    }
+    
+    /// Nächstes geplantes Workout
+    func nextWorkout() throws -> (weekday: TPWeekday, workout: Workout)? {
+        guard let activePlan = try fetchActive() else { return nil }
+        
+        let today = TPWeekday.today
+        let sortedDays = activePlan.sortedDays
+        
+        // Suche ab heute
+        for day in sortedDays where day.weekday >= today {
+            if let workout = day.workout {
+                return (day.weekday, workout)
+            }
+        }
+        
+        // Wenn nichts gefunden, suche ab Montag
+        for day in sortedDays {
+            if let workout = day.workout {
+                return (day.weekday, workout)
+            }
+        }
+        
+        return nil
+    }
+}

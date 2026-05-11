@@ -341,3 +341,160 @@ extension Double {
             : String(format: "%.1f", self)
     }
 }
+
+
+@Model
+final class TrainingsPlan {
+    @Attribute(.unique) var id: UUID
+    
+    var name: String
+    var details: String
+    var createdAt: Date
+    var isActive: Bool  // Nur ein Plan kann aktiv sein
+    var color: String   // Hex-String für UI-Farbe
+    
+    @Relationship(deleteRule: .cascade, inverse: \TrainingsPlanDay.plan)
+    var days: [TrainingsPlanDay]
+    
+    init(
+        id: UUID = UUID(),
+        name: String,
+        details: String = "",
+        createdAt: Date = .now,
+        isActive: Bool = false,
+        color: String = "#4CAF50",
+        days: [TrainingsPlanDay] = []
+    ) {
+        self.id = id
+        self.name = name
+        self.details = details
+        self.createdAt = createdAt
+        self.isActive = isActive
+        self.color = color
+        self.days = days
+    }
+    
+    /// Sortierte Tage (Montag bis Sonntag)
+    var sortedDays: [TrainingsPlanDay] {
+        days.sorted { $0.weekday.rawValue < $1.weekday.rawValue }
+    }
+    
+    /// Workout für einen bestimmten Wochentag
+    func workout(for weekday: TPWeekday) -> Workout? {
+        days.first { $0.weekday == weekday }?.workout
+    }
+    
+    /// Anzahl der Trainingstage pro Woche
+    var trainingDaysPerWeek: Int {
+        days.filter { $0.workout != nil }.count
+    }
+    
+    /// Gesamtanzahl Übungen im Plan
+    var totalExercises: Int {
+        days.compactMap(\.workout).reduce(0) { $0 + $1.exercises.count }
+    }
+}
+
+// MARK: - TrainingsPlanDay
+
+@Model
+final class TrainingsPlanDay {
+    @Attribute(.unique) var id: UUID
+    
+    var weekday: TPWeekday
+    var isRestDay: Bool
+    var notes: String
+    
+    var plan: TrainingsPlan?
+    var workout: Workout?
+    
+    init(
+        id: UUID = UUID(),
+        weekday: TPWeekday,
+        isRestDay: Bool = false,
+        notes: String = "",
+        plan: TrainingsPlan? = nil,
+        workout: Workout? = nil
+    ) {
+        self.id = id
+        self.weekday = weekday
+        self.isRestDay = isRestDay
+        self.notes = notes
+        self.plan = plan
+        self.workout = workout
+    }
+    
+    var displayName: String {
+        if isRestDay {
+            return "Ruhetag"
+        } else if let workout {
+            return workout.name
+        } else {
+            return "Kein Training"
+        }
+    }
+}
+
+// MARK: - Weekday Enum
+
+enum TPWeekday: Int, Codable, CaseIterable, Identifiable, Comparable {
+    case monday = 1
+    case tuesday = 2
+    case wednesday = 3
+    case thursday = 4
+    case friday = 5
+    case saturday = 6
+    case sunday = 7
+    
+    var id: Int { rawValue }
+    
+    var label: String {
+        switch self {
+        case .monday: "Montag"
+        case .tuesday: "Dienstag"
+        case .wednesday: "Mittwoch"
+        case .thursday: "Donnerstag"
+        case .friday: "Freitag"
+        case .saturday: "Samstag"
+        case .sunday: "Sonntag"
+        }
+    }
+    
+    var shortLabel: String {
+        switch self {
+        case .monday: "Mo"
+        case .tuesday: "Di"
+        case .wednesday: "Mi"
+        case .thursday: "Do"
+        case .friday: "Fr"
+        case .saturday: "Sa"
+        case .sunday: "So"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .monday: "1.circle.fill"
+        case .tuesday: "2.circle.fill"
+        case .wednesday: "3.circle.fill"
+        case .thursday: "4.circle.fill"
+        case .friday: "5.circle.fill"
+        case .saturday: "6.circle.fill"
+        case .sunday: "7.circle.fill"
+        }
+    }
+    
+    static func < (lhs: TPWeekday, rhs: TPWeekday) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+    
+    /// Aktueller Wochentag
+    static var today: TPWeekday {
+        let calendar = Calendar.current
+        let weekdayInt = calendar.component(.weekday, from: .now)
+        // Calendar.weekday: 1 = Sonntag, 2 = Montag, ...
+        // Unsere Enum: 1 = Montag, 7 = Sonntag
+        let adjusted = weekdayInt == 1 ? 7 : weekdayInt - 1
+        return TPWeekday(rawValue: adjusted) ?? .monday
+    }
+}

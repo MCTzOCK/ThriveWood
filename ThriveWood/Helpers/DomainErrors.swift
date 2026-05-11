@@ -31,6 +31,7 @@ enum ServiceError: LocalizedError {
     case sessionAlreadyActive
     case noActiveSession
     case repository(RepositoryError)
+    case validationFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -40,6 +41,7 @@ enum ServiceError: LocalizedError {
         case .sessionAlreadyActive: "Es läuft bereits ein Workout."
         case .noActiveSession: "Kein aktives Workout."
         case .repository(let e): e.errorDescription
+        case .validationFailed(let e): e
         }
     }
 }

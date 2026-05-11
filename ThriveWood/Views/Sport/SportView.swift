@@ -24,6 +24,7 @@ struct SportView: View {
     private enum SportPage {
         case workouts
         case library
+        case plans
     }
     
     var body: some View {
@@ -33,8 +34,10 @@ struct SportView: View {
                 if let vm {
                     if selectedPage == .workouts {
                         content(vm: vm)
-                    } else {
+                    } else if selectedPage == .library {
                         libraryContent(vm: vm)
+                    } else {
+                        TrainingsPlanListView()
                     }
                 }
                 else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
@@ -43,17 +46,20 @@ struct SportView: View {
             .navigationTitle("Sport")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        if env.entitlements.canCreateWorkout {
-                            showingNewWorkout = true
-                        } else {
-                            showingPaywall = true
+                if selectedPage == .workouts {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            if env.entitlements.canCreateWorkout {
+                                showingNewWorkout = true
+                            } else {
+                                showingPaywall = true
+                            }
+                        } label: {
+                            Image(systemName: "plus")
                         }
-                    } label: {
-                        Image(systemName: "plus")
                     }
                 }
+                
                 ToolbarItem(placement: .topBarLeading) {
                     if env.entitlements.isPro {
                         NavigationLink {
@@ -95,6 +101,7 @@ struct SportView: View {
     private func pagePicker() -> some View {
         Picker(selection: $selectedPage) {
             Text("Workouts").tag(SportPage.workouts)
+            Text("Pläne").tag(SportPage.plans)
             Text("Bibliothek").tag(SportPage.library)
         } label: {
             Text("Seite auswählen")
