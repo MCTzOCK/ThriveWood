@@ -31,15 +31,6 @@ struct EditDaySheet: View {
                 }
             }
             
-            Section {
-                Toggle("Ruhetag", isOn: $isRestDay)
-                    .onChange(of: isRestDay) { _, newValue in
-                        if newValue {
-                            selectedWorkoutID = nil
-                        }
-                    }
-            }
-            
             if !isRestDay {
                 Section {
                     // Use the workout id (UUID) as the picker's selection tag because

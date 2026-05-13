@@ -426,11 +426,11 @@ final class TrainingsPlanDay {
     
     var displayName: String {
         if isRestDay {
-            return "Ruhetag"
+            return "Rest Day"
         } else if let workout {
             return workout.name
         } else {
-            return "Kein Training"
+            return "Rest Day"
         }
     }
 }

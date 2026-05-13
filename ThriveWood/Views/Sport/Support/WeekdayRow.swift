@@ -38,7 +38,7 @@ struct WeekdayRow: View {
                     
                     Text(day.displayName)
                         .font(.caption)
-                        .foregroundStyle(day.isRestDay ? .orange : .secondary)
+                        .foregroundStyle(day.workout == nil ? .orange : .secondary)
                     
                     if !day.notes.isEmpty {
                         Text(day.notes)
@@ -50,7 +50,7 @@ struct WeekdayRow: View {
                 
                 Spacer()
                 
-                if day.isRestDay {
+                if day.workout == nil || day.isRestDay {
                     Image(systemName: "bed.double.fill")
                         .foregroundStyle(.orange)
                 } else if day.workout != nil {
