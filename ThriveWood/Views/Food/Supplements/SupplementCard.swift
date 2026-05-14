@@ -58,9 +58,7 @@ struct SupplementCard: View {
             HStack(spacing: Theme.Spacing.s) {
                 ForEach(1...supplement.timesPerDay, id: \.self) { dose in
                     Button {
-                        if isEditable {
-                            onToggle(dose)
-                        }
+                        onToggle(dose)
                     } label: {
                         VStack(spacing: 4) {
                             ZStack {
@@ -90,7 +88,6 @@ struct SupplementCard: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .disabled(!isEditable)
                     .opacity(isEditable ? 1 : 0.7)
                 }
             }

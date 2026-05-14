@@ -95,11 +95,6 @@ final class SupplementService: ObservableObject {
     // MARK: - Tracking
 
     func toggleDose(_ supplement: Supplement, doseNumber: Int, on date: Date = .now) throws {
-        // Sicherheitscheck: Nur heutiges Datum erlauben
-        guard Calendar.current.isDateInToday(date) else {
-            throw SupplementError.cannotModifyPastEntries
-        }
-        
         if let existing = try entryRepo.entry(for: supplement, on: date, dose: doseNumber) {
             try entryRepo.delete(existing)
         } else {

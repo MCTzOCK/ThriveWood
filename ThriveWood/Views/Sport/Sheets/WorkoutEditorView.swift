@@ -35,6 +35,11 @@ struct WorkoutEditorView: View {
                     ColorGrid(selection: $color)
                     Stepper("Dauer: \(duration) min",
                             value: $duration, in: 5...240, step: 5)
+                    if let w = workout {
+                        if let url = PDFService.shared.createPDF(for: w) {
+                            ShareLink(item: url) { Label("PDF teilen", systemImage: "square.and.arrow.up") }
+                        }
+                    }
                 }
                 
                 Section {

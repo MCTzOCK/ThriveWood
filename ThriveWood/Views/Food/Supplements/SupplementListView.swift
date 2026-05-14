@@ -35,7 +35,7 @@ struct SupplementListView: View {
                             supplement: supplement,
                             entries: entries.filter { $0.supplement?.id == supplement.id },
                             date: selectedDate,
-                            isEditable: isToday,  // Nur heute bearbeitbar
+                            isEditable: true,
                             onToggle: { dose in
                                 toggleDose(supplement, dose: dose)
                             },
@@ -98,12 +98,6 @@ struct SupplementListView: View {
     }
     
     private func toggleDose(_ supplement: Supplement, dose: Int) {
-        // Nur für heute erlauben
-        guard isToday else {
-            Haptics.warning()
-            return
-        }
-        
         do {
             try env.supplementService.toggleDose(supplement, doseNumber: dose, on: selectedDate)
             Haptics.success()
