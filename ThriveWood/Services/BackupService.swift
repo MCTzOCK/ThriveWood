@@ -28,6 +28,8 @@ final class BackupService {
         let exercises = try env.exerciseRepo.fetchAll()
         let workouts = try env.workoutRepo.fetchAll(includeArchived: true)
         let sessions = try env.sessionRepo.fetchAll()
+        let supplements = try env.supplementRepo.fetchAll(includeArchived: true)
+        let supplementEntries = try env.supplementEntryRepo.fetchAll()
 
         let backup = ThriveWoodBackup(
             version: ThriveWoodBackup.currentVersion,
@@ -56,7 +58,11 @@ final class BackupService {
 
             sets: sessions.flatMap { s in
                 s.sets.compactMap { mapSetEntry($0, sessionID: s.id) }
-            }
+            },
+            
+            supplements: supplements.map { mapSupplement($0) },
+            
+            supplementEntries: supplementEntries.map { mapSupplementEntry($0)  }
         )
 
         let encoder = JSONEncoder()
@@ -75,7 +81,9 @@ final class BackupService {
         var workouts: Int
         var sessions: Int
         var sets: Int
-        var total: Int { habits + completions + trees + exercises + workouts + sessions + sets }
+        var supplements: Int
+        var supplementEntries: Int
+        var total: Int { habits + completions + trees + exercises + workouts + sessions + sets + supplements + supplementEntries }
     }
 
     func importAll(_ data: Data) async throws -> ImportResult {
@@ -89,7 +97,8 @@ final class BackupService {
 
         var result = ImportResult(
             habits: 0, completions: 0, trees: 0,
-            exercises: 0, workouts: 0, sessions: 0, sets: 0
+            exercises: 0, workouts: 0, sessions: 0, sets: 0,
+            supplements: 0, supplementEntries: 0
         )
 
         // 1. Profil (merge, nicht überschreiben)
@@ -123,7 +132,15 @@ final class BackupService {
             workoutMap: workoutMap, exerciseMap: exerciseMap
         )
         result.sets = backup.sets.count
-
+        
+        // 8. Supplements + SupplementEntries
+        let supplementMap = try importSupplements(backup.supplements)
+        result.supplements = supplementMap.count
+        
+        let supplementEntryCount = try importSupplementEntries(backup.supplementEntries, supplementMap: supplementMap)
+        result.supplementEntries = supplementEntryCount
+        
+        
         return result
     }
 
@@ -236,6 +253,16 @@ final class BackupService {
             isWarmup: s.isWarmup, isCompleted: s.isCompleted,
             completedAt: s.completedAt
         )
+    }
+    
+    private func mapSupplement(_ s: Supplement) -> ThriveWoodBackup.SupplementDTO {
+        .init(
+            id: s.id, name: s.name, dosage: s.dosage, details: s.details, iconSystemName: s.iconSystemName, colorRaw: s.colorRaw, frequencyRaw: s.frequencyRaw, activeWeekdays: s.activeWeekdays, timesPerDay: s.timesPerDay, reminderTimes: s.reminderTimes, sortOrder: s.sortOrder, createdAt: s.createdAt, archivedAt: s.archivedAt
+        )
+    }
+    
+    private func mapSupplementEntry(_ e: SupplementEntry) -> ThriveWoodBackup.SupplementEntryDTO {
+        return .init(id: e.id, supplementID: e.supplement!.id, day: e.day, doseNumber: e.doseNumber, takenAt: e.takenAt, skipped: e.skipped)
     }
 
     // MARK: - Import Logic
@@ -455,6 +482,41 @@ final class BackupService {
         }
         return count
     }
+    
+    private func importSupplements(_ dtos: [ThriveWoodBackup.SupplementDTO]) throws -> [UUID: Supplement] {
+        let existing = Set((try? env.supplementRepo.fetchAll(includeArchived: true))?.map(\.id) ?? [])
+        var map: [UUID: Supplement] = [:]
+        
+        for dto in dtos {
+            if existing.contains(dto.id) {
+                if let s = try env.supplementRepo.fetch(id: dto.id) { map[dto.id] = s }
+                continue
+            }
+            let supplement = Supplement(
+                id: dto.id, name: dto.name, dosage: dto.dosage, details: dto.details, iconSystemName: dto.iconSystemName, color: HabitColor(rawValue: dto.colorRaw)!, frequency: HabitFrequency(rawValue: dto.frequencyRaw)!, activeWeekdays: dto.activeWeekdays.compactMap(Weekday.init(rawValue:)), timesPerDay: dto.timesPerDay, reminderTimes: dto.reminderTimes, sortOrder: dto.sortOrder, createdAt: dto.createdAt, archivedAt: dto.archivedAt
+            )
+            try env.supplementRepo.create(supplement)
+            map[dto.id] = supplement
+        }
+        return map
+    }
+    
+    private func importSupplementEntries(_ dtos: [ThriveWoodBackup.SupplementEntryDTO], supplementMap: [UUID: Supplement]) throws -> Int {
+        var count = 0
+        for dto in dtos {
+            guard let supplement = supplementMap[dto.supplementID] else { continue }
+            if try env.supplementEntryRepo.entry(for: supplement, on: dto.day, dose: dto.doseNumber) != nil { continue }
+            let entry = SupplementEntry(
+                id: dto.id, supplement: supplement, day: dto.day,
+                doseNumber: dto.doseNumber, takenAt: dto.takenAt,
+                skipped: dto.skipped
+            )
+            try env.supplementEntryRepo.add(entry)
+            count += 1
+        }
+        return count
+    }
+
 }
 
 // MARK: - Errors

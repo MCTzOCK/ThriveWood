@@ -22,6 +22,8 @@ struct ThriveWoodBackup: Codable {
     let workoutExercises: [WorkoutExerciseDTO]
     let sessions: [SessionDTO]
     let sets: [SetEntryDTO]
+    let supplements: [SupplementDTO]
+    let supplementEntries: [SupplementEntryDTO]
 
     static let currentVersion = 2
 
@@ -160,5 +162,31 @@ struct ThriveWoodBackup: Codable {
         let isWarmup: Bool
         let isCompleted: Bool
         let completedAt: Date?
+    }
+    
+    struct SupplementDTO: Codable {
+        let id: UUID
+        let name: String
+        let dosage: String
+        let details: String
+        let iconSystemName: String
+        let colorRaw: String
+        let frequencyRaw: String
+        let activeWeekdays: [Int]
+        let timesPerDay: Int
+        let reminderTimes: [Date]
+        
+        let sortOrder: Int
+        let createdAt: Date
+        let archivedAt: Date?
+    }
+    
+    struct SupplementEntryDTO: Codable {
+        let id: UUID
+        let supplementID: UUID
+        let day: Date
+        let doseNumber: Int
+        let takenAt: Date
+        let skipped: Bool
     }
 }

@@ -29,6 +29,8 @@ struct ExportSheet: View {
         let workouts: Int
         let sessions: Int
         let sets: Int
+        let supplements: Int
+        let supplementEntries: Int
     }
 
     var body: some View {
@@ -119,6 +121,8 @@ struct ExportSheet: View {
             summaryRow("Workouts", count: s.workouts, icon: "figure.strengthtraining.traditional")
             summaryRow("Sessions", count: s.sessions, icon: "calendar")
             summaryRow("Sätze", count: s.sets, icon: "number")
+            summaryRow("Supplements", count: s.supplements, icon: "pills.fill")
+            summaryRow("Supplement-Einträge", count: s.supplementEntries, icon: "pills")
         }
         .padding(Theme.Spacing.l)
         .background(
@@ -227,6 +231,8 @@ struct ExportSheet: View {
             let workouts = (try? env.workoutRepo.fetchAll(includeArchived: true)) ?? []
             let sessions = (try? env.sessionRepo.fetchAll()) ?? []
             let sets = sessions.flatMap(\.sets)
+            let supplements = (try? env.supplementRepo.fetchAll(includeArchived: true)) ?? []
+            let supplementEntries = (try? env.supplementEntryRepo.fetchAll()) ?? []
 
             summary = ExportSummary(
                 habits: habits.count,
@@ -235,7 +241,9 @@ struct ExportSheet: View {
                 exercises: exercises.count,
                 workouts: workouts.count,
                 sessions: sessions.count,
-                sets: sets.count
+                sets: sets.count,
+                supplements: supplements.count,
+                supplementEntries: supplementEntries.count
             )
 
             phase = .done

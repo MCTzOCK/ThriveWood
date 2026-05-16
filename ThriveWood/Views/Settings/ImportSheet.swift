@@ -134,6 +134,8 @@ struct ImportSheet: View {
             resultRow("Workouts", count: r.workouts, icon: "figure.strengthtraining.traditional")
             resultRow("Sessions", count: r.sessions, icon: "calendar")
             resultRow("Sätze", count: r.sets, icon: "number")
+            resultRow("Supplements", count: r.supplements, icon: "pills.fill")
+            resultRow("Supplement-Einträge", count: r.supplementEntries, icon: "cross.case.fill")
             Divider()
             HStack {
                 Text("Gesamt importiert").font(.subheadline.weight(.semibold))

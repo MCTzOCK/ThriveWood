@@ -488,6 +488,7 @@ protocol SupplementEntryRepository {
     func entry(for supplement: Supplement, on day: Date, dose: Int) throws -> SupplementEntry?
     func add(_ entry: SupplementEntry) throws
     func delete(_ entry: SupplementEntry) throws
+    func fetchAll() throws -> [SupplementEntry]
 }
 
 final class SwiftDataSupplementEntryRepository: SupplementEntryRepository {
@@ -521,6 +522,10 @@ final class SwiftDataSupplementEntryRepository: SupplementEntryRepository {
     func delete(_ entry: SupplementEntry) throws {
         context.delete(entry)
         try context.save()
+    }
+    
+    func fetchAll() throws -> [SupplementEntry] {
+        return try context.fetch(FetchDescriptor<SupplementEntry>(sortBy: [SortDescriptor(\.day), SortDescriptor(\.doseNumber)]))
     }
 }
 
