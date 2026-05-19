@@ -15,6 +15,7 @@ struct ExerciseBlock: View {
     let onAddSet: () -> Void
     let onComplete: (SetEntry) -> Void
     let onDelete: (SetEntry) -> Void
+    let removeExercise: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
@@ -28,6 +29,13 @@ struct ExerciseBlock: View {
                 Text("\(sets.filter(\.isCompleted).count)/\(sets.count)")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
+                
+                Button(action: removeExercise) {
+                    Image(systemName: "trash.fill")
+                        .font(.title2)
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.plain)
             }
 
             // Header

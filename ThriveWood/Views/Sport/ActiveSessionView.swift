@@ -34,14 +34,18 @@ struct ActiveSessionView: View {
             for slot in plan {
                 guard let ex = slot.exercise else { continue }
                 let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
-                result.append((ex, sets))
+                if sets.count > 0 {
+                    result.append((ex, sets))
+                }
             }
         } else {
             // Freies Training: nach Exercise-Name sortieren.
             let unique = Set(session.sets.compactMap { $0.exercise })
             for ex in unique.sorted(by: { $0.name < $1.name }) {
                 let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
-                result.append((ex, sets))
+                if sets.count > 0 {
+                    result.append((ex, sets))
+                }
             }
         }
         return result
@@ -68,7 +72,10 @@ struct ActiveSessionView: View {
                                 unit: session.weightUnit,
                                 onAddSet: { addSet(for: exercise) },
                                 onComplete: { toggleComplete($0, for: exercise) },
-                                onDelete: { deleteSet($0) }
+                                onDelete: { deleteSet($0) },
+                                removeExercise: {
+                                    sets.forEach { deleteSet($0) }
+                                }
                             )
                             .padding(.horizontal, Theme.Spacing.l)
                         }
