@@ -30,22 +30,19 @@ struct ActiveSessionView: View {
         let groups = Dictionary(grouping: session.sets) { $0.exercise?.id ?? UUID() }
         let plan = session.workout?.exercises.sorted(by: { $0.order < $1.order }) ?? []
         var result: [(Exercise, [SetEntry])] = []
-        if !plan.isEmpty {
-            for slot in plan {
-                guard let ex = slot.exercise else { continue }
-                let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
-                if sets.count > 0 {
-                    result.append((ex, sets))
-                }
+        for slot in plan {
+            guard let ex = slot.exercise else { continue }
+            let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
+            if sets.count > 0 {
+                result.append((ex, sets))
             }
-        } else {
-            // Freies Training: nach Exercise-Name sortieren.
-            let unique = Set(session.sets.compactMap { $0.exercise })
-            for ex in unique.sorted(by: { $0.name < $1.name }) {
-                let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
-                if sets.count > 0 {
-                    result.append((ex, sets))
-                }
+        }
+        // Allow adding new exercises even if there is a workout plan
+        let unique = Set(session.sets.compactMap { $0.exercise })
+        for ex in unique.sorted(by: { $0.name < $1.name }) {
+            let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
+            if sets.count > 0 && !plan.contains(where: { $0.exercise?.id == ex.id }) {
+                result.append((ex, sets))
             }
         }
         return result
