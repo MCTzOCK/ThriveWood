@@ -12,67 +12,78 @@ struct AnatomicMuscleMapView: View {
     @Binding var selectedMuscle: MuscleGroup?
     @Binding var showFront: Bool
 
+    private let svgWidth: CGFloat = 35.0
+    private let svgHeight: CGFloat = 93.0
+    private let mapHeight: CGFloat = 380.0
+
     private func rank(for muscle: MuscleGroup) -> MuscleRank {
         rankings.first(where: { $0.muscleGroup == muscle })?.rank ?? .untrained
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let helpers = AnatomicMuscleHelpers()
-            let defs = showFront ? helpers.FRONT_MUSCLES : helpers.BACK_MUSCLES
-            let scaleX = geo.size.width / 35.0
-            let scaleY = geo.size.height / 93.0
-            let scale = min(scaleX, scaleY)
-            let offsetX = (geo.size.width - 35.0 * scale) / 2.0
-            let offsetY = (geo.size.height - 93.0 * scale) / 2.0
+        let helpers = AnatomicMuscleHelpers()
+        let defs = showFront ? helpers.FRONT_MUSCLES : helpers.BACK_MUSCLES
+        let vbOriginX: CGFloat = showFront ? 0 : 37
+        let mapWidth = mapHeight * (svgWidth / svgHeight)
+        let scale = mapHeight / svgHeight
+        let zones = groupedZones(from: defs)
 
-            ZStack {
-                ForEach(groupedZones(from: defs), id: \.muscle.rawValue) { group in
-                    group.path(scale: scale, offsetX: offsetX, offsetY: offsetY)
-                        .fill(zoneColor(for: group.muscle))
-                        .overlay(
-                            group.path(scale: scale, offsetX: offsetX, offsetY: offsetY)
-                                .stroke(selectedMuscle == group.muscle ? Color.white : Color.black.opacity(0.12),
-                                        lineWidth: selectedMuscle == group.muscle ? 2.5 : 0.5)
-                        )
-                        .scaleEffect(selectedMuscle == group.muscle ? 1.02 : 1.0)
-                        .onTapGesture {
-                            Haptics.selection()
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                selectedMuscle = selectedMuscle == group.muscle ? nil : group.muscle
-                            }
+        ZStack {
+            ForEach(zones, id: \.muscle.rawValue) { group in
+                let p = group.path(scale: scale, vbOriginX: vbOriginX)
+                p.fill(zoneColor(for: group.muscle))
+                    .overlay(
+                        p.stroke(selectedMuscle == group.muscle ? Color.white : Color.black.opacity(0.15),
+                                 lineWidth: selectedMuscle == group.muscle ? 2.5 : 0.8)
+                    )
+                    .scaleEffect(selectedMuscle == group.muscle ? 1.02 : 1.0)
+                    .onTapGesture {
+                        Haptics.selection()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            selectedMuscle = selectedMuscle == group.muscle ? nil : group.muscle
                         }
-                }
-
-                if let sel = selectedMuscle {
-                    let groups = groupedZones(from: defs)
-                    let matching = groups.filter { $0.muscle == sel }
-                    if !matching.isEmpty {
-                        let cx = matching.flatMap(\.centers).reduce(0, +) / CGFloat(matching.flatMap(\.centers).count)
-                        let cy = matching.flatMap(\.centersY).reduce(0, +) / CGFloat(matching.flatMap(\.centersY).count)
-                        let labelPos = CGPoint(x: offsetX + cx * scale, y: offsetY + cy * scale)
-                        VStack(spacing: 1) {
-                            Image(systemName: rank(for: sel).icon)
-                                .font(.system(size: 12, weight: .bold))
-                            Text(sel.shortLabel)
-                                .font(.system(size: 9, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.7), radius: 2)
-                        .position(labelPos)
-                        .transition(.scale.combined(with: .opacity))
                     }
-                }
             }
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedMuscle)
+
+            if let sel = selectedMuscle {
+                labelOverlay(for: sel, zones: zones, scale: scale, vbOriginX: vbOriginX)
+            }
         }
-        .aspectRatio(35.0 / 93.0, contentMode: .fit)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedMuscle)
+        .frame(width: mapWidth, height: mapHeight)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func labelCenter(for muscle: MuscleGroup, zones: [MuscleGroupZone], scale: CGFloat, vbOriginX: CGFloat) -> CGPoint? {
+        var combined = Path()
+        for group in zones where group.muscle == muscle {
+            combined.addPath(group.path(scale: scale, vbOriginX: vbOriginX))
+        }
+        let bbox = combined.boundingRect
+        guard !bbox.isEmpty else { return nil }
+        return CGPoint(x: bbox.midX, y: bbox.midY)
+    }
+
+    @ViewBuilder
+    private func labelOverlay(for muscle: MuscleGroup, zones: [MuscleGroupZone], scale: CGFloat, vbOriginX: CGFloat) -> some View {
+        if let pos = labelCenter(for: muscle, zones: zones, scale: scale, vbOriginX: vbOriginX) {
+            VStack(spacing: 1) {
+                Image(systemName: rank(for: muscle).icon)
+                    .font(.system(size: 12, weight: .bold))
+                Text(muscle.shortLabel)
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .shadow(color: .black.opacity(0.7), radius: 2)
+            .position(pos)
+            .transition(.scale.combined(with: .opacity))
+        }
     }
 
     private func zoneColor(for muscle: MuscleGroup) -> Color {
         let r = rank(for: muscle)
         if muscle == selectedMuscle { return r.primaryColor.opacity(0.85) }
-        if r == .untrained { return Color(.systemGray5).opacity(0.3) }
+        if r == .untrained { return Color(.systemGray3).opacity(0.55) }
         return r.primaryColor.opacity(0.5)
     }
 
@@ -81,13 +92,12 @@ struct AnatomicMuscleMapView: View {
     private struct MuscleGroupZone {
         let muscle: MuscleGroup
         let svgPaths: [String]
-        let centers: [CGFloat]
-        let centersY: [CGFloat]
 
-        func path(scale: CGFloat, offsetX: CGFloat, offsetY: CGFloat) -> Path {
+        func path(scale: CGFloat, vbOriginX: CGFloat) -> Path {
             var result = Path()
             for svgPath in svgPaths {
-                let parsed = AnatomicMuscleMapView.parseSVGPath(svgPath: svgPath, scale: scale, offsetX: offsetX, offsetY: offsetY)
+                let parsed = AnatomicMuscleMapView.parseSVGPath(
+                    svgPath: svgPath, scale: scale, vbOriginX: vbOriginX)
                 result.addPath(parsed)
             }
             return result
@@ -95,28 +105,21 @@ struct AnatomicMuscleMapView: View {
     }
 
     private func groupedZones(from defs: [AMH_MuscleDef]) -> [MuscleGroupZone] {
-        var map: [MuscleGroup: [(String, CGFloat, CGFloat)]] = [:]
+        var map: [MuscleGroup: [String]] = [:]
         for d in defs {
             guard let group = svgIdToMuscleGroup(d.id) else { continue }
-            let center = Self.approximateCenter(of: d.path)
             if map[group] == nil { map[group] = [] }
-            map[group]!.append((d.path, center.0, center.1))
+            map[group]!.append(d.path)
         }
-        return map.map { muscle, entries in
-            MuscleGroupZone(
-                muscle: muscle,
-                svgPaths: entries.map(\.0),
-                centers: entries.map(\.1),
-                centersY: entries.map(\.2)
-            )
-        }.sorted { $0.centers.first ?? 0 < $1.centers.first ?? 0 }
+        return map.map { muscle, paths in
+            MuscleGroupZone(muscle: muscle, svgPaths: paths)
+        }.sorted { $0.muscle.rawValue < $1.muscle.rawValue }
     }
 
     // MARK: - SVG ID → MuscleGroup mapping
 
     private func svgIdToMuscleGroup(_ id: String) -> MuscleGroup? {
         switch id {
-        // Front
         case "shoulder-front-left", "shoulder-front-right", "shoulder-side-left", "shoulder-side-right":
             return .shoulders
         case "chest-upper-left", "chest-lower-left", "chest-upper-right", "chest-lower-right":
@@ -141,7 +144,6 @@ struct AnatomicMuscleMapView: View {
             return .tibialis
         case "neck-left", "neck-right":
             return .neck
-        // Back
         case "traps-upper-left", "traps-mid-left", "traps-lower-left", "traps-upper-right", "traps-mid-right", "traps-lower-right":
             return .traps
         case "lats-upper-left", "lats-mid-left", "lats-lower-left", "lats-upper-right", "lats-mid-right", "lats-lower-right":
@@ -170,15 +172,15 @@ struct AnatomicMuscleMapView: View {
 
     // MARK: - SVG Path Parsing
 
-    private static func parseSVGPath(svgPath: String, scale: CGFloat, offsetX: CGFloat, offsetY: CGFloat) -> Path {
+    private static func parseSVGPath(svgPath: String, scale: CGFloat, vbOriginX: CGFloat) -> Path {
         let tokens = tokenizeSVG(svgPath: svgPath)
         var path = Path()
         var currentX: CGFloat = 0, currentY: CGFloat = 0
         var subpathStartX: CGFloat = 0, subpathStartY: CGFloat = 0
         var i = 0
 
-        func tx(_ x: CGFloat) -> CGFloat { offsetX + x * scale }
-        func ty(_ y: CGFloat) -> CGFloat { offsetY + y * scale }
+        func tx(_ x: CGFloat) -> CGFloat { (x - vbOriginX) * scale }
+        func ty(_ y: CGFloat) -> CGFloat { y * scale }
 
         while i < tokens.count {
             guard let cmd = tokens[i].first, cmd.isLetter else { i += 1; continue }
@@ -278,57 +280,6 @@ struct AnatomicMuscleMapView: View {
         }
         if !current.isEmpty { tokens.append(current) }
         return tokens
-    }
-
-    private static func approximateCenter(of path: String) -> (CGFloat, CGFloat) {
-        let tokens = tokenizeSVG(svgPath: path)
-        var sumX: CGFloat = 0, sumY: CGFloat = 0, count: CGFloat = 0
-        var i = 0
-        while i < tokens.count {
-            guard let first = tokens[i].first, first.isLetter else { i += 1; continue }
-            i += 1
-            switch first {
-            case "M", "m", "L", "l":
-                let rel = first == "m" || first == "l"
-                if i + 1 < tokens.count {
-                    sumX += CGFloat(tokens[i].floatValue ?? 0) + (rel && count > 0 ? 0 : 0)
-                    sumY += CGFloat(tokens[i+1].floatValue ?? 0)
-                    count += 1
-                    i += 2
-                }
-                while i < tokens.count && (tokens[i].first?.isLetter ?? true) == false {
-                    if i + 1 < tokens.count && (tokens[i].first?.isLetter ?? true) == false {
-                        sumX += CGFloat(tokens[i].floatValue ?? 0)
-                        sumY += CGFloat(tokens[i+1].floatValue ?? 0)
-                        count += 1
-                        i += 2
-                    } else { i += 1 }
-                }
-            case "H", "h":
-                if i < tokens.count && (tokens[i].first?.isLetter ?? true) == false {
-                    sumX += CGFloat(tokens[i].floatValue ?? 0)
-                    count += 1
-                    i += 1
-                }
-                while i < tokens.count && (tokens[i].first?.isLetter ?? true) == false { i += 1 }
-            case "V", "v":
-                if i < tokens.count && (tokens[i].first?.isLetter ?? true) == false {
-                    sumY += CGFloat(tokens[i].floatValue ?? 0)
-                    count += 1
-                    i += 1
-                }
-                while i < tokens.count && (tokens[i].first?.isLetter ?? true) == false { i += 1 }
-            case "C", "c":
-                i += 6
-                while i < tokens.count && (tokens[i].first?.isLetter ?? true) == false { i += 6 }
-            case "Q", "q":
-                i += 4
-                while i < tokens.count && (tokens[i].first?.isLetter ?? true) == false { i += 4 }
-            default:
-                break
-            }
-        }
-        return count > 0 ? (sumX / count, sumY / count) : (0, 0)
     }
 }
 
