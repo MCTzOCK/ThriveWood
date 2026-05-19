@@ -12,6 +12,7 @@ struct ExerciseBlock: View {
     let exercise: Exercise
     let sets: [SetEntry]
     let unit: WeightUnit
+    let topSet: SetEntry?
     let onAddSet: () -> Void
     let onComplete: (SetEntry) -> Void
     let onDelete: (SetEntry) -> Void
@@ -36,6 +37,17 @@ struct ExerciseBlock: View {
                         .foregroundStyle(.red)
                 }
                 .buttonStyle(.plain)
+            }
+
+            if let topSet, topSet.volumeValue > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "trophy.fill")
+                    Text(topSet.summaryText)
+                }
+                .font(.caption2.weight(.bold))
+                .padding(.horizontal, 8).padding(.vertical, 3)
+                .background(Capsule().fill(Color.orange.opacity(0.15)))
+                .foregroundStyle(.orange)
             }
 
             // Header

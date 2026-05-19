@@ -172,6 +172,69 @@ final class WorkoutService {
     }
     
     func archiveWorkout(_ workout: Workout) throws { try workouts.archive(workout) }
+    
+    func getTopSet(for exercise: Exercise) -> SetEntry? {
+        let allSessions = (try? sessions.fetchAll()) ?? []
+        let relevant = allSessions
+            .flatMap(\.sets)
+            .filter { $0.exercise?.id == exercise.id && $0.isCompleted && !$0.isWarmup }
+
+        guard let top = relevant.max(by: { lhs, rhs in
+            switch exercise.trackingType {
+            case .repsWeight:
+                let lw = lhs.weight ?? 0, rw = rhs.weight ?? 0
+                if lw != rw { return lw < rw }
+                return (lhs.reps ?? 0) < (rhs.reps ?? 0)
+            case .reps:
+                return (lhs.reps ?? 0) < (rhs.reps ?? 0)
+            case .duration:
+                return (lhs.durationSeconds ?? 0) < (rhs.durationSeconds ?? 0)
+            case .distanceDuration:
+                let ld = lhs.distanceMeters ?? 0, rd = rhs.distanceMeters ?? 0
+                if ld != rd { return ld < rd }
+                return (lhs.durationSeconds ?? 0) > (rhs.durationSeconds ?? 0)
+            }
+        }) else {
+            return SetEntry(
+                order: 0, exercise: exercise,
+                reps: 0, weight: 0, durationSeconds: 0, distanceMeters: 0
+            )
+        }
+        return top
+    }
+    
+    func getAllPRs() -> [(exercise: Exercise, topSet: SetEntry)] {
+        let allSessions = (try? sessions.fetchAll()) ?? []
+        let allSets = allSessions.flatMap(\.sets)
+            .filter { $0.isCompleted && !$0.isWarmup && $0.exercise != nil }
+        
+        let grouped = Dictionary(grouping: allSets) { $0.exercise!.id }
+        
+        var result: [(exercise: Exercise, topSet: SetEntry)] = []
+        for (_, sets) in grouped {
+            guard let exercise = sets.first?.exercise else { continue }
+            let topSet = sets.max(by: { lhs, rhs in
+                switch exercise.trackingType {
+                case .repsWeight:
+                    let lw = lhs.weight ?? 0, rw = rhs.weight ?? 0
+                    if lw != rw { return lw < rw }
+                    return (lhs.reps ?? 0) < (rhs.reps ?? 0)
+                case .reps:
+                    return (lhs.reps ?? 0) < (rhs.reps ?? 0)
+                case .duration:
+                    return (lhs.durationSeconds ?? 0) < (rhs.durationSeconds ?? 0)
+                case .distanceDuration:
+                    let ld = lhs.distanceMeters ?? 0, rd = rhs.distanceMeters ?? 0
+                    if ld != rd { return ld < rd }
+                    return (lhs.durationSeconds ?? 0) > (rhs.durationSeconds ?? 0)
+                }
+            })
+            guard let topSet, topSet.volumeValue > 0 else { continue }
+            result.append((exercise, topSet))
+        }
+        
+        return result.sorted { $0.exercise.name.localizedStandardCompare($1.exercise.name) == .orderedAscending }
+    }
 }
 
 private extension ServiceError {

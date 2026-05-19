@@ -111,7 +111,7 @@ struct MuscleRankingScreen: View {
             .padding(.horizontal, 24)
             
             // Muscle Map
-            MuscleMapView(
+            AnatomicMuscleMapView(
                 rankings: rankings,
                 selectedMuscle: $selectedMuscle,
                 showFront: $showFront

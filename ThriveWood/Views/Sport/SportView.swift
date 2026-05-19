@@ -23,8 +23,9 @@ struct SportView: View {
     
     private enum SportPage {
         case workouts
-        case library
         case plans
+        case library
+        case prs
     }
     
     var body: some View {
@@ -36,6 +37,8 @@ struct SportView: View {
                         content(vm: vm)
                     } else if selectedPage == .library {
                         libraryContent(vm: vm)
+                    } else if selectedPage == .prs {
+                        PRListView()
                     } else {
                         TrainingsPlanListView()
                     }
@@ -103,6 +106,7 @@ struct SportView: View {
             Text("Workouts").tag(SportPage.workouts)
             Text("Pläne").tag(SportPage.plans)
             Text("Bibliothek").tag(SportPage.library)
+            Text("PRs").tag(SportPage.prs)
         } label: {
             Text("Seite auswählen")
         }

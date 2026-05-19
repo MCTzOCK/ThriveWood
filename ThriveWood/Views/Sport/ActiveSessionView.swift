@@ -67,6 +67,7 @@ struct ActiveSessionView: View {
                                 exercise: exercise,
                                 sets: sets,
                                 unit: session.weightUnit,
+                                topSet: env.workoutService.getTopSet(for: exercise),
                                 onAddSet: { addSet(for: exercise) },
                                 onComplete: { toggleComplete($0, for: exercise) },
                                 onDelete: { deleteSet($0) },
