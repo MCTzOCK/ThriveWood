@@ -75,8 +75,8 @@ final class MuscleRankingService {
     func overallRank() throws -> MuscleRank {
         let rankings = try calculateRankings()
         guard !rankings.isEmpty else { return .untrained }
-        let avgSets = rankings.map(\.totalSets).reduce(0, +) / rankings.count
-        return MuscleRank.fromSets(avgSets)
+        let avgVol = rankings.map{ r in Int(r.totalVolume)}.reduce(0, +) / rankings.count
+        return MuscleRank.fromVolume(avgVol)
     }
 
     /// Top N schwächste Muskelgruppen

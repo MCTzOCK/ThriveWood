@@ -70,9 +70,9 @@ struct SelectedMuscleCard: View {
                     }
                     .frame(height: 8)
                     
-                    if let setsToNext = data.rank.setsToNext(currentSets: data.totalSets),
+                    if let volumeToNext = data.rank.volumeToNext(currentVolume: Int(data.totalVolume)),
                        let next = MuscleRank(rawValue: data.rank.rawValue + 1) {
-                        Text("Noch \(setsToNext) Sets bis \(next.label)")
+                        Text("Noch \(volumeToNext) kg bis \(next.label)")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
@@ -89,7 +89,7 @@ struct SelectedMuscleCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
+                .fill(.background)
                 .shadow(color: data.rank.glowColor.opacity(0.2), radius: 20)
         )
         .onAppear {

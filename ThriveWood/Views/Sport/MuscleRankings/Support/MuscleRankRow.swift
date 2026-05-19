@@ -35,7 +35,7 @@ struct MuscleRankRow: View {
                 
                 Spacer()
                 
-                Text("\(data.totalSets)")
+                Text("\(Int(data.totalVolume)) kg")
                     .font(.subheadline.weight(.semibold).monospacedDigit())
                     .foregroundStyle(.secondary)
                 

@@ -75,15 +75,29 @@ struct HomeView: View {
                 )
                 .padding(.horizontal, Theme.Spacing.l)
                 
-                DailySummaryCard(
-                    points: vm.pointsToday,
-                    goal: vm.dailyGoal,
-                    progress: vm.progress,
-                    availablePoints: vm.availablePoints
-                )
+                VStack(spacing: Theme.Spacing.m) {
+                    DailySummaryCard(
+                        points: vm.pointsToday,
+                        goal: vm.dailyGoal,
+                        progress: vm.progress,
+                        availablePoints: vm.availablePoints
+                    )
+                }
                 .padding(.horizontal, Theme.Spacing.l)
                 
                 habitList(vm: vm)
+                
+                VStack(spacing: Theme.Spacing.m) {
+                    ProgressView(value: Double(vm.pointsToday), total: Double(
+                        vm.habits.map { $0.points.rawValue }.reduce(0, +)
+                    ))
+                        .progressViewStyle(LinearProgressViewStyle(tint: .accentColor))
+                        .padding(.horizontal, Theme.Spacing.l)
+
+                    Text("Fortschritt: \(vm.pointsToday) / \(vm.habits.map { $0.points.rawValue }.reduce(0, +)) Punkte")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
             .padding(.vertical, Theme.Spacing.l)
         }

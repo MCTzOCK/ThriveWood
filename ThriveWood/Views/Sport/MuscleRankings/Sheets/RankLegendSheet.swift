@@ -24,7 +24,7 @@ struct RankLegendSheet: View {
                         Text("Rang-System")
                             .font(.title.bold())
 
-                        Text("Sammle Sets und steige im Rang auf!")
+                        Text("Sammle Volumen und steige im Rang auf!")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -44,7 +44,7 @@ struct RankLegendSheet: View {
                         Label("So funktioniert's", systemImage: "questionmark.circle.fill")
                             .font(.headline)
 
-                        Text("Dein Rang basiert auf der Gesamtzahl der absolvierten Sets pro Muskelgruppe. Primäre Muskeln zählen voll, sekundäre Muskeln werden ebenfalls gewertet.")
+                        Text("Dein Rang basiert auf der Gesamtzahl des absolvierten Volumen pro Muskelgruppe. Primäre Muskeln zählen voll, sekundäre Muskeln werden ebenfalls gewertet.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -92,7 +92,7 @@ struct RankLegendRow: View {
                     .font(.headline)
                     .foregroundStyle(rank.primaryColor)
 
-                Text("Ab \(rank.minSets) Sets")
+                Text("Ab \(rank.minVolume) kg")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

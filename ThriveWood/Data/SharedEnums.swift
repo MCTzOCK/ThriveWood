@@ -633,6 +633,19 @@ enum MuscleRank: Int, CaseIterable, Comparable {
         }
     }
     
+    var minVolume: Int {
+        switch self {
+        case .untrained: 0
+        case .bronze: 3000
+        case .silver: 10000
+        case .gold: 25000
+        case .platinum: 50000
+        case .diamond: 100000
+        case .champion: 200000
+        case .legend: 400000
+        }
+    }
+    
     // Premium Farbpalette
     var primaryColor: Color {
         switch self {
@@ -696,6 +709,13 @@ enum MuscleRank: Int, CaseIterable, Comparable {
         return .untrained
     }
     
+    static func fromVolume(_ volume: Int) -> MuscleRank {
+        for rank in Self.allCases.reversed() {
+            if volume >= rank.minVolume { return rank }
+        }
+        return .untrained
+    }
+    
     func progressToNext(currentSets: Int) -> Double {
         guard self != .legend else { return 1.0 }
         guard let nextRank = MuscleRank(rawValue: rawValue + 1) else { return 1.0 }
@@ -707,6 +727,19 @@ enum MuscleRank: Int, CaseIterable, Comparable {
     func setsToNext(currentSets: Int) -> Int? {
         guard let nextRank = MuscleRank(rawValue: rawValue + 1) else { return nil }
         return max(0, nextRank.minSets - currentSets)
+    }
+    
+    func progressToNext(currentVolume: Int) -> Double {
+        guard self != .legend else { return 1.0 }
+        guard let nextRank = MuscleRank(rawValue: rawValue + 1) else { return 1.0 }
+        let range = nextRank.minVolume - minVolume
+        let progress = currentVolume - minVolume
+        return min(1.0, max(0.0, Double(progress) / Double(range)))
+    }
+    
+    func volumeToNext(currentVolume: Int) -> Int? {
+        guard let nextRank = MuscleRank(rawValue: rawValue + 1) else { return 0 }
+        return max(0, nextRank.minVolume - currentVolume)
     }
 }
 
@@ -725,8 +758,8 @@ struct MuscleRankingData: Identifiable, Equatable {
         self.totalSets = totalSets
         self.totalVolume = totalVolume
         self.lastWorked = lastWorked
-        self.rank = MuscleRank.fromSets(totalSets)
-        self.progressToNext = self.rank.progressToNext(currentSets: totalSets)
+        self.rank = totalVolume > 0 ? MuscleRank.fromVolume(Int(totalVolume)) : MuscleRank.fromSets(totalSets)
+        self.progressToNext = self.rank.progressToNext(currentVolume: Int(totalVolume))
     }
     
     static func == (lhs: MuscleRankingData, rhs: MuscleRankingData) -> Bool {

@@ -140,7 +140,7 @@ struct MuscleRankingScreen: View {
                 .padding(.horizontal, 20)
             
             LazyVStack(spacing: 8) {
-                ForEach(rankings.filter { $0.muscleGroup.isPrimaryMuscle }) { data in
+                ForEach(rankings.filter { $0.muscleGroup.isPrimaryMuscle }.sorted(  by: { $0.totalVolume > $1.totalVolume })) { data in
                     MuscleRankRow(data: data, isSelected: selectedMuscle == data.muscleGroup) {
                         withAnimation(.spring(response: 0.35)) {
                             selectedMuscle = data.muscleGroup
