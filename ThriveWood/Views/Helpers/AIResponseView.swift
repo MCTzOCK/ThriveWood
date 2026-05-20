@@ -32,7 +32,7 @@ struct AIResponseView: View {
                             .foregroundStyle(.tint)
                             .padding(.trailing, 4)
                             .font(.system(size: 24))
-                        Text("Die Antwort der KI könnte unvollständig oder ungenau sein. Bitte überprüfe sie kritisch und verwende sie nur als Anhaltspunkt.")
+                        Text("Die Antwort der KI könnte unvollständig oder ungenau sein. Bitte überprüfe sie kritisch und verwende sie nur als Anhaltspunkt. Die Antwort ersetzt keine professionelle medizinische Beratung.")
                             .font(.caption)
                     }
                     .padding()
