@@ -11,7 +11,9 @@ struct AnatomicMuscleMapView: View {
     let rankings: [MuscleRankingData]
     @Binding var selectedMuscle: MuscleGroup?
     @Binding var showFront: Bool
-
+    
+    @Environment(\.colorScheme) private var colorScheme
+    
     private let svgWidth: CGFloat = 35.0
     private let svgHeight: CGFloat = 93.0
     private let mapHeight: CGFloat = 380.0
@@ -83,7 +85,9 @@ struct AnatomicMuscleMapView: View {
     private func zoneColor(for muscle: MuscleGroup) -> Color {
         let r = rank(for: muscle)
         if muscle == selectedMuscle { return r.primaryColor.opacity(0.85) }
-        if r == .untrained { return Color(.systemGray3).opacity(0.55) }
+        if r == .untrained { return Color(
+            colorScheme == .dark ? .white : .black
+        ).opacity(0.55) }
         return r.primaryColor.opacity(0.5)
     }
 

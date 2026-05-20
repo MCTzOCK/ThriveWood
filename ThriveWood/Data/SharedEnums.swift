@@ -636,7 +636,7 @@ enum MuscleRank: Int, CaseIterable, Comparable {
     var minVolume: Int {
         switch self {
         case .untrained: 0
-        case .bronze: 3000
+        case .bronze: 5000
         case .silver: 10000
         case .gold: 25000
         case .platinum: 50000
