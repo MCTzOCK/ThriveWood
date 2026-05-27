@@ -17,19 +17,26 @@ struct ExerciseBlock: View {
     let onComplete: (SetEntry) -> Void
     let onDelete: (SetEntry) -> Void
     let removeExercise: () -> Void
+    let showDetails: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack(spacing: Theme.Spacing.s) {
                 Image(systemName: exercise.iconSystemName)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.tint)
                     .frame(width: 30, height: 30)
-                    .background(Circle().fill(Color.blue.opacity(0.12)))
+                    .background(Circle().fill(Color.accentColor.opacity(0.12)))
                 Text(exercise.name).font(.headline)
                 Spacer()
                 Text("\(sets.filter(\.isCompleted).count)/\(sets.count)")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
+                Button(action: showDetails) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.tint)
+                }
+                .buttonStyle(.plain)
                 
                 Button(action: removeExercise) {
                     Image(systemName: "trash.fill")
@@ -75,9 +82,9 @@ struct ExerciseBlock: View {
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: Theme.Radius.s)
-                        .fill(Color.blue.opacity(0.10))
+                        .fill(Color.accentColor.opacity(0.10))
                 )
-                .foregroundStyle(.blue)
+                .foregroundStyle(.tint)
             }
             .buttonStyle(.plain)
         }

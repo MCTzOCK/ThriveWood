@@ -16,6 +16,7 @@ struct ActiveSessionView: View {
     @Bindable var session: WorkoutSession
 
     @State private var rest = RestTimer()
+    @State private var currentExercise: Exercise? = nil
     @State private var elapsedNow: Date = .now
     @State private var showingFinish = false
     @State private var showingCancel = false
@@ -73,6 +74,11 @@ struct ActiveSessionView: View {
                                 onDelete: { deleteSet($0) },
                                 removeExercise: {
                                     sets.forEach { deleteSet($0) }
+                                },
+                                showDetails: {
+                                    withAnimation(.snappy) {
+                                        currentExercise = exercise
+                                    }
                                 }
                             )
                             .padding(.horizontal, Theme.Spacing.l)
@@ -116,6 +122,9 @@ struct ActiveSessionView: View {
                 ExerciseLibraryView(onSelect: { ex in
                     addSet(for: ex)
                 }, asSheet: true)
+            }
+            .sheet(item: $currentExercise) {
+                ExerciseDetailsSheet(exercise: $0)
             }
             .confirmationDialog(
                 "Workout wirklich abbrechen?",

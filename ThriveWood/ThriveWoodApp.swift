@@ -11,27 +11,27 @@ import SwiftData
 @main
 struct ThriveWoodApp: App {
     var sharedModelContainer = SharedModelContainer.shared
-    @State private var env: AppEnvironment?
+    @State private var env: AppEnvironment = AppEnvironment(context: SharedModelContainer.shared.mainContext)
 
     var body: some Scene {
         WindowGroup {
             Group {
-                if let env {
+                //if let env {
                     RootTabView()
                         .environment(env)
                         .environment(NotificationRouter.shared)
-                } else {
-                    ProgressView()
-                }
+                //} else {
+                //    ProgressView()
+                //}
             }
             .task {
-                if env == nil {
-                    let e = AppEnvironment(context: sharedModelContainer.mainContext)
-                    NotificationRouter.shared.env = e
-                    e.notificationService.bootstrap()
-                    env = e
-                    await e.storeService.refreshPurchaseState()
-                }
+                //if env == nil {
+                    //let e = AppEnvironment(context: sharedModelContainer.mainContext)
+                    NotificationRouter.shared.env = env
+                    env.notificationService.bootstrap()
+                    //env = e
+                    await env.storeService.refreshPurchaseState()
+                //}
             }
         }
         .modelContainer(sharedModelContainer)
