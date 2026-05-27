@@ -12,7 +12,7 @@ struct PRListView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var entries: [(exercise: Exercise, topSet: SetEntry)] = []
     @State private var searchText = ""
-    @State private var selectedExercise: Exercise?
+    @State private var selectedPR: PRSelection?
 
     private var filtered: [(exercise: Exercise, topSet: SetEntry)] {
         if searchText.isEmpty { return entries }
@@ -44,7 +44,9 @@ struct PRListView: View {
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Übung suchen")
         .onAppear { load() }
-        .sheet(item: $selectedExercise) { ExerciseDetailsSheet(exercise: $0) }
+        .sheet(item: $selectedPR) { selection in
+            ExerciseProgressionSheet(exercise: selection.exercise, topSet: selection.topSet)
+        }
     }
 
     private var emptyState: some View {
@@ -63,7 +65,7 @@ struct PRListView: View {
                         Section(letter) {
                             ForEach(items, id: \.exercise.id) { exercise, topSet in
                                 Button {
-                                    selectedExercise = exercise
+                                    selectedPR = PRSelection(exercise: exercise, topSet: topSet)
                                 } label: {
                                     PRRow(exercise: exercise, topSet: topSet)
                                 }
@@ -79,4 +81,10 @@ struct PRListView: View {
     private func load() {
         entries = env.workoutService.getAllPRs()
     }
+}
+
+struct PRSelection: Identifiable {
+    let exercise: Exercise
+    let topSet: SetEntry
+    var id: UUID { exercise.id }
 }

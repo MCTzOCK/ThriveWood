@@ -24,6 +24,7 @@ struct WorkoutSessionDetailView: View {
     @State private var errors = ErrorState()
     @State private var successHUDVisible = false
     @State private var aiAvailable = SystemLanguageModel.default.availability
+    @State private var newPRs: [(exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)] = []
     
     // MARK: - Derived
 
@@ -93,6 +94,7 @@ struct WorkoutSessionDetailView: View {
                     statsGrid
                     if !sortedExercises.isEmpty { exerciseBreakdown }
                     if let pr = heaviestSet { highlightCard(pr) }
+                    if !newPRs.isEmpty { prSection }
                     notesCard
                     Spacer(minLength: 40)
                 }
@@ -112,6 +114,7 @@ struct WorkoutSessionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
         .errorAlert(errors)
+        .onAppear { loadPRs() }
         .confirmationDialog(
             "Workout löschen?",
             isPresented: $showDeleteConfirm,
@@ -353,6 +356,57 @@ struct WorkoutSessionDetailView: View {
         }
     }
 
+    // MARK: - PR Section
+
+    private var prSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+            HStack(spacing: 6) {
+                Image(systemName: "trophy.fill")
+                    .foregroundStyle(.orange)
+                Text("Neue PRs")
+                    .font(.headline)
+            }
+            VStack(spacing: Theme.Spacing.s) {
+                ForEach(newPRs, id: \.newPR.id) { pr in
+                    prCard(pr)
+                }
+            }
+        }
+    }
+
+    private func prCard(_ pr: (exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)) -> some View {
+        HStack(spacing: Theme.Spacing.m) {
+            Image(systemName: pr.exercise.iconSystemName)
+                .font(.title3)
+                .foregroundStyle(.orange)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Color.orange.opacity(0.12)))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(pr.exercise.name)
+                    .font(.subheadline.weight(.semibold))
+                HStack(spacing: 4) {
+                    Text(pr.previousPR.summaryText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .strikethrough()
+                    Image(systemName: "arrow.right")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(pr.newPR.summaryText)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.orange)
+                }
+            }
+            Spacer()
+            Image(systemName: "flame.fill")
+                .font(.title3)
+                .foregroundStyle(.orange)
+        }
+        .padding(Theme.Spacing.m)
+        .cardStyle()
+    }
+
     // MARK: - Actions
 
     private func delete() {
@@ -361,6 +415,10 @@ struct WorkoutSessionDetailView: View {
             Haptics.success()
             dismiss()
         } catch { errors.show(error) }
+    }
+
+    private func loadPRs() {
+        newPRs = env.workoutService.getNewPRs(in: session)
     }
 
     private var shareText: String {

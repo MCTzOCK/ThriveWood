@@ -179,28 +179,94 @@ final class WorkoutService {
             .flatMap(\.sets)
             .filter { $0.exercise?.id == exercise.id && $0.isCompleted && !$0.isWarmup }
 
-        guard let top = relevant.max(by: { lhs, rhs in
-            switch exercise.trackingType {
-            case .repsWeight:
-                let lw = lhs.weight ?? 0, rw = rhs.weight ?? 0
-                if lw != rw { return lw < rw }
-                return (lhs.reps ?? 0) < (rhs.reps ?? 0)
-            case .reps:
-                return (lhs.reps ?? 0) < (rhs.reps ?? 0)
-            case .duration:
-                return (lhs.durationSeconds ?? 0) < (rhs.durationSeconds ?? 0)
-            case .distanceDuration:
-                let ld = lhs.distanceMeters ?? 0, rd = rhs.distanceMeters ?? 0
-                if ld != rd { return ld < rd }
-                return (lhs.durationSeconds ?? 0) > (rhs.durationSeconds ?? 0)
-            }
-        }) else {
+        guard let top = relevant.max(by: { setIsLess($0, $1, for: exercise) }) else {
             return SetEntry(
                 order: 0, exercise: exercise,
                 reps: 0, weight: 0, durationSeconds: 0, distanceMeters: 0
             )
         }
         return top
+    }
+    
+    func getTopSetBefore(exercise: Exercise, date: Date) -> SetEntry? {
+        let allSessions = (try? sessions.fetchAll()) ?? []
+        let relevantSets = allSessions
+            .filter { ($0.endedAt ?? $0.startedAt) < date }
+            .flatMap(\.sets)
+            .filter { $0.exercise?.id == exercise.id && $0.isCompleted && !$0.isWarmup }
+        
+        return relevantSets.max(by: { setIsLess($0, $1, for: exercise) })
+    }
+    
+    func getNewPRs(in session: WorkoutSession) -> [(exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)] {
+        let sessionSets = session.sets.filter { $0.isCompleted && !$0.isWarmup }
+        let grouped = Dictionary(grouping: sessionSets) { $0.exercise?.id ?? UUID() }
+        var results: [(exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)] = []
+        
+        for (_, sets) in grouped {
+            guard let exercise = sets.first?.exercise else { continue }
+            guard let sessionBest = sets.max(by: { setIsLess($0, $1, for: exercise) }) else { continue }
+            guard let previousBest = getTopSetBefore(exercise: exercise, date: session.startedAt) else { continue }
+            if setIsLess(previousBest, sessionBest, for: exercise) {
+                results.append((exercise, sessionBest, previousBest))
+            }
+        }
+        
+        return results.sorted { $0.exercise.name.localizedStandardCompare($1.exercise.name) == .orderedAscending }
+    }
+    
+    func getProgression(for exercise: Exercise) -> [(date: Date, value: Double, reps: Int?)] {
+        let allSessions = (try? sessions.fetchAll()) ?? []
+        let sorted = allSessions
+            .filter { $0.endedAt != nil }
+            .sorted { ($0.endedAt ?? $0.startedAt) < ($1.endedAt ?? $1.startedAt) }
+        
+        var bestSoFar: SetEntry? = nil
+        var result: [(date: Date, value: Double, reps: Int?)] = []
+        
+        for session in sorted {
+            let sets = session.sets.filter { $0.exercise?.id == exercise.id && $0.isCompleted && !$0.isWarmup }
+            guard let sessionBest = sets.max(by: { setIsLess($0, $1, for: exercise) }) else { continue }
+            
+            if bestSoFar == nil || setIsLess(bestSoFar!, sessionBest, for: exercise) {
+                bestSoFar = sessionBest
+                let value: Double
+                let reps: Int?
+                switch exercise.trackingType {
+                case .repsWeight:
+                    value = sessionBest.weight ?? 0
+                    reps = sessionBest.reps
+                case .reps:
+                    value = Double(sessionBest.reps ?? 0)
+                    reps = nil
+                case .duration:
+                    value = Double(sessionBest.durationSeconds ?? 0)
+                    reps = nil
+                case .distanceDuration:
+                    value = sessionBest.distanceMeters ?? 0
+                    reps = nil
+                }
+                result.append((date: session.endedAt ?? session.startedAt, value: value, reps: reps))
+            }
+        }
+        return result
+    }
+    
+    private func setIsLess(_ lhs: SetEntry, _ rhs: SetEntry, for exercise: Exercise) -> Bool {
+        switch exercise.trackingType {
+        case .repsWeight:
+            let lw = lhs.weight ?? 0, rw = rhs.weight ?? 0
+            if lw != rw { return lw < rw }
+            return (lhs.reps ?? 0) < (rhs.reps ?? 0)
+        case .reps:
+            return (lhs.reps ?? 0) < (rhs.reps ?? 0)
+        case .duration:
+            return (lhs.durationSeconds ?? 0) < (rhs.durationSeconds ?? 0)
+        case .distanceDuration:
+            let ld = lhs.distanceMeters ?? 0, rd = rhs.distanceMeters ?? 0
+            if ld != rd { return ld < rd }
+            return (lhs.durationSeconds ?? 0) > (rhs.durationSeconds ?? 0)
+        }
     }
     
     func getAllPRs() -> [(exercise: Exercise, topSet: SetEntry)] {
@@ -213,22 +279,7 @@ final class WorkoutService {
         var result: [(exercise: Exercise, topSet: SetEntry)] = []
         for (_, sets) in grouped {
             guard let exercise = sets.first?.exercise else { continue }
-            let topSet = sets.max(by: { lhs, rhs in
-                switch exercise.trackingType {
-                case .repsWeight:
-                    let lw = lhs.weight ?? 0, rw = rhs.weight ?? 0
-                    if lw != rw { return lw < rw }
-                    return (lhs.reps ?? 0) < (rhs.reps ?? 0)
-                case .reps:
-                    return (lhs.reps ?? 0) < (rhs.reps ?? 0)
-                case .duration:
-                    return (lhs.durationSeconds ?? 0) < (rhs.durationSeconds ?? 0)
-                case .distanceDuration:
-                    let ld = lhs.distanceMeters ?? 0, rd = rhs.distanceMeters ?? 0
-                    if ld != rd { return ld < rd }
-                    return (lhs.durationSeconds ?? 0) > (rhs.durationSeconds ?? 0)
-                }
-            })
+            let topSet = sets.max(by: { setIsLess($0, $1, for: exercise) })
             guard let topSet, topSet.volumeValue > 0 else { continue }
             result.append((exercise, topSet))
         }

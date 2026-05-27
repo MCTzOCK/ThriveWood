@@ -36,7 +36,7 @@ struct ActiveSessionView: View {
                     VStack(spacing: Theme.Spacing.l) {
                         header
                         ForEach(cachedGroups, id: \.0.id) { exercise, sets in
-                            ExerciseBlock(
+                        ExerciseBlock(
                                 exercise: exercise,
                                 sets: sets,
                                 unit: session.weightUnit,
@@ -240,28 +240,5 @@ struct ActiveSessionView: View {
             Haptics.success()
             dismiss()
         } catch { errors.show(error) }
-    }
-}
-
-// MARK: - Isolated Timer View
-
-private struct ElapsedTimer: View {
-    let sessionStartedAt: Date
-    @State private var now = Date.now
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
-    private var elapsed: String {
-        let s = Int(now.timeIntervalSince(sessionStartedAt))
-        let h = s / 3600, m = (s % 3600) / 60, sec = s % 60
-        return h > 0
-            ? String(format: "%d:%02d:%02d", h, m, sec)
-            : String(format: "%d:%02d", m, sec)
-    }
-
-    var body: some View {
-        Text(elapsed)
-            .font(.headline.monospacedDigit())
-            .foregroundStyle(.tint)
-            .onReceive(timer) { now = $0 }
     }
 }
