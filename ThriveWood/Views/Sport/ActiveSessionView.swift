@@ -17,45 +17,17 @@ struct ActiveSessionView: View {
 
     @State private var rest = RestTimer()
     @State private var currentExercise: Exercise? = nil
-    @State private var elapsedNow: Date = .now
     @State private var showingFinish = false
     @State private var showingCancel = false
     @State private var showingAddSheet = false
     @State private var notes: String = ""
     @State private var rpe: Int = 7
     @State private var errors = ErrorState()
-    private let elapsedTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
-    /// Gruppiert die Sets nach Exercise in der Reihenfolge des Workout-Plans.
-    private var groupedSets: [(Exercise, [SetEntry])] {
-        let groups = Dictionary(grouping: session.sets) { $0.exercise?.id ?? UUID() }
-        let plan = session.workout?.exercises.sorted(by: { $0.order < $1.order }) ?? []
-        var result: [(Exercise, [SetEntry])] = []
-        for slot in plan {
-            guard let ex = slot.exercise else { continue }
-            let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
-            if sets.count > 0 {
-                result.append((ex, sets))
-            }
-        }
-        // Allow adding new exercises even if there is a workout plan
-        let unique = Set(session.sets.compactMap { $0.exercise })
-        for ex in unique.sorted(by: { $0.name < $1.name }) {
-            let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
-            if sets.count > 0 && !plan.contains(where: { $0.exercise?.id == ex.id }) {
-                result.append((ex, sets))
-            }
-        }
-        return result
-    }
-
-    private var elapsed: String {
-        let s = Int(elapsedNow.timeIntervalSince(session.startedAt))
-        let h = s / 3600, m = (s % 3600) / 60, sec = s % 60
-        return h > 0
-            ? String(format: "%d:%02d:%02d", h, m, sec)
-            : String(format: "%d:%02d", m, sec)
-    }
+    @State private var cachedGroups: [(Exercise, [SetEntry])] = []
+    @State private var cachedCompletedCount: Int = 0
+    @State private var cachedTotalVolume: Double = 0
+    @State private var cachedExerciseCount: Int = 0
 
     var body: some View {
         NavigationStack {
@@ -63,7 +35,7 @@ struct ActiveSessionView: View {
                 ScrollView {
                     VStack(spacing: Theme.Spacing.l) {
                         header
-                        ForEach(groupedSets, id: \.0.id) { exercise, sets in
+                        ForEach(cachedGroups, id: \.0.id) { exercise, sets in
                             ExerciseBlock(
                                 exercise: exercise,
                                 sets: sets,
@@ -86,7 +58,7 @@ struct ActiveSessionView: View {
                         AddExerciseButton { addExercise() }
                             .padding(.horizontal, Theme.Spacing.l)
 
-                        Color.clear.frame(height: 120) // Abstand für Rest-Timer
+                        Color.clear.frame(height: 120)
                     }
                     .padding(.vertical, Theme.Spacing.l)
                 }
@@ -102,16 +74,16 @@ struct ActiveSessionView: View {
                         .foregroundStyle(.red)
                 }
                 ToolbarItem(placement: .principal) {
-                    Text(elapsed)
-                        .font(.headline.monospacedDigit())
-                        .foregroundStyle(.tint)
+                    ElapsedTimer(sessionStartedAt: session.startedAt)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Fertig") { showingFinish = true }
                         .fontWeight(.semibold)
                 }
             }
-            .onReceive(elapsedTimer) { elapsedNow = $0 }
+            .onAppear { recache() }
+            .onChange(of: session.sets.count) { _, _ in recache() }
+            .onChange(of: completedSignature) { _, _ in recache() }
             .sheet(isPresented: $showingFinish) {
                 FinishSessionSheet(rpe: $rpe, notes: $notes) {
                     finish()
@@ -143,20 +115,14 @@ struct ActiveSessionView: View {
     }
 
     // MARK: Header
+
     private var header: some View {
         HStack(spacing: Theme.Spacing.l) {
-            StatTile(value: "\(session.sets.filter(\.isCompleted).count)",
-                     label: "Sätze", tint: .green)
-            StatTile(value: "\(Int(totalVolume))",
-                     label: "Volumen (\(session.weightUnit.rawValue))", tint: .blue)
-            StatTile(value: "\(groupedSets.count)",
-                     label: "Übungen", tint: .orange)
+            StatTile(value: "\(cachedCompletedCount)", label: "Sätze", tint: .green)
+            StatTile(value: "\(Int(cachedTotalVolume))", label: "Volumen (\(session.weightUnit.rawValue))", tint: .blue)
+            StatTile(value: "\(cachedExerciseCount)", label: "Übungen", tint: .orange)
         }
         .padding(.horizontal, Theme.Spacing.l)
-    }
-
-    private var totalVolume: Double {
-        session.sets.filter { $0.isCompleted }.reduce(0) { $0 + $1.volumeValue }
     }
 
     private struct StatTile: View {
@@ -171,6 +137,36 @@ struct ActiveSessionView: View {
             .padding(.vertical, Theme.Spacing.m)
             .cardStyle()
         }
+    }
+
+    // MARK: Recache
+
+    private var completedSignature: Int {
+        session.sets.filter(\.isCompleted).count
+    }
+
+    private func recache() {
+        let groups = Dictionary(grouping: session.sets) { $0.exercise?.id ?? UUID() }
+        let plan = session.workout?.exercises.sorted(by: { $0.order < $1.order }) ?? []
+        var result: [(Exercise, [SetEntry])] = []
+        for slot in plan {
+            guard let ex = slot.exercise else { continue }
+            let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
+            if sets.count > 0 {
+                result.append((ex, sets))
+            }
+        }
+        let unique = Set(session.sets.compactMap { $0.exercise })
+        for ex in unique.sorted(by: { $0.name < $1.name }) {
+            let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
+            if sets.count > 0 && !plan.contains(where: { $0.exercise?.id == ex.id }) {
+                result.append((ex, sets))
+            }
+        }
+        cachedGroups = result
+        cachedCompletedCount = session.sets.filter(\.isCompleted).count
+        cachedTotalVolume = session.sets.filter { $0.isCompleted }.reduce(0) { $0 + $1.volumeValue }
+        cachedExerciseCount = result.count
     }
 
     // MARK: Actions
@@ -192,7 +188,6 @@ struct ActiveSessionView: View {
     }
 
     private func addExercise() {
-        // Für freies Training öffnen wir die Library.
         showingAddSheet = true
     }
 
@@ -204,7 +199,6 @@ struct ActiveSessionView: View {
 
         if !wasCompleted {
             Haptics.success()
-            // Rest-Timer: suche passenden Slot im Plan
             let restSec = session.workout?.exercises
                 .first(where: { $0.exercise?.id == exercise.id })?.restSeconds
                 ?? (try? env.profileRepo.currentProfile().defaultRestSeconds)
@@ -233,7 +227,6 @@ struct ActiveSessionView: View {
             elapsedSeconds: elapsed,
             lastSetInfo: setInfo
         )
-
     }
 
     private func deleteSet(_ set: SetEntry) {
@@ -250,3 +243,25 @@ struct ActiveSessionView: View {
     }
 }
 
+// MARK: - Isolated Timer View
+
+private struct ElapsedTimer: View {
+    let sessionStartedAt: Date
+    @State private var now = Date.now
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    private var elapsed: String {
+        let s = Int(now.timeIntervalSince(sessionStartedAt))
+        let h = s / 3600, m = (s % 3600) / 60, sec = s % 60
+        return h > 0
+            ? String(format: "%d:%02d:%02d", h, m, sec)
+            : String(format: "%d:%02d", m, sec)
+    }
+
+    var body: some View {
+        Text(elapsed)
+            .font(.headline.monospacedDigit())
+            .foregroundStyle(.tint)
+            .onReceive(timer) { now = $0 }
+    }
+}
