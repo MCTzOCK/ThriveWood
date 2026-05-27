@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B518D8752FC71041007C257B /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B518D8742FC71041007C257B /* README.md */; };
+		B518D8762FC71041007C257B /* HANDOFF.md in Resources */ = {isa = PBXBuildFile; fileRef = B518D8732FC71041007C257B /* HANDOFF.md */; };
 		B51DFC422FAF178900D8C101 /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = B51DFC412FAF178900D8C101 /* Textual */; };
 		B579DB3D2FA47EC90053BC85 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */; };
 		B579DB3F2FA47EC90053BC85 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */; };
@@ -38,6 +40,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B518D8732FC71041007C257B /* HANDOFF.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = HANDOFF.md; sourceTree = "<group>"; };
+		B518D8742FC71041007C257B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B536FCB92F98EBE1009E5384 /* ThriveWood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThriveWood.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ThriveWoodWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -130,6 +134,8 @@
 				B579DB402FA47EC90053BC85 /* ThriveWoodWidgets */,
 				B579DB3B2FA47EC90053BC85 /* Frameworks */,
 				B536FCBA2F98EBE1009E5384 /* Products */,
+				B518D8732FC71041007C257B /* HANDOFF.md */,
+				B518D8742FC71041007C257B /* README.md */,
 			);
 			sourceTree = "<group>";
 			usesTabs = 0;
@@ -248,6 +254,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B518D8752FC71041007C257B /* README.md in Resources */,
+				B518D8762FC71041007C257B /* HANDOFF.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -415,7 +423,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202;
+				CURRENT_PROJECT_VERSION = 221;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -461,7 +469,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202;
+				CURRENT_PROJECT_VERSION = 221;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -506,7 +514,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202;
+				CURRENT_PROJECT_VERSION = 221;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
@@ -542,7 +550,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202;
+				CURRENT_PROJECT_VERSION = 221;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;

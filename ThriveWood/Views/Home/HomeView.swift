@@ -76,6 +76,8 @@ struct HomeView: View {
                 .padding(.horizontal, Theme.Spacing.l)
                 
                 VStack(spacing: Theme.Spacing.m) {
+                    ForestPreviewCard(availablePoints: vm.availablePoints)
+
                     DailySummaryCard(
                         points: vm.pointsToday,
                         goal: vm.dailyGoal,
@@ -145,13 +147,6 @@ struct HomeView: View {
     
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            NavigationLink {
-                SettingsView()
-            } label: {
-                Image(systemName: "gearshape.fill")
-            }
-        }
         ToolbarItem(placement: .topBarTrailing) {
             Button {
                 if env.entitlements.canCreateHabit {
