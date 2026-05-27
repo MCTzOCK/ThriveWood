@@ -100,6 +100,7 @@ struct SetRow: View {
 
     // MARK: - Field Helpers
 
+    @ViewBuilder
     private func numberField(
         value: Binding<Double>,
         placeholder: String,
@@ -107,15 +108,31 @@ struct SetRow: View {
         width: CGFloat,
         decimal: Bool
     ) -> some View {
-        HStack(spacing: 4) {
-            TextField(placeholder, value: value, format: .number.precision(.fractionLength(decimal ? 0...2 : 0...0)))
-                .keyboardType(decimal ? .decimalPad : .numberPad)
-                .multilineTextAlignment(.center)
-            Text(suffix).font(.caption2).foregroundStyle(.secondary)
+        if decimal {
+            HStack(spacing: 4) {
+                FlexibleNumberField(
+                    value: value,
+                    placeholder: placeholder,
+                    decimal: true
+                )
+                Text(suffix)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: width)
+            .padding(.vertical, 6).padding(.horizontal, 8)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color(.tertiarySystemFill)))
+        } else {
+            HStack(spacing: 4) {
+                TextField(placeholder, value: value, format: .number.precision(.fractionLength(0...0)))
+                    .keyboardType(.numberPad)
+                    .multilineTextAlignment(.center)
+                Text(suffix).font(.caption2).foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 6).padding(.horizontal, 8)
+            .frame(width: width)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color(.tertiarySystemFill)))
         }
-        .padding(.vertical, 6).padding(.horizontal, 8)
-        .frame(width: width)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color(.tertiarySystemFill)))
     }
 
     private func durationField(seconds: Binding<Int>) -> some View {
