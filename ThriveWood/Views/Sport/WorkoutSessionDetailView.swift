@@ -79,7 +79,9 @@ struct WorkoutSessionDetailView: View {
     private var heaviestSet: (Exercise, SetEntry)? {
         let candidates = session.sets
             .filter { $0.exercise?.trackingType == .repsWeight && $0.isCompleted }
-        guard let max = candidates.max(by: { ($0.weight ?? 0) < ($1.weight ?? 0) }),
+        guard let max = candidates.max(by: { 
+            ($0.weight ?? 0) * Double($0.reps ?? 0) < ($1.weight ?? 0) * Double($1.reps ?? 0) 
+        }),
               let ex = max.exercise else { return nil }
         return (ex, max)
     }
