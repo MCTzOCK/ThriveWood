@@ -161,12 +161,21 @@ struct PaywallView: View {
     }
 
     private var restoreButton: some View {
-        Button {
-            Task { await env.storeService.restore(); dismiss() }
-        } label: {
-            Text("Käufe wiederherstellen")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+        HStack(spacing: Theme.Spacing.l) {
+            Button {
+                Task { await env.storeService.restore(); dismiss() }
+            } label: {
+                Text("Käufe wiederherstellen")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            Button {
+                SKPaymentQueue.default().presentCodeRedemptionSheet()
+            } label: {
+                Text("Code einlösen")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

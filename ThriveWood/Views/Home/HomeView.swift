@@ -8,6 +8,11 @@
 
 import SwiftUI
 
+fileprivate enum HomeTab {
+    case habits
+    case supplements
+}
+
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(NotificationRouter.self) private var router
@@ -19,17 +24,34 @@ struct HomeView: View {
     @State private var showingDebug: Bool = false
     @State private var showingPaywall = false
     
+    @State private var selectedTab: HomeTab = .habits
+    @State private var selectedDate: Date = .now
+    @State private var supplementSearch = ""
+    
     
     var body: some View {
         NavigationStack {
             Group {
                 if let vm {
-                    content(vm: vm)
+                    VStack(spacing: Theme.Spacing.l) {
+                        picker()
+                            .padding(.horizontal, Theme.Spacing.l)
+                        if selectedTab == .habits {
+                            content(vm: vm)
+                        } else {
+                            SupplementListView(selectedDate: $selectedDate, search: $supplementSearch)
+                                .background(Color(.systemGroupedBackground))
+                                .searchable(text: $supplementSearch, placement: .navigationBarDrawer(displayMode: .automatic))
+                        }
+                    }
+                    .background(Color(.systemGroupedBackground))
                 } else {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .navigationTitle("Habits")
+            .navigationTitle(
+                selectedTab == .habits ? "Habits" : "Supplements"
+            )
             .navigationBarTitleDisplayMode(.large)
             .toolbar { toolbar }
             .sheet(isPresented: $showingNewHabit) {
@@ -60,6 +82,14 @@ struct HomeView: View {
             
             router.pendingHabitID = nil
         }
+    }
+    
+    private func picker() -> some View {
+        Picker("", selection: $selectedTab) {
+            Text("Habits").tag(HomeTab.habits)
+            Text("Supplements").tag(HomeTab.supplements)
+        }
+        .pickerStyle(.segmented)
     }
     
     @ViewBuilder

@@ -11,8 +11,11 @@ import SwiftUI
 struct ExerciseDetailsSheet: View {
     
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppEnvironment.self) private var env
     
     @State private var selectedImageIndex = 0
+    @State private var showingEditDetails = false
+    @State private var showingEditMuscleGroups = false
     var exercise: Exercise
     
     var body: some View {
@@ -57,6 +60,12 @@ struct ExerciseDetailsSheet: View {
                         Text("Schließen")
                     }
                 }
+            }
+            .sheet(isPresented: $showingEditDetails) {
+                ExerciseEditDetailsSheet(exercise: exercise)
+            }
+            .sheet(isPresented: $showingEditMuscleGroups) {
+                ExerciseEditMuscleGroupsSheet(exercise: exercise)
             }
         }
     }
@@ -217,9 +226,22 @@ struct ExerciseDetailsSheet: View {
     
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Details", systemImage: "info.circle")
-                .font(.title2.bold())
-                .foregroundStyle(.primary)
+            HStack {
+                Label("Details", systemImage: "info.circle")
+                    .font(.title2.bold())
+                    .foregroundStyle(.primary)
+                Spacer()
+
+                Button {
+                    Haptics.selection()
+                    showingEditDetails = true
+                } label: {
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.title3)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.tint)
+                }
+            }
             
             Text(exercise.details)
                 .font(.subheadline)
@@ -235,9 +257,21 @@ struct ExerciseDetailsSheet: View {
     
     private var muscleGroupsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("Muskelgruppen", systemImage: "figure.strengthtraining.traditional")
-                .font(.title2.bold())
-                .foregroundStyle(.primary)
+            HStack {
+                Label("Muskelgruppen", systemImage: "figure.strengthtraining.traditional")
+                    .font(.title2.bold())
+                    .foregroundStyle(.primary)
+                Spacer()
+                Button {
+                    Haptics.selection()
+                    showingEditMuscleGroups = true
+                } label: {
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.title3)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.tint)
+                }
+            }
             
             VStack(alignment: .leading, spacing: 16) {
                 // Primary Muscles
@@ -488,4 +522,218 @@ struct ExerciseDetailsSheet: View {
         }
     }
     
+}
+
+struct ExerciseEditDetailsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AppEnvironment.self) private var env
+    
+    let exercise: Exercise
+    
+    @State private var name: String = ""
+    @State private var details: String = ""
+    @State private var category: ExerciseCategory = .strength
+    @State private var trackingType: ExerciseTrackingType = .repsWeight
+    @State private var icon: String = "dumbbell.fill"
+    @State private var hasManuallyChangedTracking = false
+    
+    private let iconOptions: [String] = [
+        "dumbbell.fill", "figure.strengthtraining.traditional",
+        "figure.strengthtraining.functional", "figure.core.training",
+        "figure.pullup", "figure.run", "figure.outdoor.cycle",
+        "figure.rower", "figure.jumprope", "figure.pool.swim",
+        "figure.stairs", "figure.mixed.cardio", "figure.flexibility",
+        "figure.yoga", "figure.cooldown", "heart.fill", "flame.fill"
+    ]
+    
+    private var isValid: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Allgemein") {
+                    TextField("Name", text: $name)
+                        .textInputAutocapitalization(.sentences)
+                    TextField("Beschreibung (optional)", text: $details, axis: .vertical)
+                        .lineLimit(1...3)
+                    Picker("Kategorie", selection: $category) {
+                        ForEach(ExerciseCategory.allCases) { c in
+                            Text(c.id).tag(c)
+                        }
+                    }
+                }
+                
+                Section("Symbol") {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            ForEach(iconOptions, id: \.self) { name in
+                                Button {
+                                    Haptics.selection()
+                                    icon = name
+                                } label: {
+                                    Image(systemName: name)
+                                        .font(.title3)
+                                        .frame(width: 44, height: 44)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(icon == name
+                                                      ? Color.blue.opacity(0.18)
+                                                      : Color(.tertiarySystemFill))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .strokeBorder(icon == name ? Color.blue : .clear, lineWidth: 2)
+                                        )
+                                        .foregroundStyle(icon == name ? .blue : .primary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .navigationTitle("Details bearbeiten")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig", action: save)
+                        .disabled(!isValid)
+                        .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                name = exercise.name
+                details = exercise.details
+                category = exercise.category
+                trackingType = exercise.trackingType
+                icon = exercise.iconSystemName
+            }
+            .onChange(of: category) { _, newCategory in
+                guard !hasManuallyChangedTracking else { return }
+                trackingType = defaultTracking(for: newCategory)
+            }
+            .onChange(of: trackingType) { _, _ in
+                hasManuallyChangedTracking = true
+            }
+        }
+    }
+    
+    private func save() {
+        exercise.name = name.trimmingCharacters(in: .whitespaces)
+        exercise.details = details.trimmingCharacters(in: .whitespacesAndNewlines)
+        exercise.category = category
+        exercise.trackingType = trackingType
+        exercise.iconSystemName = icon
+        do {
+            try env.exerciseRepo.update(exercise)
+            Haptics.success()
+            dismiss()
+        } catch {
+            Haptics.warning()
+        }
+    }
+    
+    private func defaultTracking(for category: ExerciseCategory) -> ExerciseTrackingType {
+        switch category {
+        case .strength:     .repsWeight
+        case .cardio:       .distanceDuration
+        case .plyometrics:  .reps
+        case .mobility:     .duration
+        case .stretching:   .duration
+        case .balance:      .duration
+        case .other:        .repsWeight
+        }
+    }
+    
+    private func trackingIcon(_ type: ExerciseTrackingType) -> String {
+        switch type {
+        case .repsWeight:       "scalemass.fill"
+        case .reps:             "number"
+        case .duration:         "timer"
+        case .distanceDuration: "location.fill"
+        }
+    }
+    
+    private func trackingHint(_ type: ExerciseTrackingType) -> String {
+        switch type {
+        case .repsWeight:
+            "Klassisches Krafttraining – Gewicht und Wiederholungen werden pro Satz erfasst."
+        case .reps:
+            "Bodyweight-Übungen wie Liegestütze oder Klimmzüge – nur Wiederholungen."
+        case .duration:
+            "Zeitbasiert wie Plank, Yoga oder Dehnen – pro Satz wird die Dauer erfasst."
+        case .distanceDuration:
+            "Cardio wie Laufen oder Radfahren – Distanz und Zeit werden erfasst."
+        }
+    }
+}
+
+struct ExerciseEditMuscleGroupsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AppEnvironment.self) private var env
+    
+    let exercise: Exercise
+    
+    @State private var primary: Set<MuscleGroup> = []
+    @State private var secondary: Set<MuscleGroup> = []
+    
+    private var isValid: Bool {
+        !primary.isEmpty
+    }
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    DisclosureGroup("Hauptmuskeln (\(primary.count))") {
+                        MuscleGroupGrid(selection: $primary)
+                    }
+                    DisclosureGroup("Sekundärmuskeln (\(secondary.count))") {
+                        MuscleGroupGrid(selection: $secondary)
+                    }
+                } header: {
+                    Text("Muskelgruppen")
+                } footer: {
+                    if primary.isEmpty {
+                        Text("Mindestens eine Hauptmuskelgruppe wählen.")
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Muskeln bearbeiten")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig", action: save)
+                        .disabled(!isValid)
+                        .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                primary = Set(exercise.primaryMuscleGroups)
+                secondary = Set(exercise.secondaryMuscleGroups)
+            }
+        }
+    }
+    
+    private func save() {
+        exercise.primaryMuscleGroups = Array(primary)
+        exercise.secondaryMuscleGroups = Array(secondary)
+        do {
+            try env.exerciseRepo.update(exercise)
+            Haptics.success()
+            dismiss()
+        } catch {
+            Haptics.warning()
+        }
+    }
 }

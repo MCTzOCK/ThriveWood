@@ -11,11 +11,13 @@ import SwiftUI
 struct SupplementListView: View {
     @Environment(AppEnvironment.self) private var env
     @Binding var selectedDate: Date
+    @Binding var search: String
     
     @State private var supplements: [Supplement] = []
     @State private var entries: [SupplementEntry] = []
     @State private var showEditor: Supplement?
     @State private var showCreateSheet = false
+    
     
     private var isToday: Bool {
         Calendar.current.isDateInToday(selectedDate)
@@ -27,13 +29,18 @@ struct SupplementListView: View {
                 WeekStripView(selectedDate: $selectedDate)
                     .padding(.horizontal)
                 
+                let filteredSupplements = supplements.filter { supplement in
+                    search.isEmpty || supplement.name.localizedCaseInsensitiveContains(search) || supplement.dosage.localizedCaseInsensitiveContains(search)
+                }
+                
                 if supplements.isEmpty {
                     emptyState
                 } else {
-                    ForEach(supplements, id: \.id) { supplement in
+                    ForEach(filteredSupplements, id: \.id) { supplement in
+                        let supplementEntries = entries.filter { $0.supplement?.id == supplement.id }
                         SupplementCard(
                             supplement: supplement,
-                            entries: entries.filter { $0.supplement?.id == supplement.id },
+                            entries: supplementEntries,
                             date: selectedDate,
                             isEditable: true,
                             onToggle: { dose in

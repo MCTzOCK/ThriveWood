@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 enum AppTab: Hashable {
-    case home, analytics, sport, me
+    case home, analytics, sport, nutrition, settings
 }
 
 struct RootTabView: View {
@@ -37,9 +37,13 @@ struct RootTabView: View {
                 .tabItem { Label("Sport", systemImage: "dumbbell.fill") }
                 .tag(AppTab.sport)
 
-            ProfileHubView()
-                .tabItem { Label("Mehr", systemImage: "ellipsis.circle.fill") }
-                .tag(AppTab.me)
+            /*NutritionTab()
+                .tabItem { Label("Ernährung", systemImage: "fork.knife") }
+                .tag(AppTab.nutrition)*/
+            
+            SettingsView()
+                .tabItem { Label("Einstellungen", systemImage: "gearshape.2") }
+                .tag(AppTab.settings)
         }
         .tint(profile?.accentTheme.color ?? .green)
         .preferredColorScheme(profile?.appearance.colorScheme)

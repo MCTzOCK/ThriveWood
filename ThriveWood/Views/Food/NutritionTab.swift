@@ -42,7 +42,8 @@ struct NutritionTab: View {
                         description: Text("Die Ernährungsübersicht ist derzeit in Entwicklung.")
                     )
                 case .supplements:
-                    SupplementListView(selectedDate: $selectedDate)
+                    Text("In Kürze verfügbar")
+                    //SupplementListView(selectedDate: $selectedDate)
                 }
             }
             .navigationTitle("Ernährung")
