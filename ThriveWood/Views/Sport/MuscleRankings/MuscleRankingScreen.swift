@@ -23,6 +23,7 @@ struct MuscleRankingScreen: View {
     @State private var pulseScale: CGFloat = 1
     @State private var flipAngle: Double = 0
     @State private var isFlipped: Bool = false
+    @AppStorage("includeUntrainedMuscles") private var includeUntrainedMuscles: Bool = true
     
     var body: some View {
         ScrollView {
@@ -58,6 +59,7 @@ struct MuscleRankingScreen: View {
         }
         .task { await load() }
         .refreshable { await load() }
+        .onChange(of: includeUntrainedMuscles) { _, _ in Task { await load() } }
     }
     
 // MARK: - Overall Rank
@@ -298,9 +300,14 @@ struct MuscleRankingScreen: View {
         progressAnimated = false
         do {
             rankings = try env.muscleRankingService.calculateRankings()
-            overallRank = try env.muscleRankingService.overallRank()
-            let totalVolume = rankings.map { $0.totalVolume }.reduce(0, +)
-            let avgVolume = rankings.isEmpty ? 0 : totalVolume / Double(rankings.count)
+            let relevantRankings = includeUntrainedMuscles 
+                ? rankings 
+                : rankings.filter { $0.totalVolume > 0 }
+            overallRank = try env.muscleRankingService.overallRank(
+                includeUntrained: includeUntrainedMuscles
+            )
+            let totalVolume = relevantRankings.map { $0.totalVolume }.reduce(0, +)
+            let avgVolume = relevantRankings.isEmpty ? 0 : totalVolume / Double(relevantRankings.count)
             overallVolume = avgVolume
             overallProgress = overallRank.progressToNext(currentVolume: Int(avgVolume))
         } catch {}

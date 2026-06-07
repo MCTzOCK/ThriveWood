@@ -72,10 +72,13 @@ final class MuscleRankingService {
     }
 
     /// Gesamtrang basierend auf Durchschnitt aller Muskeln
-    func overallRank() throws -> MuscleRank {
+    func overallRank(includeUntrained: Bool = true) throws -> MuscleRank {
         let rankings = try calculateRankings()
-        guard !rankings.isEmpty else { return .untrained }
-        let avgVol = rankings.map{ r in Int(r.totalVolume)}.reduce(0, +) / rankings.count
+        let relevantRankings = includeUntrained 
+            ? rankings 
+            : rankings.filter { $0.totalVolume > 0 }
+        guard !relevantRankings.isEmpty else { return .untrained }
+        let avgVol = relevantRankings.map { r in Int(r.totalVolume) }.reduce(0, +) / relevantRankings.count
         return MuscleRank.fromVolume(avgVol)
     }
 

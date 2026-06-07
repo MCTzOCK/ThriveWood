@@ -150,8 +150,18 @@ struct SettingsView: View {
                             .monospacedDigit()
                     }
                 }
+                
+                HStack {
+                    Image(systemName: "chart.bar.fill").foregroundStyle(.tint)
+                    Toggle("Untrainierte Muskeln zählen", isOn: Binding(
+                        get: { UserDefaults.standard.bool(forKey: "includeUntrainedMuscles") },
+                        set: { UserDefaults.standard.set($0, forKey: "includeUntrainedMuscles") }
+                    ))
+                }
             } header: {
                 Text("Sport")
+            } footer: {
+                Text("Wenn aus, werden Muskeln mit 0 kg Volumen vom Gesamt-Rang ausgenommen.")
             }
 
             // MARK: Mitteilungen

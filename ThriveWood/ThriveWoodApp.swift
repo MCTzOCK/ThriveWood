@@ -31,6 +31,12 @@ struct ThriveWoodApp: App {
                     env.notificationService.bootstrap()
                     //env = e
                     await env.storeService.refreshPurchaseState()
+                
+                // check if userdefault "includeUntrainedMuscles" (bool) is present, otherwise set it to true
+                    if UserDefaults.standard.object(forKey: "includeUntrainedMuscles") == nil {
+                        UserDefaults.standard.set(true, forKey: "includeUntrainedMuscles")
+                    }
+                
                 //}
             }
         }
