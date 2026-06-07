@@ -121,7 +121,7 @@ struct SportView: View {
             print(exercise)
             selectedExercise = exercise
             showingExerciseDetails = true
-        }, asSheet: false)
+        }, asSheet: false, onlyFor: nil)
     }
     
     @ViewBuilder

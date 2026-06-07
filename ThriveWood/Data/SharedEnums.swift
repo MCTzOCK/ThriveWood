@@ -173,7 +173,7 @@ enum MuscleGroup: String, Codable, CaseIterable, Identifiable {
         case .quads: "Quadrizeps"
         case .hipFlexors: "Hüftbeuger"
         case .adductors: "Adduktoren"
-        case .tibialis: "Schienbein"
+        case .tibialis: "Fußheber"
         case .hamstrings: "Beinbizeps"
         case .glutes: "Gesäß"
         case .abductors: "Abduktoren"
@@ -246,11 +246,10 @@ enum MuscleGroup: String, Codable, CaseIterable, Identifiable {
         self != .fullBody && self != .cardio
     }
     
-    /// Ist es ein Haupt-Muskelgruppe (nicht sub-muscle)
-    var isPrimaryMuscle: Bool {
+    /// Ob der Muskel in der Liste unter der Anatomie-Ansicht angezeigt wird
+    var showInList: Bool {
         switch self {
-        case .upperChest, .frontDelts, .sideDelts, .rearDelts, .rearShoulders,
-                .midBack, .rhomboids, .serratus, .hipFlexors, .tibialis, .rotatorCuff:
+        case .fullBody, .cardio:
             return false
         default:
             return true

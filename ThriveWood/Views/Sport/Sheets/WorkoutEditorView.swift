@@ -89,7 +89,7 @@ struct WorkoutEditorView: View {
             .sheet(isPresented: $showingLibrary) {
                 ExerciseLibraryView(onSelect: { exercise in
                     addExercise(exercise)
-                }, asSheet: true)
+                }, asSheet: true, onlyFor: nil)
             }
             .errorAlert(errors)
             .onAppear(perform: hydrate)

@@ -93,7 +93,7 @@ struct ActiveSessionView: View {
             .sheet(isPresented: $showingAddSheet) {
                 ExerciseLibraryView(onSelect: { ex in
                     addSet(for: ex)
-                }, asSheet: true)
+                }, asSheet: true, onlyFor: nil)
             }
             .sheet(item: $currentExercise) {
                 ExerciseDetailsSheet(exercise: $0)

@@ -13,6 +13,7 @@ struct ExerciseLibraryView: View {
     @Environment(\.dismiss) private var dismiss
     let onSelect: (Exercise) -> Void
     let asSheet: Bool
+    let onlyFor: MuscleGroup?
 
     @State private var exercises: [Exercise] = []
     @State private var search: String = ""
@@ -24,6 +25,12 @@ struct ExerciseLibraryView: View {
         exercises.filter { e in
             let matchesSearch = search.isEmpty || e.name.localizedCaseInsensitiveContains(search)
             let matchesCategory = selectedCategory == nil || e.category == selectedCategory
+            if onlyFor != nil {
+                return matchesSearch && matchesCategory && (
+                    e.primaryMuscleGroups.contains(onlyFor!) ||
+                    e.secondaryMuscleGroups.contains(onlyFor!)
+                )
+            }
             return matchesSearch && matchesCategory
         }
     }
@@ -44,7 +51,9 @@ struct ExerciseLibraryView: View {
                                 Button {
                                     Haptics.selection()
                                     onSelect(e)
-                                    dismiss()
+                                    if onlyFor == nil {
+                                        dismiss()
+                                    }
                                 } label: {
                                     HStack(spacing: Theme.Spacing.m) {
                                         Image(systemName: e.iconSystemName)

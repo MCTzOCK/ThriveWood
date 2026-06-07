@@ -107,14 +107,14 @@ struct ExerciseProgressionSheet: View {
 
             Chart(Array(progression.enumerated()), id: \.offset) { _, point in
                 LineMark(
-                    x: .value("Datum", point.date),
+                    x: .value("Datum", point.date, unit: .day),
                     y: .value(trackingLabel, chartValue(point.value))
                 )
                 .foregroundStyle(.orange)
                 .interpolationMethod(.catmullRom)
 
                 AreaMark(
-                    x: .value("Datum", point.date),
+                    x: .value("Datum", point.date, unit: .day),
                     y: .value(trackingLabel, chartValue(point.value))
                 )
                 .foregroundStyle(.orange.gradient.opacity(0.15))
@@ -167,7 +167,7 @@ struct ExerciseProgressionSheet: View {
     }
 
     private var strideBy: Calendar.Component {
-        progression.count > 12 ? .quarter : .month
+        progression.count > 24 ? .year : .month
     }
 
     private func chartValue(_ raw: Double) -> Double {

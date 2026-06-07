@@ -9,8 +9,9 @@ import SwiftUI
 struct SelectedMuscleCard: View {
     let data: MuscleRankingData
     let onClose: () -> Void
-    
+
     @State private var progressAnimated = false
+    @Environment(\.colorScheme) private var colorScheme: ColorScheme
     
     var body: some View {
         VStack(spacing: 16) {
@@ -20,7 +21,7 @@ struct SelectedMuscleCard: View {
                     Circle()
                         .fill(data.rank.gradient)
                         .frame(width: 56, height: 56)
-                        .shadow(color: data.rank.glowColor, radius: 8)
+                        //.shadow(color: data.rank.glowColor, radius: 8)
                     
                     Image(systemName: data.rank.icon)
                         .font(.title2.bold())
@@ -43,6 +44,7 @@ struct SelectedMuscleCard: View {
                         .font(.title2)
                         .foregroundStyle(.secondary)
                 }
+                .tint(data.rank.primaryColor)
             }
             
             // Progress
@@ -85,11 +87,30 @@ struct SelectedMuscleCard: View {
                 StatItem(icon: "scalemass.fill", value: formatVolume(data.totalVolume), label: "Volumen")
                 StatItem(icon: "calendar", value: formatDate(data.lastWorked), label: "Zuletzt")
             }
+            /*
+            // Library Button
+            Button {
+                withAnimation {
+                    onLibraryOpen()
+                }
+            } label: {
+                HStack(spacing: Theme.Spacing.l) {
+                    Image(systemName: "book.closed")
+                    Text("Übungen ansehen")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.systemBackground))
+                .cornerRadius(8)
+            }
+            .tint(data.rank.primaryColor)*/
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(.background)
+                .fill(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
                 .shadow(color: data.rank.glowColor.opacity(0.2), radius: 20)
         )
         .onAppear {
