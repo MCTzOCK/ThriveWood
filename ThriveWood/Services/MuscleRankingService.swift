@@ -27,11 +27,12 @@ final class MuscleRankingService {
 
         for set in completedSets {
             guard let exercise = set.exercise else { continue }
+            let volume = normalizedVolume(for: set)
 
             // Primäre Muskeln (voller Credit)
             for muscle in exercise.primaryMuscleGroups {
                 setsPerMuscle[muscle, default: 0] += 1
-                volumePerMuscle[muscle, default: 0] += (set.weight ?? 0) * Double(set.reps ?? 0)
+                volumePerMuscle[muscle, default: 0] += volume
 
                 if let completed = set.completedAt {
                     if lastWorkedPerMuscle[muscle] == nil || completed > lastWorkedPerMuscle[muscle]! {
@@ -43,7 +44,7 @@ final class MuscleRankingService {
             // Sekundäre Muskeln (halber Credit fürs Volumen, volle Sets)
             for muscle in exercise.secondaryMuscleGroups {
                 setsPerMuscle[muscle, default: 0] += 1
-                volumePerMuscle[muscle, default: 0] += (set.weight ?? 0) * Double(set.reps ?? 0) * 0.5
+                volumePerMuscle[muscle, default: 0] += volume * 0.5
 
                 if let completed = set.completedAt {
                     if lastWorkedPerMuscle[muscle] == nil || completed > lastWorkedPerMuscle[muscle]! {
@@ -118,6 +119,37 @@ final class MuscleRankingService {
         return dailySets
             .map { (date: $0.key, sets: $0.value) }
             .sorted { $0.date < $1.date }
+    }
+
+    // MARK: - Normalized Volume
+
+    /// Berechnet ein normalisiertes Volumen für verschiedene Exercise-Typen.
+    /// Macht unterschiedliche Einheiten (kg, Reps, Sekunden, Meter) vergleichbar.
+    private func normalizedVolume(for set: SetEntry) -> Double {
+        guard let type = set.exercise?.trackingType else { return 0 }
+
+        switch type {
+        case .repsWeight:
+            // Standard: Gewicht × Reps (kg)
+            return (set.weight ?? 0) * Double(set.reps ?? 0)
+
+        case .reps:
+            // Bodyweight: Reps × Äquivalent-Gewicht (~60kg durchschnittliches Körpergewicht)
+            // 1 Rep = 60 kg Volumen
+            return Double(set.reps ?? 0) * 60.0
+
+        case .duration:
+            // Zeitbasiert: Sekunden → Volumen
+            // 1 Sekunde = 1 Volumen-Einheit (z.B. 60s Plank = 60 Volumen)
+            // Dies ist konservativer als repsWeight, da isometrische Übungen weniger "Bewegung" haben
+            return Double(set.durationSeconds ?? 0)
+
+        case .distanceDuration:
+            // Distanz-basiert: Meter → Volumen
+            // 1 Meter = 0.5 Volumen-Einheiten (z.B. 10km Laufen = 5000 Volumen)
+            // Skaliert so, dass Cardio und Krafttraining ähnliche Rankings erreichen können
+            return (set.distanceMeters ?? 0) * 0.5
+        }
     }
 }
 
