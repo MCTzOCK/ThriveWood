@@ -140,15 +140,14 @@ final class MuscleRankingService {
 
         case .duration:
             // Zeitbasiert: Sekunden → Volumen
-            // 1 Sekunde = 1 Volumen-Einheit (z.B. 60s Plank = 60 Volumen)
-            // Dies ist konservativer als repsWeight, da isometrische Übungen weniger "Bewegung" haben
-            return Double(set.durationSeconds ?? 0)
+            // 1 Sekunde = 0.5 Volumen-Einheiten (z.B. 60s Plank = 30 Volumen)
+            return Double(set.durationSeconds ?? 0) * 0.5
 
         case .distanceDuration:
             // Distanz-basiert: Meter → Volumen
-            // 1 Meter = 0.5 Volumen-Einheiten (z.B. 10km Laufen = 5000 Volumen)
-            // Skaliert so, dass Cardio und Krafttraining ähnliche Rankings erreichen können
-            return (set.distanceMeters ?? 0) * 0.5
+            // 1 Meter = 0.05 Volumen-Einheiten (z.B. 10km Laufen = 500 Volumen)
+            // Cardio trägt bei, aber nicht so stark wie Krafttraining
+            return (set.distanceMeters ?? 0) * 0.05
         }
     }
 }
