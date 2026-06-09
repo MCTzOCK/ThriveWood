@@ -33,12 +33,20 @@ struct EditSessionSheet: View {
     private var sortedExercises: [(Exercise, [SetEntry])] {
         let groups = Dictionary(grouping: session.sets) { $0.exercise?.id ?? UUID() }
         if let plan = session.workout?.exercises.sorted(by: { $0.order < $1.order }), !plan.isEmpty {
-            return plan.compactMap { slot in
-                guard let ex = slot.exercise else { return nil }
+            var result: [(Exercise, [SetEntry])] = []
+            for slot in plan {
+                guard let ex = slot.exercise else { continue }
                 let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
-                guard !sets.isEmpty else { return nil }
-                return (ex, sets)
+                if !sets.isEmpty { result.append((ex, sets)) }
             }
+            let unique = Set(session.sets.compactMap { $0.exercise })
+            for ex in unique.sorted(by: { $0.name < $1.name }) {
+                let sets = (groups[ex.id] ?? []).sorted { $0.order < $1.order }
+                if !sets.isEmpty && !plan.contains(where: { $0.exercise?.id == ex.id }) {
+                    result.append((ex, sets))
+                }
+            }
+            return result
         }
         let unique = Set(session.sets.compactMap { $0.exercise })
         return unique.sorted { $0.name < $1.name }.map { ex in
