@@ -20,6 +20,8 @@ struct SettingsView: View {
     @State private var showingImport = false
     @State private var showingExport = false
 
+    @AppStorage("activityProfile") private var activityProfileRaw: String = ActivityProfile.moderat.rawValue
+
     var body: some View {
         NavigationStack {
             Group {
@@ -150,6 +152,17 @@ struct SettingsView: View {
                             .monospacedDigit()
                     }
                 }
+
+                Picker(selection: $activityProfileRaw) {
+                    ForEach(ActivityProfile.allCases) { profile in
+                        Label(profile.label, systemImage: profile.icon).tag(profile.rawValue)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "figure.highintensity.interval").foregroundStyle(.tint)
+                        Text("Aktivitätsprofil")
+                    }
+                }
                 
                 HStack {
                     Image(systemName: "chart.bar.fill").foregroundStyle(.tint)
@@ -161,7 +174,10 @@ struct SettingsView: View {
             } header: {
                 Text("Sport")
             } footer: {
-                Text("Wenn aus, werden Muskeln mit 0 kg Volumen vom Gesamt-Rang ausgenommen.")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Wenn aus, werden Muskeln mit 0 kg Volumen vom Gesamt-Rang ausgenommen.")
+                    Text("Das Aktivitätsprofil beeinflusst die Erholungs-Empfehlungen in der Muskelkarte.")
+                }
             }
 
             // MARK: Mitteilungen

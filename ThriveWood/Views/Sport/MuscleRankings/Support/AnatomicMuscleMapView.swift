@@ -9,9 +9,10 @@ import SwiftUI
 
 struct AnatomicMuscleMapView: View {
     let rankings: [MuscleRankingData]
+    let recoveryData: [MuscleRecoveryData]?
     @Binding var selectedMuscle: MuscleGroup?
     @Binding var showFront: Bool
-    
+
     @Environment(\.colorScheme) private var colorScheme
     
     private let svgWidth: CGFloat = 35.0
@@ -33,10 +34,24 @@ struct AnatomicMuscleMapView: View {
         ZStack {
             ForEach(zones, id: \.muscle.rawValue) { group in
                 let p = group.path(scale: scale, vbOriginX: vbOriginX)
+                let strokeColor: Color = {
+                    if let recoveryData = recoveryData {
+                        let rd = recoveryData.first(where: { $0.muscleGroup == group.muscle })
+                        if let rd = rd {
+                            switch rd.state {
+                            case .needsRest: return .red
+                            case .warning: return .orange
+                            case .recovered: return selectedMuscle == group.muscle ? .white : Color.black.opacity(0.15)
+                            }
+                        }
+                        return selectedMuscle == group.muscle ? .white : Color.black.opacity(0.15)
+                    }
+                    return selectedMuscle == group.muscle ? Color.white : Color.black.opacity(0.15)
+                }()
+                let strokeW: CGFloat = selectedMuscle == group.muscle ? 2.5 : 0.8
                 p.fill(zoneColor(for: group.muscle))
                     .overlay(
-                        p.stroke(selectedMuscle == group.muscle ? Color.white : Color.black.opacity(0.15),
-                                 lineWidth: selectedMuscle == group.muscle ? 2.5 : 0.8)
+                        p.stroke(strokeColor, lineWidth: strokeW)
                     )
                     .scaleEffect(selectedMuscle == group.muscle ? 1.02 : 1.0)
                     .onTapGesture {
@@ -70,10 +85,18 @@ struct AnatomicMuscleMapView: View {
     private func labelOverlay(for muscle: MuscleGroup, zones: [MuscleGroupZone], scale: CGFloat, vbOriginX: CGFloat) -> some View {
         if let pos = labelCenter(for: muscle, zones: zones, scale: scale, vbOriginX: vbOriginX) {
             VStack(spacing: 1) {
-                Image(systemName: rank(for: muscle).icon)
-                    .font(.system(size: 12, weight: .bold))
-                Text(muscle.shortLabel)
-                    .font(.system(size: 9, weight: .semibold))
+                if let recoveryData = recoveryData,
+                   let rd = recoveryData.first(where: { $0.muscleGroup == muscle }) {
+                    Image(systemName: rd.stateIcon)
+                        .font(.system(size: 12, weight: .bold))
+                    Text(muscle.shortLabel)
+                        .font(.system(size: 9, weight: .semibold))
+                } else {
+                    Image(systemName: rank(for: muscle).icon)
+                        .font(.system(size: 12, weight: .bold))
+                    Text(muscle.shortLabel)
+                        .font(.system(size: 9, weight: .semibold))
+                }
             }
             .foregroundStyle(.white)
             .shadow(color: .black.opacity(0.7), radius: 2)
@@ -83,6 +106,22 @@ struct AnatomicMuscleMapView: View {
     }
 
     private func zoneColor(for muscle: MuscleGroup) -> Color {
+        if let recoveryData = recoveryData {
+            let data = recoveryData.first(where: { $0.muscleGroup == muscle })
+            if data == nil || data!.weeklyVolume == 0 {
+                return muscle == selectedMuscle ? Color.green.opacity(0.75) : Color.green.opacity(0.2)
+            }
+            let state = data!.state
+            switch state {
+            case .recovered:
+                return muscle == selectedMuscle ? Color.green.opacity(0.75) : Color.green.opacity(0.35)
+            case .warning:
+                return muscle == selectedMuscle ? Color.orange.opacity(0.85) : Color.orange.opacity(0.55)
+            case .needsRest:
+                return muscle == selectedMuscle ? Color.red.opacity(0.85) : Color.red.opacity(0.6)
+            }
+        }
+
         let r = rank(for: muscle)
         if muscle == selectedMuscle { return r.primaryColor.opacity(0.85) }
         if r == .untrained { return Color(

@@ -11,6 +11,7 @@ struct MuscleRankingScreen: View {
     @Environment(AppEnvironment.self) private var env
     
     @State private var rankings: [MuscleRankingData] = []
+    @State private var recoveryData: [MuscleRecoveryData] = []
     @State private var showFront = true
     @State private var selectedMuscle: MuscleGroup?
     @State private var overallRank: MuscleRank = .untrained
@@ -23,30 +24,66 @@ struct MuscleRankingScreen: View {
     @State private var pulseScale: CGFloat = 1
     @State private var flipAngle: Double = 0
     @State private var isFlipped: Bool = false
+    @State private var mapMode: MapMode = .ranking
     @AppStorage("includeUntrainedMuscles") private var includeUntrainedMuscles: Bool = true
+
+    enum MapMode: String, CaseIterable, Identifiable {
+        case ranking = "ranking"
+        case recovery = "recovery"
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .ranking: "Ranking"
+            case .recovery: "Pause"
+            }
+        }
+        var icon: String {
+            switch self {
+            case .ranking: "trophy.fill"
+            case .recovery: "bed.double.fill"
+            }
+        }
+    }
     
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                overallRankHeader
+                if mapMode == .ranking {
+                    overallRankHeader
+                } else {
+                    recoveryOverviewHeader
+                }
                 diagramSection
                 
                 // Selected Muscle Detail
-                if let selected = selectedMuscle,
-                   let data = rankings.first(where: { $0.muscleGroup == selected }) {
-                    SelectedMuscleCard(data: data) {
-                        withAnimation { selectedMuscle = nil }
+                if let selected = selectedMuscle {
+                    if mapMode == .ranking,
+                       let data = rankings.first(where: { $0.muscleGroup == selected }) {
+                        SelectedMuscleCard(data: data) {
+                            withAnimation { selectedMuscle = nil }
+                        }
+                        .padding(.horizontal)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else if mapMode == .recovery,
+                              let rd = recoveryData.first(where: { $0.muscleGroup == selected }) {
+                        RecoveryMuscleCard(data: rd) {
+                            withAnimation { selectedMuscle = nil }
+                        }
+                        .padding(.horizontal)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-                    .padding(.horizontal)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 
-                muscleListSection
+                if mapMode == .ranking {
+                    muscleListSection
+                } else {
+                    recoveryListSection
+                }
             }
             .padding(.vertical)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Muskel-Ranking")
+        .navigationTitle(mapMode == .ranking ? "Muskel-Ranking" : "Erholung")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { showLegend = true } label: {
@@ -55,7 +92,11 @@ struct MuscleRankingScreen: View {
             }
         }
         .sheet(isPresented: $showLegend) {
-            RankLegendSheet().presentationDetents([.medium])
+            if mapMode == .ranking {
+                RankLegendSheet().presentationDetents([.medium])
+            } else {
+                RecoveryLegendSheet().presentationDetents([.medium])
+            }
         }
         .task { await load() }
         .refreshable { await load() }
@@ -224,6 +265,15 @@ struct MuscleRankingScreen: View {
     
     private var diagramSection: some View {
         VStack(spacing: 16) {
+            // Map Mode Picker
+            Picker("Modus", selection: $mapMode) {
+                ForEach(MapMode.allCases) { mode in
+                    Label(mode.label, systemImage: mode.icon).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 24)
+
             // Front/Back Toggle
             HStack(spacing: 0) {
                 ForEach([true, false], id: \.self) { isFront in
@@ -254,6 +304,7 @@ struct MuscleRankingScreen: View {
             // Muscle Map
             AnatomicMuscleMapView(
                 rankings: rankings,
+                recoveryData: mapMode == .recovery ? recoveryData : nil,
                 selectedMuscle: $selectedMuscle,
                 showFront: $showFront
             )
@@ -261,7 +312,7 @@ struct MuscleRankingScreen: View {
             .padding(.vertical, 8)
             
             if selectedMuscle == nil {
-                Label("Tippe auf einen Muskel", systemImage: "hand.tap.fill")
+                Label(mapMode == .ranking ? "Tippe auf einen Muskel" : "Rote Muskeln brauchen Pause", systemImage: mapMode == .ranking ? "hand.tap.fill" : "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -293,6 +344,92 @@ struct MuscleRankingScreen: View {
             .padding(.horizontal)
         }
     }
+
+    // MARK: - Recovery Overview Header
+
+    private var recoveryOverviewHeader: some View {
+        let musclesNeedingRest = recoveryData.filter { $0.needsRest }
+        let musclesWarning = recoveryData.filter { $0.isWarning }
+        let profile = ActivityProfile.current
+
+        let headerColor: Color = musclesNeedingRest.isEmpty ? (musclesWarning.isEmpty ? .green : .orange) : .red
+        let headerIcon = musclesNeedingRest.isEmpty ? (musclesWarning.isEmpty ? "checkmark.circle.fill" : "exclamationmark.circle.fill") : "exclamationmark.triangle.fill"
+        let headerText: String = {
+            if !musclesNeedingRest.isEmpty {
+                return "\(musclesNeedingRest.count) Muskeln brauchen Pause"
+            }
+            if !musclesWarning.isEmpty {
+                return "\(musclesWarning.count) Muskeln nah am Limit"
+            }
+            return "Alle Muskeln erholt"
+        }()
+        let headerCount: String = {
+            if !musclesNeedingRest.isEmpty { return "\(musclesNeedingRest.count)" }
+            if !musclesWarning.isEmpty { return "\(musclesWarning.count)" }
+            return "✓"
+        }()
+
+        return VStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .stroke(headerColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .frame(width: 100, height: 100)
+
+                VStack(spacing: 4) {
+                    Image(systemName: headerIcon)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundStyle(headerColor)
+                    Text(headerCount)
+                        .font(.system(size: 20, weight: .heavy, design: .rounded))
+                        .foregroundStyle(headerColor)
+                }
+            }
+            .frame(height: 120)
+
+            Text(headerText)
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            HStack(spacing: 4) {
+                Image(systemName: profile.icon)
+                    .font(.caption)
+                Text("Profil: \(profile.label)")
+                    .font(.caption)
+            }
+            .foregroundStyle(.secondary)
+        }
+        .padding(.top, 20)
+    }
+
+    // MARK: - Recovery List
+
+    private var recoveryListSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Erholungsstatus")
+                .font(.headline)
+                .padding(.horizontal, 20)
+
+            LazyVStack(spacing: 8) {
+                let sortedRecovery = recoveryData
+                    .filter { $0.muscleGroup.showInList }
+                    .sorted { lhs, rhs in
+                        if lhs.needsRest != rhs.needsRest { return lhs.needsRest }
+                        if lhs.isWarning != rhs.isWarning { return lhs.isWarning }
+                        return lhs.weeklyVolume > rhs.weeklyVolume
+                    }
+
+                ForEach(sortedRecovery) { data in
+                    RecoveryMuscleRow(data: data, isSelected: selectedMuscle == data.muscleGroup) {
+                        withAnimation(.spring(response: 0.35)) {
+                            selectedMuscle = data.muscleGroup
+                            showFront = data.muscleGroup.bodyPosition.isFront
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
     
     // MARK: - Load
     
@@ -300,6 +437,7 @@ struct MuscleRankingScreen: View {
         progressAnimated = false
         do {
             rankings = try env.muscleRankingService.calculateRankings()
+            recoveryData = try env.muscleRecoveryService.calculateRecovery()
             let relevantRankings = includeUntrainedMuscles 
                 ? rankings 
                 : rankings.filter { $0.totalVolume > 0 }

@@ -5,6 +5,7 @@
 //  Created by Ben Siebert on 26.04.26.
 //
 
+
 import Foundation
 import SwiftUI
 import Charts
@@ -18,6 +19,7 @@ struct WorkoutSessionDetailView: View {
     @Bindable var session: WorkoutSession
 
     @State private var isEditing = false
+    @State private var showEditSession = false
     @State private var draftNotes: String = ""
     @State private var draftRPE: Int = 7
     @State private var showDeleteConfirm = false
@@ -25,12 +27,12 @@ struct WorkoutSessionDetailView: View {
     @State private var successHUDVisible = false
     @State private var aiAvailable = SystemLanguageModel.default.availability
     @State private var newPRs: [(exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)] = []
+    @State private var showShareImage = false
     
     // MARK: - Derived
 
     private var sortedExercises: [(Exercise, [SetEntry])] {
         let groups = Dictionary(grouping: session.sets) { $0.exercise?.id ?? UUID() }
-        // Wenn ein Plan existiert: Reihenfolge des Plans übernehmen
         if let plan = session.workout?.exercises.sorted(by: { $0.order < $1.order }), !plan.isEmpty {
             return plan.compactMap { slot in
                 guard let ex = slot.exercise else { return nil }
@@ -39,7 +41,6 @@ struct WorkoutSessionDetailView: View {
                 return (ex, sets)
             }
         }
-        // Sonst alphabetisch
         let unique = Set(session.sets.compactMap { $0.exercise })
         return unique.sorted { $0.name < $1.name }.map { ex in
             (ex, (groups[ex.id] ?? []).sorted { $0.order < $1.order })
@@ -117,6 +118,13 @@ struct WorkoutSessionDetailView: View {
         .toolbar { toolbar }
         .errorAlert(errors)
         .onAppear { loadPRs() }
+        .sheet(isPresented: $showEditSession) {
+            EditSessionSheet(session: session)
+                .onDisappear { loadPRs() }
+        }
+        .sheet(isPresented: $showShareImage) {
+            WorkoutSummaryImageSheet(session: session)
+        }
         .confirmationDialog(
             "Workout löschen?",
             isPresented: $showDeleteConfirm,
@@ -136,13 +144,21 @@ struct WorkoutSessionDetailView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button {
+                    showEditSession = true
+                } label: { Label("Workout bearbeiten", systemImage: "pencil.and.list.clipboard") }
+
+                /*Button {
                     draftNotes = session.notes
                     draftRPE = session.perceivedExertion ?? 7
                     isEditing = true
-                } label: { Label("Notizen bearbeiten", systemImage: "pencil") }
+                } label: { Label("Notizen bearbeiten", systemImage: "pencil") }*/
+
+                Button {
+                    showShareImage = true
+                } label: { Label("Zusammenfassung teilen", systemImage: "photo.on.rectangle.angled") }
 
                 ShareLink(item: shareText) {
-                    Label("Teilen", systemImage: "square.and.arrow.up")
+                    Label("Als Text teilen", systemImage: "square.and.arrow.up")
                 }
 
                 Button {

@@ -890,3 +890,158 @@ enum MeasurablePreset: String, CaseIterable, Identifiable {
         }
     }
 }
+
+
+// MARK: - Activity Profile & Muscle Recovery
+
+enum ActivityProfile: String, CaseIterable, Identifiable {
+    case leicht = "leicht"
+    case moderat = "moderat"
+    case extrem = "extrem"
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .leicht: "Leicht"
+        case .moderat: "Moderat"
+        case .extrem: "Extrem"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .leicht: "figure.walk"
+        case .moderat: "figure.run"
+        case .extrem: "figure.highintensity.intervaltraining"
+        }
+    }
+
+    var maxWeeklyVolumePerMuscle: Double {
+        switch self {
+        case .leicht: 10000
+        case .moderat: 18000
+        case .extrem: 28000
+        }
+    }
+
+    var warningWeeklyVolumePerMuscle: Double {
+        switch self {
+        case .leicht: 6000
+        case .moderat: 12000
+        case .extrem: 20000
+        }
+    }
+
+    var recoveryHours: Double {
+        switch self {
+        case .leicht: 72
+        case .moderat: 48
+        case .extrem: 36
+        }
+    }
+
+    var maxConsecutiveDays: Int {
+        switch self {
+        case .leicht: 1
+        case .moderat: 2
+        case .extrem: 3
+        }
+    }
+
+    var maxDailyVolumePerMuscle: Double {
+        switch self {
+        case .leicht: 5000
+        case .moderat: 8000
+        case .extrem: 12000
+        }
+    }
+
+    var minVolumeForRecoveryCheck: Double {
+        switch self {
+        case .leicht: 500
+        case .moderat: 1000
+        case .extrem: 1500
+        }
+    }
+}
+
+enum MuscleRecoveryState {
+    case recovered
+    case warning
+    case needsRest
+
+    var color: Color {
+        switch self {
+        case .recovered: .green
+        case .warning: .orange
+        case .needsRest: .red
+        }
+    }
+}
+
+struct MuscleRecoveryData: Identifiable {
+    var id: MuscleGroup { muscleGroup }
+
+    let muscleGroup: MuscleGroup
+    let weeklyVolume: Double
+    let daysSinceLastWorked: Int?
+    let consecutiveTrainingDays: Int
+    let state: MuscleRecoveryState
+    let restReason: MuscleRestReason
+    let recommendedRestDays: Int
+
+    var needsRest: Bool { state == .needsRest }
+    var isWarning: Bool { state == .warning }
+
+    var restReasonText: String {
+        switch restReason {
+        case .none:
+            return "Keine Pause nötig."
+        case .weeklyOverload:
+            return "Wöchentliches Volumen (\(formatVol(weeklyVolume))) liegt über dem Limit für dein Profil (\(formatVol(ActivityProfile.current.maxWeeklyVolumePerMuscle)))."
+        case .insufficientRecovery:
+            let days = daysSinceLastWorked ?? 0
+            let required = Int(ActivityProfile.current.recoveryHours / 24.0)
+            return "Nur \(days) Tag\(days == 1 ? "" : "e") Ruhe – empfohlen werden \(required) Tag\(required == 1 ? "" : "e")."
+        case .consecutiveOverload:
+            return "\(consecutiveTrainingDays) Tage hintereinander trainiert. Maximal \(ActivityProfile.current.maxConsecutiveDays) für dein Profil."
+        case .dailyOverload:
+            return "Tägliches Volumen zu hoch für diesen Muskel."
+        case .nearLimit:
+            return "Volumen nähert sich dem Limit. \(formatVol(ActivityProfile.current.maxWeeklyVolumePerMuscle - weeklyVolume)) Puffer verbleibend."
+        }
+    }
+
+    var stateIcon: String {
+        switch state {
+        case .recovered: "checkmark.circle.fill"
+        case .warning: "exclamationmark.circle.fill"
+        case .needsRest: "exclamationmark.triangle.fill"
+        }
+    }
+
+    private func formatVol(_ v: Double) -> String {
+        v >= 1000 ? String(format: "%.1fk", v / 1000) : "\(Int(v))"
+    }
+}
+
+enum MuscleRestReason {
+    case none
+    case weeklyOverload
+    case insufficientRecovery
+    case consecutiveOverload
+    case dailyOverload
+    case nearLimit
+}
+
+extension ActivityProfile {
+    static var current: ActivityProfile {
+        get {
+            ActivityProfile(rawValue: UserDefaults.standard.string(forKey: "activityProfile") ?? "") ?? .moderat
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: "activityProfile")
+        }
+    }
+}

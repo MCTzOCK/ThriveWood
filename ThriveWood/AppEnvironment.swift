@@ -42,6 +42,7 @@ final class AppEnvironment {
     let nutritionService: NutritionService
     let supplementService: SupplementService
     let muscleRankingService: MuscleRankingService
+    let muscleRecoveryService: MuscleRecoveryService
     let aiService: AIService
     let trainingsPlanService: TrainingsPlanService
     
@@ -104,6 +105,7 @@ final class AppEnvironment {
             notificationService: notificationService
         )
         self.muscleRankingService = MuscleRankingService(sessionRepo: sessionRepo)
+        self.muscleRecoveryService = MuscleRecoveryService(sessionRepo: sessionRepo)
         self.aiService = AIService()
         self.trainingsPlanService = TrainingsPlanService(repo: trainingsPlanRepo)
         

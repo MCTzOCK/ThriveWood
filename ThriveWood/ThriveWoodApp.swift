@@ -36,6 +36,9 @@ struct ThriveWoodApp: App {
                     if UserDefaults.standard.object(forKey: "includeUntrainedMuscles") == nil {
                         UserDefaults.standard.set(true, forKey: "includeUntrainedMuscles")
                     }
+                    if UserDefaults.standard.object(forKey: "activityProfile") == nil {
+                        UserDefaults.standard.set(ActivityProfile.moderat.rawValue, forKey: "activityProfile")
+                    }
                 
                 //}
             }
