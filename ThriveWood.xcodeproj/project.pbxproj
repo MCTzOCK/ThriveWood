@@ -60,6 +60,8 @@
 		B579DB542FA47F0D0053BC85 /* Exceptions for "ThriveWood" folder in "ThriveWoodWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Data/AchievementDefinitions.swift,
+				Data/Models/AchievementDomain.swift,
 				Data/Models/FoodDomain.swift,
 				Data/Models/ForestDomain.swift,
 				Data/Models/HabitDomain.swift,
@@ -423,7 +425,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 288;
+				CURRENT_PROJECT_VERSION = 300;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -469,7 +471,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 288;
+				CURRENT_PROJECT_VERSION = 300;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -514,7 +516,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 288;
+				CURRENT_PROJECT_VERSION = 300;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
@@ -550,7 +552,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 288;
+				CURRENT_PROJECT_VERSION = 300;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;

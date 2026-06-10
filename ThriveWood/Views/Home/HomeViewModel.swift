@@ -90,6 +90,7 @@ final class HomeViewModel {
                 }
             }
             reloadPoints()
+            env.achievementService.checkHabits()
         } catch {
             Haptics.warning()
             errors.show(error)
@@ -110,6 +111,7 @@ final class HomeViewModel {
                 }
             }
             reloadPoints()
+            env.achievementService.checkHabits()
         } catch {
             Haptics.warning()
             errors.show(error)
@@ -159,7 +161,6 @@ final class HomeViewModel {
         }
     }
 
-    /// Setzt den Wert direkt (z.B. aus einem Textfeld).
     func setMeasurableValue(_ habit: Habit, value: Double) {
         do {
             _ = try env.habitService.setValue(habit, value: value, on: selectedDate)
@@ -170,6 +171,7 @@ final class HomeViewModel {
                 else { completedHabitIDs.remove(habit.id) }
             }
             reloadPoints()
+            env.achievementService.checkHabits()
         } catch { errors.show(error) }
     }
 

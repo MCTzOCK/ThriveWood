@@ -89,6 +89,7 @@ final class ForestViewModel {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { load() }
             selectedCell = nil
             showingSpeciesPicker = false
+            env.achievementService.checkForest()
         } catch {
             Haptics.warning()
             errors.show(error)
@@ -104,6 +105,7 @@ final class ForestViewModel {
                 self?.wateringTreeID = nil
             }
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { load() }
+            env.achievementService.checkForest()
         } catch {
             Haptics.warning()
             errors.show(error)

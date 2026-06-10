@@ -581,6 +581,35 @@ final class SwiftDataMealTemplateRepository: MealTemplateRepository {
 }
 
 
+@MainActor
+final class SwiftDataAchievementRepository: SwiftDataRepository, AchievementRepository {
+    func fetchAll() throws -> [AchievementRecord] {
+        try context.fetch(FetchDescriptor<AchievementRecord>(
+            sortBy: [SortDescriptor(\.unlockedAt, order: .reverse)]
+        ))
+    }
+
+    func fetch(definition: AchievementDefinition) throws -> AchievementRecord? {
+        let raw = definition.rawValue
+        var d = FetchDescriptor<AchievementRecord>(
+            predicate: #Predicate { $0.definitionRaw == raw }
+        )
+        d.fetchLimit = 1
+        return try context.fetch(d).first
+    }
+
+    func add(_ record: AchievementRecord) throws {
+        context.insert(record)
+        try save()
+    }
+
+    func delete(_ record: AchievementRecord) throws {
+        context.delete(record)
+        try save()
+    }
+}
+
+
 // MARK: Training Plans
 
 @MainActor

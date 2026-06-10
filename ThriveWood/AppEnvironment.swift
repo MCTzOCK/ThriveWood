@@ -20,6 +20,7 @@ final class AppEnvironment {
     let workoutRepo: any WorkoutRepository
     let sessionRepo: any WorkoutSessionRepository
     let profileRepo: any UserProfileRepository
+    let achievementRepo: AchievementRepository
     
     let foodRepo: FoodRepository
     let foodEntryRepo: FoodEntryRepository
@@ -45,6 +46,7 @@ final class AppEnvironment {
     let muscleRecoveryService: MuscleRecoveryService
     let aiService: AIService
     let trainingsPlanService: TrainingsPlanService
+    let achievementService: AchievementService
     
     var entitlements: EntitlementService
     
@@ -66,7 +68,7 @@ final class AppEnvironment {
         let profileRepo    = SwiftDataUserProfileRepository(context: context)
         self.trainingsPlanRepo = TrainingsPlanRepository(modelContext: context)
 
-        
+
         self.habitRepo = habitRepo
         self.completionRepo = completionRepo
         self.forestRepo = forestRepo
@@ -108,6 +110,15 @@ final class AppEnvironment {
         self.muscleRecoveryService = MuscleRecoveryService(sessionRepo: sessionRepo)
         self.aiService = AIService()
         self.trainingsPlanService = TrainingsPlanService(repo: trainingsPlanRepo)
+        self.achievementRepo = SwiftDataAchievementRepository(context: context)
+        self.achievementService = AchievementService(
+            repo: achievementRepo,
+            habitService: habitService,
+            scoringService: scoring,
+            forestService: forestService,
+            sessionRepo: sessionRepo,
+            muscleRankingService: muscleRankingService
+        )
         
         
         // Seed & Bootstrap
@@ -130,6 +141,7 @@ final class AppEnvironment {
         if isNew { try habitRepo.create(habit) }
         else      { try habitRepo.update(habit) }
         try await notificationService.scheduleReminders(for: habit)
+        achievementService.checkHabits()
     }
     
     func archiveHabit(_ habit: Habit) async throws {

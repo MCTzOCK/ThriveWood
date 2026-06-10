@@ -238,6 +238,8 @@ struct ActiveSessionView: View {
         do {
             try env.workoutService.finishSession(perceivedExertion: rpe, notes: notes)
             Haptics.success()
+            env.achievementService.checkWorkouts()
+            env.achievementService.checkMuscle()
             dismiss()
         } catch { errors.show(error) }
     }

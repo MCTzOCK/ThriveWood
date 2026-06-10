@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 enum AppTab: Hashable {
-    case home, analytics, sport, nutrition, settings
+    case home, analytics, sport, achievements, settings
 }
 
 struct RootTabView: View {
@@ -37,10 +37,10 @@ struct RootTabView: View {
                 .tabItem { Label("Sport", systemImage: "dumbbell.fill") }
                 .tag(AppTab.sport)
 
-            /*NutritionTab()
-                .tabItem { Label("Ernährung", systemImage: "fork.knife") }
-                .tag(AppTab.nutrition)*/
-            
+            AchievementsView()
+                .tabItem { Label("Erfolge", systemImage: "trophy.fill") }
+                .tag(AppTab.achievements)
+
             SettingsView()
                 .tabItem { Label("Einstellungen", systemImage: "gearshape.2") }
                 .tag(AppTab.settings)
@@ -50,6 +50,7 @@ struct RootTabView: View {
         .onChange(of: selection) { _, _ in Haptics.selection() }
         .task {
             _ = try? env.profileRepo.currentProfile()
+            env.achievementService.checkAll(silent: true)
         }
         .onAppear {
             if needsOnboarding { showOnboarding = true }
@@ -59,5 +60,6 @@ struct RootTabView: View {
                 showOnboarding = false
             }
         }
+        .achievementHUD()
     }
 }

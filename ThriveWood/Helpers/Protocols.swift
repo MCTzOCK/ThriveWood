@@ -74,3 +74,10 @@ protocol UserProfileRepository {
     func currentProfile() throws -> UserProfile
     func update(_ profile: UserProfile) throws
 }
+
+protocol AchievementRepository {
+    func fetchAll() throws -> [AchievementRecord]
+    func fetch(definition: AchievementDefinition) throws -> AchievementRecord?
+    func add(_ record: AchievementRecord) throws
+    func delete(_ record: AchievementRecord) throws
+}
