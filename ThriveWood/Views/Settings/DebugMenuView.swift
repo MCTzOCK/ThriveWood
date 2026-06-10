@@ -39,6 +39,9 @@ struct DebugMenuView: View {
                     Button("🔔 Test-Notification (5s)") {
                         Task { try? await env.debugService.fireTestNotification() }
                     }
+                    Button("🏆 Achievement HUD testen") {
+                        env.achievementService.triggerTestNotification()
+                    }
                 }
 
                 Section("In-App Purchases") {

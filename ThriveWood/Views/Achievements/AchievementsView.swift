@@ -9,6 +9,8 @@ struct AchievementsView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var selectedCategory: AchievementCategory?
     @State private var appeared = false
+    @State private var unlockedIds: Set<String> = []
+    @State private var unlockDates: [String: Date] = [:]
 
     private var svc: AchievementService { env.achievementService }
 
@@ -19,15 +21,15 @@ struct AchievementsView: View {
         return svc.achievements(for: category)
     }
 
-    private var unlockedCount: Int { svc.unlockedCount() }
-    private var totalCount: Int { svc.totalCount() }
+    private var unlockedCount: Int { unlockedIds.count }
+    private var totalCount: Int { AchievementDefinition.allCases.count }
     private var progressFraction: Double {
         totalCount > 0 ? Double(unlockedCount) / Double(totalCount) : 0
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
+            ScrollView(showsIndicators: true) {
                 VStack(spacing: Theme.Spacing.xl) {
                     heroHeader
                     categoryFilter
@@ -38,8 +40,20 @@ struct AchievementsView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Erfolge")
             .navigationBarTitleDisplayMode(.large)
+            .onAppear {
+                refreshState()
+                withAnimation(.easeOut(duration: 0.6).delay(0.2)) { appeared = true }
+            }
+            .onChange(of: svc.unlockedIds) { _, _ in refreshState() }
         }
-        .onAppear { withAnimation(.easeOut(duration: 0.6).delay(0.2)) { appeared = true } }
+    }
+
+    private func refreshState() {
+        unlockedIds = svc.unlockedIds
+        let records = svc.unlockedRecords()
+        var dates: [String: Date] = [:]
+        for record in records { dates[record.definitionRaw] = record.unlockedAt }
+        unlockDates = dates
     }
 
     // MARK: - Hero Header
@@ -173,7 +187,6 @@ struct AchievementsView: View {
                     .fill(isSelected ? color : Color(.systemGray6))
             )
             .foregroundStyle(isSelected ? .white : .primary)
-            .scaleEffect(isSelected ? 1.02 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }
         .buttonStyle(.plain)
@@ -184,35 +197,55 @@ struct AchievementsView: View {
     private var achievementsGrid: some View {
         LazyVStack(spacing: Theme.Spacing.m) {
             ForEach(filteredDefinitions) { def in
-                achievementRow(for: def)
-                    .padding(.horizontal, Theme.Spacing.l)
+                AchievementRow(
+                    def: def,
+                    isUnlocked: unlockedIds.contains(def.rawValue),
+                    unlockDate: unlockDates[def.rawValue],
+                    progress: svc.progress(for: def)
+                )
+                .padding(.horizontal, Theme.Spacing.l)
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: selectedCategory)
     }
+}
 
-    private func achievementRow(for def: AchievementDefinition) -> some View {
-        let unlocked = svc.isUnlocked(def)
-        let progress = svc.progress(for: def)
-        let fraction = progress.target > 0 ? Double(progress.current) / Double(progress.target) : 0.0
-        let records = svc.unlockedRecords()
-        let unlockDate = records.first(where: { $0.definitionRaw == def.rawValue })?.unlockedAt
+// MARK: - Achievement Row (extracted for performance)
 
-        return VStack(spacing: 0) {
+private struct AchievementRow: View {
+    let def: AchievementDefinition
+    let isUnlocked: Bool
+    let unlockDate: Date?
+    let progress: (current: Int, target: Int)
+
+    private var fraction: Double {
+        progress.target > 0 ? Double(progress.current) / Double(progress.target) : 0.0
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
             HStack(spacing: Theme.Spacing.m) {
-                iconCircle(for: def, unlocked: unlocked, fraction: fraction)
+                iconCircle
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(def.title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(unlocked ? .primary : .secondary)
+                    HStack(spacing: 4) {
+                        Text(def.title)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(isUnlocked ? .primary : .secondary)
 
-                    Text(unlocked ? def.description : progressText(for: def))
+                        if !isUnlocked {
+                            Text("\(progress.current)/\(progress.target)")
+                                .font(.caption2.weight(.medium).monospacedDigit())
+                                .foregroundStyle(def.category.color.opacity(0.7))
+                        }
+                    }
+
+                    Text(def.description)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
 
-                    if unlocked, let date = unlockDate {
+                    if isUnlocked, let date = unlockDate {
                         Text(date.formatted(date: .abbreviated, time: .omitted))
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
@@ -221,37 +254,37 @@ struct AchievementsView: View {
 
                 Spacer()
 
-                unlockedBadge(unlocked: unlocked)
+                if isUnlocked {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.green)
+                }
             }
             .padding(Theme.Spacing.m)
 
-            if !unlocked {
-                progressLayer(for: def, fraction: fraction)
+            if !isUnlocked {
+                progressLayer
             }
         }
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                .stroke(unlocked ? def.category.color.opacity(0.3) : Color(.systemGray5), lineWidth: unlocked ? 1.5 : 0.5)
+                .stroke(isUnlocked ? def.category.color.opacity(0.3) : Color(.systemGray5).opacity(0.5), lineWidth: isUnlocked ? 1.5 : 0.5)
         )
-        .opacity(unlocked ? 1.0 : 0.75)
-        .saturation(unlocked ? 1.0 : 0.4)
+        .opacity(isUnlocked ? 1.0 : 0.75)
     }
 
-    // MARK: - Sub-Components
-
-    @ViewBuilder
-    private func iconCircle(for def: AchievementDefinition, unlocked: Bool, fraction: Double) -> some View {
+    private var iconCircle: some View {
         ZStack {
             Circle()
                 .fill(
-                    unlocked
-                    ? LinearGradient(colors: [def.category.color.opacity(0.2), def.category.color.opacity(0.08)], startPoint: .top, endPoint: .bottom)
-                    : LinearGradient(colors: [Color(.systemGray5), Color(.systemGray6)], startPoint: .top, endPoint: .bottom)
+                    isUnlocked
+                    ? def.category.color.opacity(0.15)
+                    : Color(.systemGray6)
                 )
 
-            if unlocked {
+            if isUnlocked {
                 Image(systemName: def.icon)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(def.category.color)
@@ -264,52 +297,26 @@ struct AchievementsView: View {
 
                     Image(systemName: def.icon)
                         .font(.system(size: 16))
-                        .foregroundStyle(.secondary.opacity(0.5))
+                        .foregroundStyle(.secondary.opacity(0.6))
                 }
             }
         }
         .frame(width: 48, height: 48)
     }
 
-    @ViewBuilder
-    private func unlockedBadge(unlocked: Bool) -> some View {
-        if unlocked {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 22))
-                .foregroundStyle(.green)
-                .symbolEffect(.bounce, value: unlocked)
-        } else {
-            EmptyView()
-        }
-    }
-
-    @ViewBuilder
-    private func progressLayer(for def: AchievementDefinition, fraction: Double) -> some View {
-        VStack(spacing: 4) {
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color(.systemGray6))
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [def.category.color.opacity(0.8), def.category.color.opacity(0.5)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: geo.size.width * max(fraction, 0.02))
-                }
+    private var progressLayer: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color(.systemGray6))
+                Capsule()
+                    .fill(def.category.color.opacity(0.7))
+                    .frame(width: geo.size.width * max(fraction, 0.02))
             }
-            .frame(height: 5)
-            .clipShape(Capsule())
         }
+        .frame(height: 5)
+        .clipShape(Capsule())
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.bottom, Theme.Spacing.s)
-    }
-
-    private func progressText(for def: AchievementDefinition) -> String {
-        let p = svc.progress(for: def)
-        return "\(p.current)/\(p.target)"
     }
 }
