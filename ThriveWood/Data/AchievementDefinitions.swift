@@ -533,8 +533,8 @@ enum AchievementDefinition: String, Codable, CaseIterable, Identifiable {
         case .habitCreator5: 5
         case .habitCreator10: 10
         case .firstCompletion: 1
-        case .habitsAllInOneDay5: 1
-        case .habitsAllInOneDay10: 1
+        case .habitsAllInOneDay5: 5
+        case .habitsAllInOneDay10: 10
         case .habitsAllInOneDayAll: 1
         case .streak3: 3
         case .streak7: 7

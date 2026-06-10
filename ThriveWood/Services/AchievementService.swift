@@ -135,17 +135,13 @@ final class AchievementService {
         switch def {
         // MARK: Habits
         case .firstHabit:
-            return ((try? habitService.activeHabits()) ?? []).isEmpty ? 0 : 1
-        case .habitCreator5:
-            return ((try? habitService.activeHabits()) ?? []).count >= 5 ? 1 : 0
-        case .habitCreator10:
-            return ((try? habitService.activeHabits()) ?? []).count >= 10 ? 1 : 0
+            return ((try? habitService.activeHabits()) ?? []).count
+        case .habitCreator5, .habitCreator10:
+            return ((try? habitService.activeHabits()) ?? []).count
         case .firstCompletion:
             return hasAnyCompletion() ? 1 : 0
-        case .habitsAllInOneDay5:
-            return habitsCompletedToday() >= 5 ? 1 : 0
-        case .habitsAllInOneDay10:
-            return habitsCompletedToday() >= 10 ? 1 : 0
+        case .habitsAllInOneDay5, .habitsAllInOneDay10:
+            return habitsCompletedToday()
         case .habitsAllInOneDayAll:
             return allHabitsCompletedToday() ? 1 : 0
         case .streak3, .streak7, .streak14, .streak30, .streak60, .streak100, .streak180, .streak365:
@@ -153,11 +149,9 @@ final class AchievementService {
         case .points10, .points50, .points100, .points250, .points500, .points1000, .points2500, .points5000:
             return (try? scoringService.totalEarned()) ?? 0
         case .measurableGoal100:
-            return hasMeasurableCompletion() ? 1 : 0
-        case .measurableGoal500:
-            return measurableCompletionCount()
-        case .measurableGoal1000:
-            return measurableCompletionCount()
+            return measurableGoalReachedCount()
+        case .measurableGoal500, .measurableGoal1000:
+            return totalMeasurableCompletions()
         case .pointsSingleDay10, .pointsSingleDay20, .pointsSingleDay30:
             return (try? habitService.pointsEarned(on: .now)) ?? 0
 
@@ -260,10 +254,6 @@ final class AchievementService {
         return habits.filter { (try? habitService.isCompleted($0)) ?? false }.count
     }
 
-    private func habitsCompletedToday(_ minCount: Int) -> Bool {
-        habitsCompletedToday() >= minCount
-    }
-
     private func allHabitsCompletedToday() -> Bool {
         let due = (try? habitService.habitsDue()) ?? []
         guard !due.isEmpty else { return false }
@@ -275,14 +265,25 @@ final class AchievementService {
         return habits.compactMap { try? habitService.longestStreak(for: $0) }.max() ?? 0
     }
 
-    private func hasMeasurableCompletion() -> Bool {
+    private func measurableGoalReachedCount() -> Int {
         let habits = (try? habitService.activeHabits()) ?? []
-        return habits.contains { $0.isMeasurable && ((try? habitService.isCompleted($0)) ?? false) }
+        var count = 0
+        for habit in habits where habit.isMeasurable {
+            if let progress = try? habitService.currentProgress(habit), progress.progress >= 1.0 {
+                count += 1
+            }
+        }
+        return count
     }
 
-    private func measurableCompletionCount() -> Int {
-        let completions = (try? habitService.activeHabits())?.flatMap { (try? habitService.currentProgress($0)) != nil ? [$0] : [] } ?? []
-        return completions.count
+    private func totalMeasurableCompletions() -> Int {
+        let habits = (try? habitService.activeHabits()) ?? []
+        var total = 0
+        for habit in habits where habit.isMeasurable {
+            let completions = habit.completions.filter { $0.isComplete }
+            total += completions.count
+        }
+        return total
     }
 
     private func completedSessionsCount() -> Int {
