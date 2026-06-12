@@ -7,6 +7,7 @@
 
 
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
 
 @MainActor
@@ -29,15 +30,12 @@ final class HealthKitService {
             return
         }
         
-        // Prüfe Write-Permission für Workouts als Indikator
         let workoutType = HKObjectType.workoutType()
         let status = store.authorizationStatus(for: workoutType)
         
         isAuthorized = status == .sharingAuthorized
     }
 
-    
-    // MARK: - Typen, die wir lesen / schreiben wollen
     
     private var readTypes: Set<HKObjectType> {
         Set([
@@ -58,8 +56,6 @@ final class HealthKitService {
         ].compactMap { $0 })
     }
 
-    // MARK: - Authorization
-
     func requestAuthorization() async -> Bool {
         guard isAvailable else { return false }
         do {
@@ -72,9 +68,6 @@ final class HealthKitService {
         }
     }
 
-    // MARK: - Workout speichern
-
-    /// Speichert eine abgeschlossene `WorkoutSession` in Apple Health.
     func save(session: WorkoutSession) async throws {
         guard isAvailable, isAuthorized else { return }
         guard let endedAt = session.endedAt else { return }
@@ -92,7 +85,6 @@ final class HealthKitService {
 
         try await builder.beginCollection(at: session.startedAt)
 
-        // Metadaten
         var metadata: [String: Any] = [
             HKMetadataKeyWasUserEntered: true
         ]
@@ -102,7 +94,6 @@ final class HealthKitService {
         }
         try await builder.addMetadata(metadata)
 
-        // Samples aus unseren Sets ableiten
         let samples = buildSamples(from: session)
         if !samples.isEmpty {
             try await builder.addSamples(samples)
@@ -112,8 +103,6 @@ final class HealthKitService {
         try await builder.finishWorkout()
     }
 
-    // MARK: - Lesen (für Analyse-Tab)
-
     func fetchSteps(in range: ClosedRange<Date>) async throws -> Double {
         try await fetchSum(type: .stepCount, unit: .count(), in: range)
     }
@@ -122,21 +111,16 @@ final class HealthKitService {
         try await fetchSum(type: .activeEnergyBurned, unit: .kilocalorie(), in: range)
     }
 
-    /// Tagesweise Schritte für Charts.
     func fetchDailySteps(in range: ClosedRange<Date>) async throws -> [(date: Date, steps: Double)] {
         try await fetchDailySum(type: .stepCount, unit: .count(), in: range)
     }
 
-    // MARK: - Mapping
-
     private func mapActivityType(session: WorkoutSession) -> HKWorkoutActivityType {
-        // Wenn wir den Übungstyp kennen, mappen wir passend
         let exercises = session.sets.compactMap { $0.exercise }
         let categories = Set(exercises.map { $0.category })
         let trackingTypes = Set(exercises.map { $0.trackingType })
 
         if trackingTypes.contains(.distanceDuration) {
-            // Prüfe ob es Laufen, Radfahren, etc. ist
             let names = Set(exercises.map { $0.name.lowercased() })
             if names.contains(where: { $0.contains("lauf") || $0.contains("run") }) {
                 return .running
@@ -150,7 +134,7 @@ final class HealthKitService {
             if names.contains(where: { $0.contains("ruder") || $0.contains("row") }) {
                 return .rowing
             }
-            return .running // Default für distanceDuration
+            return .running
         }
 
         if categories.contains(.cardio) { return .mixedCardio }
@@ -164,7 +148,6 @@ final class HealthKitService {
         guard let endedAt = session.endedAt else { return [] }
         var samples: [HKSample] = []
 
-        // Distanz (alle distanceDuration-Sets aufsammeln)
         let totalDistance = session.sets
             .filter { $0.exercise?.trackingType == .distanceDuration && $0.isCompleted }
             .reduce(0.0) { $0 + ($1.distanceMeters ?? 0) }
@@ -184,10 +167,8 @@ final class HealthKitService {
             }
         }
 
-        // Kalorien schätzen (einfache Heuristik basierend auf Dauer)
         if let durationSec = session.durationSeconds, durationSec > 0 {
             let durationMin = Double(durationSec) / 60
-            // Grobe Schätzung: ~6 kcal/min Krafttraining, ~8 kcal/min Cardio
             let exercises = session.sets.compactMap { $0.exercise }
             let isCardioHeavy = exercises.filter { $0.category == .cardio }.count > exercises.count / 2
             let calPerMin: Double = isCardioHeavy ? 8 : 6
@@ -205,8 +186,6 @@ final class HealthKitService {
 
         return samples
     }
-
-    // MARK: - Generic Fetch Helpers
 
     private func fetchSum(
         type identifier: HKQuantityTypeIdentifier,
@@ -269,3 +248,19 @@ final class HealthKitService {
         }
     }
 }
+#else
+@MainActor
+@Observable
+final class HealthKitService {
+    static let shared = HealthKitService()
+    private(set) var isAvailable: Bool = false
+    private(set) var isAuthorized: Bool = false
+    init() {}
+    func checkAuthorizationStatus() {}
+    func requestAuthorization() async -> Bool { false }
+    func save(session: WorkoutSession) async throws {}
+    func fetchSteps(in range: ClosedRange<Date>) async throws -> Double { 0 }
+    func fetchActiveCalories(in range: ClosedRange<Date>) async throws -> Double { 0 }
+    func fetchDailySteps(in range: ClosedRange<Date>) async throws -> [(date: Date, steps: Double)] { [] }
+}
+#endif

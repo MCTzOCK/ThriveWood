@@ -82,7 +82,7 @@ struct MuscleRankingScreen: View {
             }
             .padding(.vertical)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .navigationTitle(mapMode == .ranking ? "Muskel-Ranking" : "Erholung")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -117,7 +117,7 @@ struct MuscleRankingScreen: View {
                 
                 // Progress ring background
                 Circle()
-                    .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .stroke(Color.systemGray5, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .frame(width: 120, height: 120)
                 
                 // Progress ring (circular)
@@ -297,7 +297,7 @@ struct MuscleRankingScreen: View {
                     .buttonStyle(.plain)
                 }
             }
-            .background(Color(.tertiarySystemFill))
+            .background(Color.tertiaryFill)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .padding(.horizontal, 24)
             
@@ -318,7 +318,7 @@ struct MuscleRankingScreen: View {
             }
         }
         .padding(.vertical, 20)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .padding(.horizontal)
     }

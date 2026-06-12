@@ -57,7 +57,7 @@ struct HabitRowView: View {
             Image(systemName: "gear")
                 .font(.caption.weight(.bold))
                 .frame(width: 28, height: 28)
-                .background(Circle().fill(Color(.tertiarySystemFill)))
+                .background(Circle().fill(Color.tertiaryFill))
                 .foregroundStyle(.secondary)
         }
         .buttonStyle(.plain)
@@ -112,7 +112,7 @@ struct HabitRowView: View {
                 Image(systemName: "minus")
                     .font(.caption.weight(.bold))
                     .frame(width: 28, height: 28)
-                    .background(Circle().fill(Color(.tertiarySystemFill)))
+                    .background(Circle().fill(Color.tertiaryFill))
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)

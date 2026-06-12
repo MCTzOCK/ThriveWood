@@ -91,7 +91,7 @@ struct RecoveryMuscleCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+                .fill(colorScheme == .dark ? Color.secondarySystemBackground : Color.systemBackground)
                 .shadow(color: stateColor.opacity(0.15), radius: 20)
         )
     }

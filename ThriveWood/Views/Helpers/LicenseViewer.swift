@@ -70,6 +70,8 @@ struct LicenseDetailView: View {
             .padding()
         }
         .navigationTitle(library.name)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }

@@ -59,7 +59,7 @@ struct BodyProgressEntryEditor: View {
 
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var savedPhotoPaths: [String] = []
-    @State private var loadedNewImages: [UIImage] = []
+    @State private var loadedNewImages: [PlatformImage] = []
 
     @State private var isMale: Bool = true
     @State private var autoCalculateBF: Bool = false
@@ -84,7 +84,9 @@ struct BodyProgressEntryEditor: View {
                 extrasSection
             }
             .navigationTitle(isEditing ? "Eintrag bearbeiten" : "Neuer Eintrag")
-            .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+.navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -111,7 +113,9 @@ struct BodyProgressEntryEditor: View {
                             .padding(.vertical, Theme.Spacing.l)
                         }
                         .navigationTitle(guide.title)
-                        .navigationBarTitleDisplayMode(.inline)
+                        #if os(iOS)
+.navigationBarTitleDisplayMode(.inline)
+#endif
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
                                 Button("OK") { guideFor = nil }
@@ -209,7 +213,9 @@ struct BodyProgressEntryEditor: View {
                     .font(.subheadline)
                 Spacer()
                 TextField("0", value: $weightKg, format: .number.precision(.fractionLength(1...1)))
-                    .keyboardType(.decimalPad)
+                    #if os(iOS)
+.keyboardType(.decimalPad)
+#endif
                     .multilineTextAlignment(.trailing)
                     .frame(width: 80)
                 Text(weightUnit.rawValue)
@@ -276,7 +282,9 @@ struct BodyProgressEntryEditor: View {
                 if hasBodyFat {
                     HStack {
                         TextField("0", value: $bodyFatPercentage, format: .number.precision(.fractionLength(1...1)))
-                            .keyboardType(.decimalPad)
+                            #if os(iOS)
+.keyboardType(.decimalPad)
+#endif
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
                         Text("%")
@@ -296,7 +304,9 @@ struct BodyProgressEntryEditor: View {
             if hasMuscleMass {
                 HStack {
                     TextField("0", value: $muscleMassKg, format: .number.precision(.fractionLength(1...1)))
-                        .keyboardType(.decimalPad)
+                        #if os(iOS)
+.keyboardType(.decimalPad)
+#endif
                         .multilineTextAlignment(.trailing)
                         .frame(width: 80)
                     Text(weightUnit.rawValue)
@@ -315,7 +325,9 @@ struct BodyProgressEntryEditor: View {
             if hasWater {
                 HStack {
                     TextField("0", value: $waterPercentage, format: .number.precision(.fractionLength(1...1)))
-                        .keyboardType(.decimalPad)
+                        #if os(iOS)
+.keyboardType(.decimalPad)
+#endif
                         .multilineTextAlignment(.trailing)
                         .frame(width: 80)
                     Text("%")
@@ -374,7 +386,9 @@ struct BodyProgressEntryEditor: View {
                 HStack {
                     Spacer()
                     TextField("0", value: value, format: .number.precision(.fractionLength(1...1)))
-                        .keyboardType(.decimalPad)
+                        #if os(iOS)
+.keyboardType(.decimalPad)
+#endif
                         .multilineTextAlignment(.center)
                         .frame(width: 80)
                     Text(mUnit).font(.subheadline).foregroundStyle(.secondary)
@@ -397,7 +411,7 @@ struct BodyProgressEntryEditor: View {
                     HStack(spacing: Theme.Spacing.s) {
                         ForEach(savedPhotoPaths, id: \.self) { path in
                             if let image = loadImage(path) {
-                                Image(uiImage: image)
+                                Image(platformImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .frame(width: 80, height: 100)
@@ -405,7 +419,7 @@ struct BodyProgressEntryEditor: View {
                             }
                         }
                         ForEach(loadedNewImages, id: \.self) { image in
-                            Image(uiImage: image)
+                            Image(platformImage: image)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: 80, height: 100)
@@ -505,10 +519,10 @@ struct BodyProgressEntryEditor: View {
 
     private func loadSelectedPhotos() {
         Task {
-            var images: [UIImage] = []
+            var images: [PlatformImage] = []
             for item in selectedPhotos {
                 if let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
+                   let image = PlatformImage(data: data) {
                     images.append(image)
                 }
             }
@@ -572,9 +586,9 @@ struct BodyProgressEntryEditor: View {
         onSave()
     }
 
-    private func loadImage(_ path: String) -> UIImage? {
+    private func loadImage(_ path: String) -> PlatformImage? {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let url = dir.appendingPathComponent(path)
-        return UIImage(contentsOfFile: url.path)
+        return PlatformImage.fromFile(at: url.path)
     }
 }

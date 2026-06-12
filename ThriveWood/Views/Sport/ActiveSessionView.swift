@@ -66,21 +66,23 @@ struct ActiveSessionView: View {
                     }
                     .padding(.vertical, Theme.Spacing.l)
                 }
-                .background(Color(.systemGroupedBackground))
+                .background(Color.groupedBackground)
 
                 if rest.isRunning { RestTimerBar(rest: rest) }
             }
             .navigationTitle(session.workout?.name ?? "Freies Training")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .automatic) {
                     Button("Schließen", role: .destructive) { dismiss() }
                         .foregroundStyle(.red)
                 }
                 ToolbarItem(placement: .principal) {
                     ElapsedTimer(sessionStartedAt: session.startedAt)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button("Fertig") { showingFinish = true }
                         .fontWeight(.semibold)
                 }
@@ -115,6 +117,7 @@ struct ActiveSessionView: View {
                 Text("Alle Sätze dieses Workouts gehen verloren.")
             }
             .errorAlert(errors)
+            #if os(iOS)
             .fullScreenCover(item: $trackingExercise) { exercise in
                 ExerciseTrackerView(
                     tracker: exerciseTracker,
@@ -123,6 +126,16 @@ struct ActiveSessionView: View {
                     trackerCompleted(seconds: seconds, distance: distance)
                 }
             }
+            #else
+            .sheet(item: $trackingExercise) { exercise in
+                ExerciseTrackerView(
+                    tracker: exerciseTracker,
+                    exercise: exercise
+                ) { seconds, distance in
+                    trackerCompleted(seconds: seconds, distance: distance)
+                }
+            }
+            #endif
         }
     }
 

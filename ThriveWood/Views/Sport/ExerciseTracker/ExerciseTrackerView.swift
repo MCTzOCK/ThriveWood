@@ -28,7 +28,9 @@ struct ExerciseTrackerView: View {
             }
             .padding(.horizontal, Theme.Spacing.xl)
         }
+        #if os(iOS)
         .statusBarHidden(true)
+        #endif
     }
 
     private var backgroundGradient: some View {

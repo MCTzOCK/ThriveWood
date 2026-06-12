@@ -59,7 +59,9 @@ struct EditTrainingsPlanSheet: View {
                 }
             }
             .navigationTitle("Plan bearbeiten")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

@@ -61,7 +61,7 @@ struct OnboardingView: View {
         LinearGradient(
             colors: [
                 accentTheme.color.opacity(0.12),
-                Color(.systemBackground)
+                Color.systemBackground
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing

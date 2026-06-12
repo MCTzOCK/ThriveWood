@@ -6,6 +6,7 @@
 //
 
 
+#if os(iOS)
 import ActivityKit
 import Foundation
 
@@ -15,8 +16,6 @@ final class WorkoutLiveActivityManager {
     private var currentActivity: Activity<WorkoutActivityAttributes>?
 
     var isActive: Bool { currentActivity != nil }
-
-    // MARK: - Start
 
     func start(
         workoutName: String,
@@ -30,7 +29,6 @@ final class WorkoutLiveActivityManager {
             return
         }
 
-        // Bestehende beenden
         end()
 
         let attributes = WorkoutActivityAttributes(
@@ -63,8 +61,6 @@ final class WorkoutLiveActivityManager {
         }
     }
 
-    // MARK: - Update
-
     func update(
         currentExercise: String,
         exerciseIndex: Int,
@@ -94,8 +90,6 @@ final class WorkoutLiveActivityManager {
             await activity.update(ActivityContent(state: state, staleDate: nil))
         }
     }
-
-    // MARK: - Rest Timer
 
     func startRest(
         duration: Int,
@@ -141,8 +135,6 @@ final class WorkoutLiveActivityManager {
         )
     }
 
-    // MARK: - End
-
     func end() {
         guard let activity = currentActivity else { return }
         
@@ -153,7 +145,6 @@ final class WorkoutLiveActivityManager {
         }
     }
 
-    /// Beendet mit finaler Zusammenfassung (bleibt kurz auf dem Lock Screen)
     func endWithSummary(
         completedSets: Int,
         totalSets: Int,
@@ -176,9 +167,24 @@ final class WorkoutLiveActivityManager {
         Task {
             await activity.end(
                 ActivityContent(state: finalState, staleDate: nil),
-                dismissalPolicy: .after(.now.addingTimeInterval(300)) // 5 Min sichtbar
+                dismissalPolicy: .after(.now.addingTimeInterval(300))
             )
             self.currentActivity = nil
         }
     }
 }
+#else
+import Foundation
+
+@MainActor
+@Observable
+final class WorkoutLiveActivityManager {
+    var isActive: Bool { false }
+    func start(workoutName: String, workoutIcon: String, firstExercise: String, totalExercises: Int, totalSets: Int) {}
+    func update(currentExercise: String, exerciseIndex: Int, totalExercises: Int, completedSets: Int, totalSets: Int, elapsedSeconds: Int, isResting: Bool = false, restSecondsRemaining: Int? = nil, lastSetInfo: String? = nil) {}
+    func startRest(duration: Int, currentExercise: String, exerciseIndex: Int, totalExercises: Int, completedSets: Int, totalSets: Int, elapsedSeconds: Int, lastSetInfo: String?) {}
+    func endRest(currentExercise: String, exerciseIndex: Int, totalExercises: Int, completedSets: Int, totalSets: Int, elapsedSeconds: Int) {}
+    func end() {}
+    func endWithSummary(completedSets: Int, totalSets: Int, elapsedSeconds: Int) {}
+}
+#endif

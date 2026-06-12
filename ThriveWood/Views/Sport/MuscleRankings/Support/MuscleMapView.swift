@@ -58,9 +58,9 @@ struct MuscleMapView: View {
         VStack(spacing: 4) {
             // Kopf (rein dekorativ)
             Circle()
-                .fill(Color(.systemGray4))
+                .fill(Color.systemGray4)
                 .frame(width: 44, height: 44)
-                .overlay(Circle().stroke(Color(.systemGray3), lineWidth: 1))
+                .overlay(Circle().stroke(Color.systemGray3, lineWidth: 1))
             
             // Muskelreihen
             ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in

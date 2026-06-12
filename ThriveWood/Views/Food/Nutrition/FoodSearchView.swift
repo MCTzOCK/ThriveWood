@@ -71,10 +71,16 @@ struct FoodSearchView: View {
                         resultsSection
                     }
                 }
+                #if os(iOS)
                 .listStyle(.insetGrouped)
+                #else
+                .listStyle(.inset)
+                #endif
             }
             .navigationTitle(onFoodLogged != nil ? "Zutat hinzufügen" : "Lebensmittel hinzufügen")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -88,8 +94,13 @@ struct FoodSearchView: View {
                 }
             }
             .sheet(isPresented: $showScanner) {
+                #if os(iOS)
                 BarcodeScannerView(scannedCode: $scannedCode, isPresented: $showScanner)
                     .ignoresSafeArea()
+                #else
+                Text("Barcode-Scanner ist nur auf iOS verfügbar.")
+                    .padding()
+                #endif
             }
             .sheet(item: $showFoodDetail) { food in
                 if let callback = onFoodLogged {
@@ -139,7 +150,7 @@ struct FoodSearchView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
                         .background(
-                            Capsule().fill(selectedMeal == meal ? meal.color : Color(.tertiarySystemFill))
+                            Capsule().fill(selectedMeal == meal ? meal.color : Color.tertiaryFill)
                         )
                         .foregroundStyle(selectedMeal == meal ? .white : .primary)
                     }
@@ -158,7 +169,9 @@ struct FoodSearchView: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 TextField("Suchen...", text: $searchText)
+                    #if os(iOS)
                     .textInputAutocapitalization(.never)
+                    #endif
                     .autocorrectionDisabled()
                     .submitLabel(.search)
                     .onSubmit { Task { await search() } }
@@ -173,7 +186,7 @@ struct FoodSearchView: View {
                 }
             }
             .padding(Theme.Spacing.s)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous))
 
             Button {

@@ -77,11 +77,17 @@ struct ExerciseLibraryView: View {
                         }
                     }
                 }
+                #if os(iOS)
                 .listStyle(.insetGrouped)
+                #else
+                .listStyle(.inset)
+                #endif
             }
-            .searchable(text: $search, placement: asSheet ? .navigationBarDrawer(displayMode: .always) : .toolbar)
+            .searchable(text: $search)
             .navigationTitle("Übungen")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(asSheet ? .inline : .large)
+            #endif
             .toolbar {
                 if asSheet {
                     ToolbarItem(placement: .cancellationAction) {
@@ -89,7 +95,7 @@ struct ExerciseLibraryView: View {
                     }
                 }
                 
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button { showingNew = true } label: {
                         Image(systemName: "plus")
                     }
@@ -142,7 +148,7 @@ struct ExerciseLibraryView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .background(
-                        Capsule().fill(isSelected ? Color.accentColor : Color(.secondarySystemGroupedBackground))
+                        Capsule().fill(isSelected ? Color.accentColor : Color.cardBackground)
                     )
                     .foregroundStyle(isSelected ? .white : .primary)
             }

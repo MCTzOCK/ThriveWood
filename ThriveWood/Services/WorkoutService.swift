@@ -17,7 +17,6 @@ final class WorkoutService {
     private let exercises: any ExerciseRepository
     private let profileRepo: any UserProfileRepository
     private let env: AppEnvironment
-    private let healthService = HealthKitService.shared
     
     /// Aktive Session wird live im State gehalten – Views können direkt binden.
     private(set) var activeSession: WorkoutSession?
@@ -123,7 +122,7 @@ final class WorkoutService {
         let savedSession = session
         
         Task {
-            try? await healthService.save(session: savedSession)
+            try? await env.healthService.save(session: savedSession)
         }
         
         self.activeSession = nil

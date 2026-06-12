@@ -110,7 +110,9 @@ struct ImportSheet: View {
             }
             .padding(.horizontal, Theme.Spacing.xl)
             .navigationTitle("Import")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Schließen") { dismiss() }
@@ -148,7 +150,7 @@ struct ImportSheet: View {
         .padding(Theme.Spacing.l)
         .background(
             RoundedRectangle(cornerRadius: Theme.Radius.m)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.cardBackground)
         )
     }
 

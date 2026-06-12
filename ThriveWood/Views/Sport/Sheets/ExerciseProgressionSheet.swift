@@ -57,9 +57,11 @@ struct ExerciseProgressionSheet: View {
                 }
                 .padding(Theme.Spacing.l)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
             .navigationTitle(exercise.name)
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Schließen") { dismiss() }

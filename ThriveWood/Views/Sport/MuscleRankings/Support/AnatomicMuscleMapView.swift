@@ -124,8 +124,8 @@ struct AnatomicMuscleMapView: View {
 
         let r = rank(for: muscle)
         if muscle == selectedMuscle { return r.primaryColor.opacity(0.85) }
-        if r == .untrained { return Color(
-            colorScheme == .dark ? .white : .black
+        if r == .untrained { return (
+            colorScheme == .dark ? Color.white : Color.black
         ).opacity(0.55) }
         return r.primaryColor.opacity(0.5)
     }

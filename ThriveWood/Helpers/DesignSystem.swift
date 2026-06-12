@@ -28,8 +28,19 @@ enum Theme {
 
 
 enum Haptics {
-    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) {
-        UIImpactFeedbackGenerator(style: style).impactOccurred()
+    enum FeedbackStyle {
+        case light, medium, heavy, soft, rigid
+    }
+    #if os(iOS)
+    static func impact(_ style: FeedbackStyle = .medium) {
+        let uiStyle: UIImpactFeedbackGenerator.FeedbackStyle = switch style {
+        case .light: .light
+        case .medium: .medium
+        case .heavy: .heavy
+        case .soft: .soft
+        case .rigid: .rigid
+        }
+        UIImpactFeedbackGenerator(style: uiStyle).impactOccurred()
     }
     static func success() {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -40,6 +51,12 @@ enum Haptics {
     static func selection() {
         UISelectionFeedbackGenerator().selectionChanged()
     }
+    #else
+    static func impact(_ style: FeedbackStyle = .medium) {}
+    static func success() {}
+    static func warning() {}
+    static func selection() {}
+    #endif
 }
 
 @Observable

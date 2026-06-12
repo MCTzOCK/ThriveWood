@@ -27,7 +27,13 @@ struct AppIconPickerView: View {
         .init(id: "AppIcon-Cartoon",   displayName: "Cartoon",  previewName: "AppIconPreview-Cartoon")
     ]
 
-    @State private var current: String? = UIApplication.shared.alternateIconName
+    @State private var current: String? = {
+        #if os(iOS)
+        return UIApplication.shared.alternateIconName
+        #else
+        return nil
+        #endif
+    }()
 
     var body: some View {
         NavigationStack {
@@ -57,7 +63,9 @@ struct AppIconPickerView: View {
                 .buttonStyle(.plain)
             }
             .navigationTitle("App-Icon")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fertig") { dismiss() }
@@ -68,11 +76,13 @@ struct AppIconPickerView: View {
     }
 
     private func setIcon(_ id: String?) {
+        #if os(iOS)
         UIApplication.shared.setAlternateIconName(id) { error in
             if error == nil {
                 Haptics.success()
                 current = id
             }
         }
+        #endif
     }
 }

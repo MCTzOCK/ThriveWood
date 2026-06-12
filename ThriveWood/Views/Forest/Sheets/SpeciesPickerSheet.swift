@@ -41,9 +41,11 @@ struct SpeciesPickerSheet: View {
                 .padding()
             }
             .navigationTitle("Baum pflanzen")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button("Schließen") { dismiss() }
                 }
             }
@@ -112,7 +114,7 @@ struct SpeciesPickerSheet: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: Theme.Radius.m)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(Color.cardBackground)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Radius.m)

@@ -128,7 +128,7 @@ private struct DarkDesign: View {
         .frame(width: 400)
         .background(
             ZStack {
-                Color(.systemGroupedBackground)
+                Color.groupedBackground
                 LinearGradient(colors: [color.opacity(0.08), .clear], startPoint: .top, endPoint: .bottom)
             }
         )
@@ -340,7 +340,7 @@ private struct BoldDesign: View {
             .padding(.horizontal, Theme.Spacing.l).padding(.bottom, Theme.Spacing.m)
         }
         .frame(width: 400)
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .environment(\.colorScheme, .dark)
     }
@@ -368,7 +368,7 @@ private struct CompactDesign: View {
             bottomBar
         }
         .frame(width: 400)
-        .background(Color(.systemBackground))
+        .background(Color.systemBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(color.opacity(0.15), lineWidth: 1.5))
         .environment(\.colorScheme, .dark)
@@ -405,7 +405,7 @@ private struct CompactDesign: View {
                         .font(.caption2.weight(.bold).monospacedDigit()).foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 8).padding(.vertical, 6)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color(.secondarySystemGroupedBackground)))
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.cardBackground))
             }
         }
         .padding(.horizontal, Theme.Spacing.m).padding(.vertical, Theme.Spacing.s)
@@ -439,7 +439,7 @@ private struct GradientDesign: View {
         VStack(spacing: 0) {
             ZStack {
                 LinearGradient(
-                    colors: [color, color.opacity(0.6), Color(.systemGroupedBackground)],
+                    colors: [color, color.opacity(0.6), Color.groupedBackground],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )
                 VStack(spacing: Theme.Spacing.l) {
@@ -489,7 +489,7 @@ private struct GradientDesign: View {
             .padding(.horizontal, Theme.Spacing.l).padding(.bottom, Theme.Spacing.m)
         }
         .frame(width: 400)
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .environment(\.colorScheme, .dark)
     }
@@ -563,7 +563,7 @@ private struct StatsCardDesign: View {
         .frame(width: 400)
         .background(
             ZStack {
-                Color(.systemGroupedBackground)
+                Color.groupedBackground
                 LinearGradient(colors: [color.opacity(0.05), .clear], startPoint: .top, endPoint: .center)
             }
         )
@@ -585,7 +585,7 @@ private struct StatsCardDesign: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.m)
-        .background(RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous).fill(Color(.secondarySystemGroupedBackground)))
+        .background(RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous).fill(Color.cardBackground))
     }
 }
 
@@ -720,7 +720,7 @@ private struct StatsOnlyDesign: View {
         .frame(width: 400)
         .background(
             ZStack {
-                Color(.systemGroupedBackground)
+                Color.groupedBackground
                 LinearGradient(colors: [color.opacity(0.06), .clear], startPoint: .center, endPoint: .bottom)
             }
         )
@@ -767,6 +767,7 @@ private struct PillBadge: View {
     }
 }
 
+#if os(iOS)
 struct WorkoutSummaryShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController {
@@ -774,3 +775,4 @@ struct WorkoutSummaryShareSheet: UIViewControllerRepresentable {
     }
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+#endif

@@ -42,7 +42,9 @@ struct AllMealTemplatesView: View {
             }
         }
         .navigationTitle("Alle Mahlzeiten")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

@@ -36,7 +36,9 @@ struct FinishSessionSheet: View {
                 }
             }
             .navigationTitle("Workout beenden")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Zurück") { dismiss() }

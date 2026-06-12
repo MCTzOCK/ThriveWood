@@ -62,7 +62,7 @@ struct RecoveryMuscleRow: View {
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? stateColor.opacity(0.1) : Color(.secondarySystemGroupedBackground))
+                    .fill(isSelected ? stateColor.opacity(0.1) : Color.cardBackground)
             )
         }
         .buttonStyle(.plain)

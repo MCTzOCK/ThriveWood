@@ -300,7 +300,9 @@ final class AchievementService {
     }
 
     private func hasAnyPR() -> Bool {
+        #if os(iOS)
         let workoutService = (UIApplication.shared.connectedScenes.first?.delegate as? any AnyObject)
+        #endif
         return totalPRCount() >= 1
     }
 

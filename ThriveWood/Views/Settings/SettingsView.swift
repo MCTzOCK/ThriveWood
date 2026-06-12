@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 struct SettingsView: View {
     @Environment(AppEnvironment.self) private var env
@@ -32,7 +33,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Einstellungen")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
             .sheet(isPresented: $showingExport) {
                 if env.entitlements.canExportData {
                     ExportSheet()
@@ -201,6 +204,7 @@ struct SettingsView: View {
                 }
             }
             
+            #if canImport(HealthKit)
             Section {
                 if !env.healthService.isAvailable {
                     HStack(spacing: Theme.Spacing.m) {
@@ -226,6 +230,7 @@ struct SettingsView: View {
             } footer: {
                 Text("Workouts werden automatisch in Apple Health gespeichert. Schritte und Kalorien erscheinen in der Analyse.")
             }
+            #endif
 
             Section {
                 Button {
@@ -306,11 +311,19 @@ struct SettingsView: View {
         } message: {
             Text("Habits, Wald, Trainings und Verlauf werden unwiderruflich entfernt.")
         }
+        #if os(iOS)
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isRerun: true) {
                 showOnboarding = false
             }
         }
+        #else
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView(isRerun: true) {
+                showOnboarding = false
+            }
+        }
+        #endif
     }
 
     // MARK: - Loading
@@ -337,9 +350,15 @@ struct SettingsView: View {
     }
 
     private func openSystemSettings() {
+        #if os(iOS)
         if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)
         }
+        #elseif os(macOS)
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+            NSWorkspace.shared.open(url)
+        }
+        #endif
     }
 
     private func formatRest(_ seconds: Int) -> String {

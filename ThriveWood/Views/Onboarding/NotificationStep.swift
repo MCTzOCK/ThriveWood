@@ -59,7 +59,7 @@ struct NotificationStep: View {
             .padding(Theme.Spacing.l)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.m)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.cardBackground)
             )
             .opacity(appear ? 1 : 0)
             .animation(.easeOut.delay(0.3), value: appear)

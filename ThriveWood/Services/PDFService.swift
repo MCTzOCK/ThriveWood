@@ -6,9 +6,149 @@
 //
 import SwiftUI
 import PDFKit
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 import Combine
 import Foundation
+
+#if os(macOS)
+typealias UIColor = NSColor
+typealias UIFont = NSFont
+typealias UIBezierPath = NSBezierPath
+
+extension NSColor {
+    convenience init(red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
+        self.init(calibratedRed: red, green: green, blue: blue, alpha: alpha)
+    }
+    convenience init(white: CGFloat, alpha: CGFloat) {
+        self.init(calibratedWhite: white, alpha: alpha)
+    }
+    static var systemRed: NSColor { .red }
+    static var systemOrange: NSColor { .orange }
+    static var systemYellow: NSColor { .yellow }
+    static var systemGreen: NSColor { .green }
+    static var systemMint: NSColor { .cyan }
+    static var systemTeal: NSColor { .cyan }
+    static var systemCyan: NSColor { .cyan }
+    static var systemBlue: NSColor { .blue }
+    static var systemIndigo: NSColor { .purple }
+    static var systemPurple: NSColor { .purple }
+    static var systemPink: NSColor { .magenta }
+    static var systemBrown: NSColor { .brown }
+}
+
+extension NSFont {
+    static func systemFont(ofSize size: CGFloat, weight: NSFont.Weight = .regular) -> NSFont {
+        NSFont.systemFont(ofSize: size, weight: weight)
+    }
+    static func italicSystemFont(ofSize size: CGFloat) -> NSFont {
+        NSFont(descriptor: NSFont.systemFont(ofSize: size).fontDescriptor.withSymbolicTraits(.italic), size: size) ?? NSFont.systemFont(ofSize: size)
+    }
+}
+
+extension NSBezierPath {
+    convenience init(roundedRect rect: CGRect, cornerRadius: CGFloat) {
+        self.init(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
+    }
+    convenience init(ovalIn rect: CGRect) {
+        self.init(ovalIn: rect)
+    }
+    convenience init(rect: CGRect) {
+        self.init(rect: rect)
+    }
+    func addLine(to point: CGPoint) {
+        line(to: point)
+    }
+    func move(to point: CGPoint) {
+        move(to: point)
+    }
+    var cgPath: CGPath {
+        let path = CGMutablePath()
+        var points = [CGPoint]()
+        for i in 0..<elementCount {
+            let type = element(at: i, associatedPoints: &points)
+            switch type {
+            case .moveTo: path.move(to: points[0])
+            case .lineTo: path.addLine(to: points[0])
+            case .curveTo: path.addCurve(to: points[2], control1: points[0], control2: points[1])
+            case .closePath: path.closeSubpath()
+            @unknown default: break
+            }
+        }
+        return path
+    }
+    var usesEvenOddFillRule: Bool {
+        get { windingRule == .evenOdd }
+        set { windingRule = newValue ? .evenOdd : .nonZero }
+    }
+}
+
+extension NSString {
+    func draw(at point: CGPoint, withAttributes attrs: [NSAttributedString.Key: Any]? = nil) {
+        self.draw(at: point, withAttributes: attrs)
+    }
+    func draw(in rect: CGRect, withAttributes attrs: [NSAttributedString.Key: Any]? = nil) {
+        self.draw(in: rect, withAttributes: attrs)
+    }
+    func size(withAttributes attrs: [NSAttributedString.Key: Any]? = nil) -> NSSize {
+        self.size(withAttributes: attrs)
+    }
+}
+
+struct UIGraphicsPDFRenderer {
+    let bounds: CGRect
+    let format: UIGraphicsPDFRendererFormat
+    
+    init(bounds: CGRect, format: UIGraphicsPDFRendererFormat) {
+        self.bounds = bounds
+        self.format = format
+    }
+    
+    func pdfData(actions: (UIGraphicsPDFRendererContext) -> Void) -> Data {
+        let mediaBox = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
+        let mutableData = NSMutableData()
+        guard let consumer = CGDataConsumer(data: mutableData as CFMutableData) else { return Data() }
+        var mediaBoxPtr = mediaBox
+        guard let context = CGContext(consumer: consumer, mediaBox: &mediaBoxPtr, formatInfo as CFDictionary?) else { return Data() }
+        context.beginPage(mediaBox: &mediaBoxPtr)
+        let ctx = UIGraphicsPDFRendererContext(cgContext: context)
+        NSGraphicsContext.saveGraphicsState()
+        let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
+        NSGraphicsContext.current = nsContext
+        actions(ctx)
+        context.endPage()
+        context.closePDF()
+        NSGraphicsContext.restoreGraphicsState()
+        return mutableData as Data
+    }
+}
+
+class UIGraphicsPDFRendererContext {
+    let cgContext: CGContext?
+    
+    init(cgContext: CGContext) {
+        self.cgContext = cgContext
+    }
+    
+    func beginPage() {
+        cgContext?.beginPage(mediaBox: nil)
+    }
+}
+
+struct UIGraphicsPDFRendererFormat {
+    var documentInfo: [String: Any] = [:]
+}
+
+private var formatInfo: [String: Any] {
+    [
+        kCGPDFContextTitle as String: "ThriveWood",
+        kCGPDFContextCreator as String: "ThriveWood"
+    ]
+}
+#endif
 
 // MARK: - PDFService
 
@@ -56,8 +196,6 @@ final class PDFService: ObservableObject {
         static let badgeBackground = UIColor(red: 0.27, green: 0.55, blue: 0.96, alpha: 0.12)
         static let divider = UIColor(white: 0.88, alpha: 1.0)
     }
-    
-    // MARK: - Fonts
     
     private enum Fonts {
         static let title = UIFont.systemFont(ofSize: 26, weight: .bold)
@@ -171,7 +309,7 @@ final class PDFService: ObservableObject {
     // MARK: - Format / Metadata
     
     private func makeFormat(for workout: Workout) -> UIGraphicsPDFRendererFormat {
-        let format = UIGraphicsPDFRendererFormat()
+        var format = UIGraphicsPDFRendererFormat()
         format.documentInfo = [
             kCGPDFContextTitle as String: workout.name,
             kCGPDFContextAuthor as String: "ThriveWood",
@@ -820,7 +958,6 @@ final class PDFService: ObservableObject {
     }
     
     private func uiColor(from value: String) -> UIColor? {
-        // Try hex first
         var hex = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if hex.hasPrefix("#") { hex.removeFirst() }
         if hex.count == 6, let rgb = UInt32(hex, radix: 16) {
@@ -829,7 +966,6 @@ final class PDFService: ObservableObject {
             let b = CGFloat(rgb & 0xFF) / 255
             return UIColor(red: r, green: g, blue: b, alpha: 1)
         }
-        // Fallback: try HabitColor raw value mapping
         switch value.lowercased() {
         case "red": return .systemRed
         case "orange": return .systemOrange

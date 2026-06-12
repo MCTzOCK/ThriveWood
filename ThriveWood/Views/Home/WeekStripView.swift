@@ -55,7 +55,7 @@ struct WeekStripView: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
                     .frame(width: 32, height: 32)
-                    .background(Circle().fill(Color(.tertiarySystemFill)))
+                    .background(Circle().fill(Color.tertiaryFill))
             }
             .buttonStyle(.plain)
 
@@ -89,7 +89,7 @@ struct WeekStripView: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(isFutureBlocked ? .tertiary : .secondary)
                     .frame(width: 32, height: 32)
-                    .background(Circle().fill(Color(.tertiarySystemFill)))
+                    .background(Circle().fill(Color.tertiaryFill))
             }
             .buttonStyle(.plain)
             .disabled(isFutureBlocked)
@@ -207,7 +207,7 @@ struct WeekStripView: View {
             .padding(.vertical, Theme.Spacing.s)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                    .fill(isSelected ? Color.accentColor : Color(.secondarySystemGroupedBackground))
+                    .fill(isSelected ? Color.accentColor : Color.cardBackground)
             )
             .opacity(isFuture ? 0.5 : 1)
             .animation(.easeInOut(duration: 0.2), value: isSelected)

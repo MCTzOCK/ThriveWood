@@ -26,7 +26,7 @@ struct WeekdaySelector: View {
                         .frame(maxWidth: .infinity, minHeight: 34)
                         .background(
                             RoundedRectangle(cornerRadius: Theme.Radius.s)
-                                .fill(isOn ? Color.green : Color(.secondarySystemGroupedBackground))
+                                .fill(isOn ? Color.green : Color.cardBackground)
                         )
                         .foregroundStyle(isOn ? .white : .primary)
                 }

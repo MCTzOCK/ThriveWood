@@ -85,9 +85,11 @@ struct TreeDetailSheet: View {
             }
             .padding(.vertical, Theme.Spacing.l)
             .navigationTitle("Baum")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button("Fertig") { dismiss() }
                 }
             }

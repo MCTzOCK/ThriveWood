@@ -37,9 +37,11 @@ struct AchievementsView: View {
                 }
                 .padding(.bottom, 40)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
             .navigationTitle("Erfolge")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
             .onAppear {
                 refreshState()
                 withAnimation(.easeOut(duration: 0.6).delay(0.2)) { appeared = true }
@@ -129,7 +131,7 @@ struct AchievementsView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color(.systemGray5))
+                    .fill(Color.systemGray5)
                     .frame(height: 8)
                 Capsule()
                     .fill(
@@ -184,7 +186,7 @@ struct AchievementsView: View {
             .padding(.vertical, 8)
             .background(
                 Capsule()
-                    .fill(isSelected ? color : Color(.systemGray6))
+                    .fill(isSelected ? color : Color.systemGray6)
             )
             .foregroundStyle(isSelected ? .white : .primary)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
@@ -270,7 +272,7 @@ private struct AchievementRow: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                .stroke(isUnlocked ? def.category.color.opacity(0.3) : Color(.systemGray5).opacity(0.5), lineWidth: isUnlocked ? 1.5 : 0.5)
+                .stroke(isUnlocked ? def.category.color.opacity(0.3) : Color.systemGray5.opacity(0.5), lineWidth: isUnlocked ? 1.5 : 0.5)
         )
         .opacity(isUnlocked ? 1.0 : 0.75)
     }
@@ -281,7 +283,7 @@ private struct AchievementRow: View {
                 .fill(
                     isUnlocked
                     ? def.category.color.opacity(0.15)
-                    : Color(.systemGray6)
+                    : Color.systemGray6
                 )
 
             if isUnlocked {
@@ -308,7 +310,7 @@ private struct AchievementRow: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color(.systemGray6))
+                    .fill(Color.systemGray6)
                 Capsule()
                     .fill(def.category.color.opacity(0.7))
                     .frame(width: geo.size.width * max(fraction, 0.02))

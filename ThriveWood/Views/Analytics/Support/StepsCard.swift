@@ -17,6 +17,7 @@ struct StepsCard: View {
     @State private var totalSteps: Double = 0
 
     var body: some View {
+        #if canImport(HealthKit)
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -62,6 +63,9 @@ struct StepsCard: View {
         .padding(Theme.Spacing.l)
         .cardStyle()
         .task { await loadData() }
+        #else
+        EmptyView()
+        #endif
     }
 
     private func loadData() async {

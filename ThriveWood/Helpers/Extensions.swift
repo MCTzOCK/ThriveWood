@@ -58,7 +58,7 @@ extension View {
         self
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.cardBackground)
             )
             .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
     }
@@ -67,6 +67,96 @@ extension View {
         modifier(ErrorAlertModifier(state: state))
     }
 }
+
+extension Color {
+    static var cardBackground: Color {
+        #if os(iOS)
+        Color(.secondarySystemGroupedBackground)
+        #else
+        Color(NSColor.controlBackgroundColor)
+        #endif
+    }
+    
+    static var groupedBackground: Color {
+        #if os(iOS)
+        Color(.systemGroupedBackground)
+        #else
+        Color(NSColor.windowBackgroundColor)
+        #endif
+    }
+    
+    static var tertiaryFill: Color {
+        #if os(iOS)
+        Color(.tertiarySystemFill)
+        #else
+        Color(NSColor.controlBackgroundColor).opacity(0.5)
+        #endif
+    }
+    
+    static var tertiaryLabel: Color {
+        #if os(iOS)
+        Color(UIColor.tertiaryLabel)
+        #else
+        Color(NSColor.tertiaryLabelColor)
+        #endif
+    }
+    
+    static var systemGray5: Color {
+        #if os(iOS)
+        Color(.systemGray5)
+        #else
+        Color(NSColor.controlBackgroundColor)
+        #endif
+    }
+    
+    static var systemGray6: Color {
+        #if os(iOS)
+        Color(.systemGray6)
+        #else
+        Color(NSColor.windowBackgroundColor)
+        #endif
+    }
+    
+    static var systemGray4: Color {
+        #if os(iOS)
+        Color(.systemGray4)
+        #else
+        Color(NSColor.unemphasizedSelectedContentBackgroundColor)
+        #endif
+    }
+    
+    static var systemGray3: Color {
+        #if os(iOS)
+        Color(.systemGray3)
+        #else
+        Color(NSColor.separatorColor)
+        #endif
+    }
+    
+    static var secondarySystemBackground: Color {
+        #if os(iOS)
+        Color(.secondarySystemBackground)
+        #else
+        Color(NSColor.controlBackgroundColor)
+        #endif
+    }
+    
+    static var systemBackground: Color {
+        #if os(iOS)
+        Color(.systemBackground)
+        #else
+        Color(NSColor.windowBackgroundColor)
+        #endif
+    }
+}
+
+#if os(macOS)
+extension Color {
+    init(_ color: NSColor) {
+        self.init(nsColor: color)
+    }
+}
+#endif
 
 import SwiftUI
 

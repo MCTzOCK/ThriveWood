@@ -9,7 +9,9 @@
 import Foundation
 import SwiftUI
 import Charts
+#if canImport(FoundationModels)
 import FoundationModels
+#endif
 
 
 struct WorkoutSessionDetailView: View {
@@ -25,7 +27,16 @@ struct WorkoutSessionDetailView: View {
     @State private var showDeleteConfirm = false
     @State private var errors = ErrorState()
     @State private var successHUDVisible = false
-    @State private var aiAvailable = SystemLanguageModel.default.availability
+    @State private var aiAvailable: Bool = {
+        #if os(iOS)
+        return SystemLanguageModel.default.availability == .available
+        #else
+        if #available(macOS 26.0, *) {
+            return SystemLanguageModel.default.availability == .available
+        }
+        return false
+        #endif
+    }()
     @State private var newPRs: [(exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)] = []
     @State private var showShareImage = false
     
@@ -120,9 +131,11 @@ struct WorkoutSessionDetailView: View {
                 }
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .navigationTitle(session.workout?.name ?? "Freies Training")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar { toolbar }
         .errorAlert(errors)
         .onAppear { loadPRs() }
@@ -149,7 +162,7 @@ struct WorkoutSessionDetailView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .automatic) {
             Menu {
                 Button {
                     showEditSession = true
@@ -187,7 +200,7 @@ struct WorkoutSessionDetailView: View {
                     Label("In Health speichern", systemImage: "heart.text.square")
                 }
                 
-                if aiAvailable == .available{
+                if aiAvailable {
                     NavigationLink {
                         WorkoutAnalysisView(session: session)
                     } label: {

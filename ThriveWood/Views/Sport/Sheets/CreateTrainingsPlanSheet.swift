@@ -54,7 +54,9 @@ struct CreateTrainingsPlanSheet: View {
                 }
             }
             .navigationTitle("Neuer Trainingsplan")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

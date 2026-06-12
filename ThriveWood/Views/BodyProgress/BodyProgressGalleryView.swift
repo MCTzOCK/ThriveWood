@@ -13,6 +13,14 @@ struct BodyProgressGalleryView: View {
 
     @State private var selectedPhoto: PhotoLocation?
 
+    #if os(macOS)
+    private var gridWidth: CGFloat { 600 }
+    private var thumbnailSize: CGFloat { 180 }
+    #else
+    private var gridWidth: CGFloat { UIScreen.main.bounds.width }
+    private var thumbnailSize: CGFloat { (UIScreen.main.bounds.width - Theme.Spacing.l * 2 - Theme.Spacing.s * 2) / 3 }
+    #endif
+
     private var entriesWithPhotos: [BodyProgressEntry] {
         entries.filter { !$0.photoPaths.isEmpty }
     }
@@ -29,18 +37,28 @@ struct BodyProgressGalleryView: View {
             }
             .background(Color.black)
             .navigationTitle("Fotogalerie")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
+            #if os(iOS)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button("Fertig") { dismiss() }
                         .foregroundStyle(.white)
                 }
             }
+            #if os(iOS)
             .fullScreenCover(item: $selectedPhoto) { loc in
                 PhotoViewer(entries: entriesWithPhotos, initialEntry: loc.entryIndex, initialPhoto: loc.photoIndex)
             }
+            #else
+            .sheet(item: $selectedPhoto) { loc in
+                PhotoViewer(entries: entriesWithPhotos, initialEntry: loc.entryIndex, initialPhoto: loc.photoIndex)
+            }
+            #endif
         }
     }
 
@@ -50,7 +68,7 @@ struct BodyProgressGalleryView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.7))
 
-            let columns = [GridItem(.adaptive(minimum: (UIScreen.main.bounds.width - Theme.Spacing.l * 2 - Theme.Spacing.s) / 3), spacing: Theme.Spacing.s)]
+            let columns = [GridItem(.adaptive(minimum: (gridWidth - Theme.Spacing.l * 2 - Theme.Spacing.s) / 3), spacing: Theme.Spacing.s)]
 
             LazyVGrid(columns: columns, spacing: Theme.Spacing.s) {
                 ForEach(Array(entry.photoPaths.enumerated()), id: \.offset) { index, path in
@@ -60,11 +78,11 @@ struct BodyProgressGalleryView: View {
                                 selectedPhoto = PhotoLocation(entryIndex: entryIndex, photoIndex: index)
                             }
                         } label: {
-                            Image(uiImage: image)
+                            Image(platformImage: image)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: (UIScreen.main.bounds.width - Theme.Spacing.l * 2 - Theme.Spacing.s * 2) / 3,
-                                       height: (UIScreen.main.bounds.width - Theme.Spacing.l * 2 - Theme.Spacing.s * 2) / 3)
+                                .frame(width: thumbnailSize,
+                                       height: thumbnailSize)
                                 .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                     }
@@ -74,10 +92,10 @@ struct BodyProgressGalleryView: View {
         }
     }
 
-    private func loadImage(_ path: String) -> UIImage? {
+    private func loadImage(_ path: String) -> PlatformImage? {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let url = dir.appendingPathComponent(path)
-        return UIImage(contentsOfFile: url.path)
+        return PlatformImage.fromFile(at: url.path)
     }
 }
 
@@ -147,14 +165,18 @@ struct PhotoViewer: View {
         TabView(selection: $currentPhotoIndex) {
             ForEach(Array(currentEntry.photoPaths.enumerated()), id: \.offset) { index, path in
                 if let image = loadImage(path) {
-                    Image(uiImage: image)
+                    Image(platformImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .tag(index)
                 }
             }
         }
+        #if os(iOS)
         .tabViewStyle(.page(indexDisplayMode: .always))
+        #else
+        .tabViewStyle(.automatic)
+        #endif
     }
 
     private var footer: some View {
@@ -204,10 +226,10 @@ struct PhotoViewer: View {
         if currentPhotoIndex >= currentEntry.photoPaths.count { currentPhotoIndex = max(0, currentEntry.photoPaths.count - 1) }
     }
 
-    private func loadImage(_ path: String) -> UIImage? {
+    private func loadImage(_ path: String) -> PlatformImage? {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let url = dir.appendingPathComponent(path)
-        return UIImage(contentsOfFile: url.path)
+        return PlatformImage.fromFile(at: url.path)
     }
 }
 

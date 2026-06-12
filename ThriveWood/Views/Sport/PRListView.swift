@@ -41,7 +41,9 @@ struct PRListView: View {
             }
         }
         .navigationTitle("PRs")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.large)
+        #endif
         .searchable(text: $searchText, prompt: "Übung suchen")
         .onAppear { load() }
         .sheet(item: $selectedPR) { selection in
@@ -73,7 +75,11 @@ struct PRListView: View {
                         }
                     }
                 }
+                #if os(iOS)
                 .listStyle(.insetGrouped)
+                #else
+                .listStyle(.inset)
+                #endif
             }
         }
     }

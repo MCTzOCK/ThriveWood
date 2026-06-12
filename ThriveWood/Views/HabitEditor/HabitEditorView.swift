@@ -114,7 +114,9 @@ struct HabitEditorView: View {
                 if isEditing { deleteSection }
             }
             .navigationTitle(isEditing ? "Habit bearbeiten" : "Neuer Habit")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -139,7 +141,9 @@ struct HabitEditorView: View {
     private var detailsSection: some View {
         Section("Details") {
             TextField("Titel", text: $title)
+                #if os(iOS)
                 .textInputAutocapitalization(.sentences)
+                #endif
             TextField("Beschreibung (optional)", text: $details, axis: .vertical)
                 .lineLimit(1...3)
         }
@@ -363,7 +367,7 @@ struct HabitEditorView: View {
                             .background(
                                 Capsule().fill(
                                     isPresetActive(preset)
-                                    ? Color.accentColor : Color(.tertiarySystemFill)
+                                    ? Color.accentColor : Color.tertiaryFill
                                 )
                             )
                             .foregroundStyle(isPresetActive(preset) ? .white : .primary)
@@ -379,7 +383,9 @@ struct HabitEditorView: View {
             Text("Tagesziel").font(.subheadline)
             Spacer()
             TextField("0", value: $targetValue, format: .number)
-                .keyboardType(.decimalPad)
+                #if os(iOS)
+.keyboardType(.decimalPad)
+#endif
                 .multilineTextAlignment(.trailing)
                 .frame(width: 80)
                 .textFieldStyle(.roundedBorder)
@@ -392,7 +398,9 @@ struct HabitEditorView: View {
             Text("Pro Schritt").font(.subheadline)
             Spacer()
             TextField("0", value: $incrementValue, format: .number)
-                .keyboardType(.decimalPad)
+                #if os(iOS)
+.keyboardType(.decimalPad)
+#endif
                 .multilineTextAlignment(.trailing)
                 .frame(width: 80)
                 .textFieldStyle(.roundedBorder)

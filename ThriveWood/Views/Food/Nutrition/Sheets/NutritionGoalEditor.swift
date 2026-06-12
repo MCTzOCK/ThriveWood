@@ -67,7 +67,9 @@ struct NutritionGoalEditor: View {
                 }
             }
             .navigationTitle("Ziele bearbeiten")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

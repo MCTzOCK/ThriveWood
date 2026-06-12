@@ -21,7 +21,9 @@ struct AnalyticsView: View {
                 else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
             .navigationTitle("Analyse")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
         }
         .task {
             if vm == nil { vm = AnalyticsViewModel(env: env) }
@@ -91,7 +93,7 @@ struct AnalyticsView: View {
             .padding(.vertical, Theme.Spacing.l)
         }
         .sheet(isPresented: $showingPaywall) { PaywallView() }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
     }

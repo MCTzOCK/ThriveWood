@@ -105,7 +105,7 @@ struct SupplementCard: View {
             
         }
         .padding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
         .padding(.horizontal)
     }
@@ -116,7 +116,7 @@ struct SupplementCard: View {
         } else if isTaken(dose: dose) {
             return supplement.color.color.opacity(0.1)
         } else {
-            return Color(.tertiarySystemFill)
+            return Color.tertiaryFill
         }
     }
     

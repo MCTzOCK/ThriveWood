@@ -22,7 +22,7 @@ struct MuscleGroupGrid: View {
                         .font(.caption.weight(.semibold))
                         .frame(maxWidth: .infinity, minHeight: 32)
                         .background(
-                            Capsule().fill(isOn ? Color.blue : Color(.tertiarySystemFill))
+                            Capsule().fill(isOn ? Color.blue : Color.tertiaryFill)
                         )
                         .foregroundStyle(isOn ? .white : .primary)
                 }

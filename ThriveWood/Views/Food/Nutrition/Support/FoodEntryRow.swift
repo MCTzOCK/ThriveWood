@@ -32,7 +32,7 @@ struct FoodEntryRow: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous))
         .padding(.horizontal)
         .swipeActions(edge: .trailing) {

@@ -51,7 +51,9 @@ struct MealTemplateEditorView: View {
                 nutritionPreview
             }
             .navigationTitle(template == nil ? "Mahlzeit speichern" : "Mahlzeit bearbeiten")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -92,7 +94,7 @@ struct MealTemplateEditorView: View {
                                 .frame(width: 44, height: 44)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .fill(icon == iconName ? color.color.opacity(0.2) : Color(.tertiarySystemFill))
+                                        .fill(icon == iconName ? color.color.opacity(0.2) : Color.tertiaryFill)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
@@ -123,7 +125,9 @@ struct MealTemplateEditorView: View {
                     Spacer()
                     HStack(spacing: 4) {
                         TextField("", value: $item.amount, format: .number)
+                            #if os(iOS)
                             .keyboardType(.decimalPad)
+                            #endif
                             .frame(width: 60)
                             .textFieldStyle(.roundedBorder)
                             .multilineTextAlignment(.trailing)
@@ -148,8 +152,10 @@ struct MealTemplateEditorView: View {
             HStack {
                 Text("Zutaten (\(items.count))")
                 Spacer()
+                #if os(iOS)
                 EditButton()
                     .font(.caption)
+                #endif
             }
         }
     }

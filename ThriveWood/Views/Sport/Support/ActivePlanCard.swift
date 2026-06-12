@@ -61,7 +61,7 @@ struct ActivePlanCard: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.cardBackground)
             )
         }
         .buttonStyle(.plain)

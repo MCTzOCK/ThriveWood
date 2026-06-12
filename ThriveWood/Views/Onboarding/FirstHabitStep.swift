@@ -81,7 +81,7 @@ struct FirstHabitStep: View {
                         .padding(Theme.Spacing.m)
                         .background(
                             RoundedRectangle(cornerRadius: Theme.Radius.m)
-                                .fill(Color(.secondarySystemGroupedBackground))
+                                .fill(Color.cardBackground)
                         )
 
                     // Icon-Auswahl
@@ -98,7 +98,7 @@ struct FirstHabitStep: View {
                                             RoundedRectangle(cornerRadius: 10)
                                                 .fill(icon == name
                                                       ? color.color.opacity(0.2)
-                                                      : Color(.tertiarySystemFill))
+                                                      : Color.tertiaryFill)
                                         )
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
@@ -125,7 +125,7 @@ struct FirstHabitStep: View {
                 .padding(Theme.Spacing.l)
                 .background(
                     RoundedRectangle(cornerRadius: Theme.Radius.l)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(Color.cardBackground)
                 )
                 .opacity(appear ? 1 : 0)
                 .animation(.easeOut.delay(0.3), value: appear)

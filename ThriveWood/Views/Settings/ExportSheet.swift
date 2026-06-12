@@ -46,7 +46,9 @@ struct ExportSheet: View {
             }
             .padding(Theme.Spacing.xl)
             .navigationTitle("Export")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Schließen") { dismiss() }
@@ -127,7 +129,7 @@ struct ExportSheet: View {
         .padding(Theme.Spacing.l)
         .background(
             RoundedRectangle(cornerRadius: Theme.Radius.m)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.cardBackground)
         )
     }
 

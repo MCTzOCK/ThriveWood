@@ -61,7 +61,7 @@ struct NutritionTab: View {
                         }
                     }
                     if env.aiService.isAvailable() {
-                        ToolbarItem(placement: .topBarLeading) {
+                        ToolbarItem(placement: .automatic) {
                             NavigationLink {
                                 SupplementAnalysisView()
                             } label: {
@@ -80,7 +80,7 @@ struct NutritionTab: View {
             .sheet(isPresented: $showingPaywall) {
                 PaywallView()
             }
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background(Color.groupedBackground)
         }
     }
 }

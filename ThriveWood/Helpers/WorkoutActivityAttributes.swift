@@ -6,16 +6,15 @@
 //
 
 
+#if os(iOS)
 import ActivityKit
 import Foundation
 
 struct WorkoutActivityAttributes: ActivityAttributes {
-    // Statische Daten (ändern sich nicht während der Session)
     let workoutName: String
-    let workoutIcon: String  // SF Symbol
+    let workoutIcon: String
     let startedAt: Date
 
-    // Dynamische Daten (werden live aktualisiert)
     struct ContentState: Codable, Hashable {
         let currentExerciseName: String
         let currentExerciseIndex: Int
@@ -25,6 +24,7 @@ struct WorkoutActivityAttributes: ActivityAttributes {
         let elapsedSeconds: Int
         let isResting: Bool
         let restSecondsRemaining: Int?
-        let lastSetInfo: String?  // z.B. "80kg × 10"
+        let lastSetInfo: String?
     }
 }
+#endif

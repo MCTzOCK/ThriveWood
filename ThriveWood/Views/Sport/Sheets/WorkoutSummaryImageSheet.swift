@@ -10,7 +10,7 @@ import SwiftUI
 
 struct ShareItem: Identifiable {
     let id = UUID()
-    let image: UIImage
+    let image: PlatformImage
 }
 
 struct WorkoutSummaryImageSheet: View {
@@ -78,22 +78,32 @@ struct WorkoutSummaryImageSheet: View {
                         .tag(design)
                     }
                 }
+                #if os(iOS)
                 .tabViewStyle(.page(indexDisplayMode: .always))
                 .indexViewStyle(.page(backgroundDisplayMode: .always))
+                #else
+                .tabViewStyle(.automatic)
+                #endif
                 .frame(maxHeight: .infinity)
 
                 bottomBar
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
             .navigationTitle("Zusammenfassung")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Schließen") { dismiss() }
                 }
             }
             .sheet(item: $shareItem) { item in
+                #if os(iOS)
                 WorkoutSummaryShareSheet(items: [item.image])
+                #else
+                MacShareView(image: item.image)
+                #endif
             }
         }
     }
@@ -103,10 +113,17 @@ struct WorkoutSummaryImageSheet: View {
             Button {
                 let renderer = ImageRenderer(content: WorkoutSummaryImage(data: data, design: selectedDesign))
                 renderer.scale = renderScale
+                #if os(iOS)
                 if let uiImage = renderer.uiImage {
                     shareItem = ShareItem(image: uiImage)
                     Haptics.success()
                 }
+                #else
+                if let nsImage = renderer.nsImage {
+                    shareItem = ShareItem(image: nsImage)
+                    Haptics.success()
+                }
+                #endif
             } label: {
                 HStack(spacing: Theme.Spacing.s) {
                     Image(systemName: "square.and.arrow.up")
@@ -132,7 +149,7 @@ struct WorkoutSummaryImageSheet: View {
             }
         }
         .padding(Theme.Spacing.l)
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
     }
 
     private func qualityButton(label: String, scale: CGFloat, selected: Bool) -> some View {
@@ -143,9 +160,33 @@ struct WorkoutSummaryImageSheet: View {
             Text(label)
                 .font(.caption.weight(selected ? .bold : .regular))
                 .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(Capsule().fill(selected ? Color.accentColor.opacity(0.2) : Color(.tertiarySystemFill)))
+                .background(Capsule().fill(selected ? Color.accentColor.opacity(0.2) : Color.tertiaryFill))
                 .foregroundStyle(selected ? Color.accentColor : .secondary)
         }
         .buttonStyle(.plain)
     }
 }
+
+#if os(macOS)
+struct MacShareView: View {
+    let image: PlatformImage
+    @State private var shareURL: URL?
+    
+    var body: some View {
+        if let url = shareURL {
+            ShareLink(item: url) {
+                Label("Bild teilen", systemImage: "square.and.arrow.up")
+            }
+        } else {
+            Text("Bild wird vorbereitet...")
+                .task {
+                    if let data = image.jpegData(compressionQuality: 0.9) {
+                        let url = FileManager.default.temporaryDirectory.appendingPathComponent("workout-summary.jpg")
+                        try? data.write(to: url)
+                        shareURL = url
+                    }
+                }
+        }
+    }
+}
+#endif

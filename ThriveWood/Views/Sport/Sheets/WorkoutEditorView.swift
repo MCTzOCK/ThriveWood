@@ -61,7 +61,9 @@ struct WorkoutEditorView: View {
                     HStack {
                         Text("Übungen")
                         Spacer()
+                        #if os(iOS)
                         if !slots.isEmpty { EditButton().font(.caption) }
+                        #endif
                     }
                 }
                 
@@ -76,7 +78,9 @@ struct WorkoutEditorView: View {
                 }
             }
             .navigationTitle(isEditing ? "Workout bearbeiten" : "Neues Workout")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

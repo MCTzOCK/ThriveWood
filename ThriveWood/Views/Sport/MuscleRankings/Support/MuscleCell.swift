@@ -35,7 +35,7 @@ struct MuscleCell: View {
                 
                 Text(muscle.shortLabel)
                     .font(.system(size: isSelected ? 10 : 9, weight: .semibold))
-                    .foregroundStyle(rank == .untrained ? .secondary : Color(.white))
+                    .foregroundStyle(rank == .untrained ? .secondary : Color.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
@@ -98,7 +98,7 @@ struct MuscleCell: View {
     
     private var fillStyle: some ShapeStyle {
         if rank == .untrained {
-            return AnyShapeStyle(Color(.systemGray5))
+            return AnyShapeStyle(Color.systemGray5)
         }
         return AnyShapeStyle(
             LinearGradient(

@@ -4,6 +4,7 @@
 //
 //  Created by Ben Siebert on 02.05.26.
 //
+#if os(iOS)
 import SwiftUI
 import AVFoundation
 
@@ -110,7 +111,6 @@ final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObje
         previewLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(previewLayer)
 
-        // Scan-Bereich Overlay
         addScanOverlay()
     }
 
@@ -179,3 +179,4 @@ final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObje
         }
     }
 }
+#endif

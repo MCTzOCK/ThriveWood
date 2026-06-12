@@ -79,7 +79,11 @@ struct ExerciseDetailsSheet: View {
                     .tag(index)
             }
         }
+        #if os(iOS)
         .tabViewStyle(.page(indexDisplayMode: .never))
+        #else
+        .tabViewStyle(.automatic)
+        #endif
         // 1. Add the gradient as an overlay that ignores touches
         .overlay {
             LinearGradient(
@@ -220,7 +224,7 @@ struct ExerciseDetailsSheet: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGroupedBackground))
+                .fill(Color.groupedBackground)
         )
     }
     
@@ -251,7 +255,7 @@ struct ExerciseDetailsSheet: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGroupedBackground))
+                .fill(Color.groupedBackground)
         )
     }
     
@@ -318,7 +322,7 @@ struct ExerciseDetailsSheet: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGroupedBackground))
+                .fill(Color.groupedBackground)
         )
     }
     
@@ -353,7 +357,7 @@ struct ExerciseDetailsSheet: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGroupedBackground))
+                .fill(Color.groupedBackground)
         )
     }
     
@@ -555,7 +559,9 @@ struct ExerciseEditDetailsSheet: View {
             Form {
                 Section("Allgemein") {
                     TextField("Name", text: $name)
+#if os(iOS)
                         .textInputAutocapitalization(.sentences)
+                        #endif
                     TextField("Beschreibung (optional)", text: $details, axis: .vertical)
                         .lineLimit(1...3)
                     Picker("Kategorie", selection: $category) {
@@ -580,7 +586,7 @@ struct ExerciseEditDetailsSheet: View {
                                             RoundedRectangle(cornerRadius: 10)
                                                 .fill(icon == name
                                                       ? Color.blue.opacity(0.18)
-                                                      : Color(.tertiarySystemFill))
+                                                      : Color.tertiaryFill)
                                         )
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
@@ -596,7 +602,9 @@ struct ExerciseEditDetailsSheet: View {
                 }
             }
             .navigationTitle("Details bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+.navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -707,7 +715,9 @@ struct ExerciseEditMuscleGroupsSheet: View {
                 }
             }
             .navigationTitle("Muskeln bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+.navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

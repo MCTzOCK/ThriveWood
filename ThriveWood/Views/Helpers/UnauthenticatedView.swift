@@ -15,7 +15,7 @@ struct UnauthenticatedView: View {
         VStack(spacing: 12) {
             Image(systemName: "lock.shield")
                 .font(.system(size: 50))
-                .foregroundColor(Color(UIColor.tertiaryLabel))
+                .foregroundColor(Color.tertiaryLabel)
             
             Text("Anmeldung erforderlich")
                 .font(.headline)
@@ -23,7 +23,7 @@ struct UnauthenticatedView: View {
             
             Text("Bitte melde dich mit Face-ID an, um deine Daten zu schützen.")
                 .font(.subheadline)
-                .foregroundColor(Color(UIColor.tertiaryLabel))
+                .foregroundColor(Color.tertiaryLabel)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             

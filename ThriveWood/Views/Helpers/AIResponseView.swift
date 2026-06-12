@@ -56,9 +56,25 @@ struct AIResponseView: View {
     
     private func inference() {
         Task {
+            #if os(macOS)
+            if #available(macOS 26.0, *) {
+                do {
+                    let stream = env.aiService.stream(for: prompt)
+                    for try await xm in stream {
+                        loading = false
+                        response = xm.content
+                    }
+                } catch let error {
+                    response = "Fehler bei der KI-Antwort: \(error.localizedDescription)"
+                    loading = false
+                }
+            } else {
+                response = "KI ist auf dieser macOS-Version nicht verfügbar."
+                loading = false
+            }
+            #else
             do {
                 let stream = env.aiService.stream(for: prompt)
-                
                 for try await xm in stream {
                     loading = false
                     response = xm.content
@@ -67,6 +83,7 @@ struct AIResponseView: View {
                 response = "Fehler bei der KI-Antwort: \(error.localizedDescription)"
                 loading = false
             }
+            #endif
         }
     }
 }

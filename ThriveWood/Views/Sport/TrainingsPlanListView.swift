@@ -66,7 +66,7 @@ struct TrainingsPlanListView: View {
                 TrainingsPlanDetailView(plan: plan)
             }
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Pläne durchsuchen") {
+        .searchable(text: $searchText, prompt: "Pläne durchsuchen") {
             planList(plans: plans.filter { $0.name.lowercased().contains(searchText.lowercased()) })
         }
         .task { await load() }

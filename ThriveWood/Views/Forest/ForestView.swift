@@ -19,7 +19,9 @@ struct ForestView: View {
                 else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
             .navigationTitle("Mein Wald")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
         }
         .task {
             if vm == nil { vm = ForestViewModel(env: env) }

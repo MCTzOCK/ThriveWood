@@ -40,11 +40,11 @@ struct HomeView: View {
                             content(vm: vm)
                         } else {
                             SupplementListView(selectedDate: $selectedDate, search: $supplementSearch)
-                                .background(Color(.systemGroupedBackground))
-                                .searchable(text: $supplementSearch, placement: .navigationBarDrawer(displayMode: .automatic))
+                                .background(Color.groupedBackground)
+                                .searchable(text: $supplementSearch)
                         }
                     }
-                    .background(Color(.systemGroupedBackground))
+                    .background(Color.groupedBackground)
                 } else {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -52,7 +52,9 @@ struct HomeView: View {
             .navigationTitle(
                 selectedTab == .habits ? "Habits" : "Supplements"
             )
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
             .toolbar { toolbar }
             .sheet(isPresented: $showingNewHabit) {
                 HabitEditorView(habit: nil)
@@ -133,8 +135,8 @@ struct HomeView: View {
             }
             .padding(.vertical, Theme.Spacing.l)
         }
-        .background(Color(.systemGroupedBackground))
-        .searchable(text: $vm.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
+        .background(Color.groupedBackground)
+        .searchable(text: $vm.searchText)
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
     }
@@ -177,7 +179,7 @@ struct HomeView: View {
     
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .automatic) {
             Button {
                 if env.entitlements.canCreateHabit {
                     showingNewHabit = true
@@ -189,7 +191,7 @@ struct HomeView: View {
             }
             .accessibilityLabel("Neuer Habit")
         }
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItem(placement: .automatic) {
             NavigationLink {
                 AchievementsView()
             } label: {
@@ -197,7 +199,7 @@ struct HomeView: View {
             }
         }
 #if DEBUG
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItem(placement: .automatic) {
             Button { showingDebug = true } label: {
                 Image(systemName: "hammer.fill")
             }

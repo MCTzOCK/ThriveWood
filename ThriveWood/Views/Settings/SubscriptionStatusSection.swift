@@ -76,7 +76,9 @@ struct SubscriptionStatusSection: View {
                 }
                 .font(.subheadline)
             }
+            #if os(iOS)
             .manageSubscriptionsSheet(isPresented: $showingManage)
+            #endif
 
             Button {
                 Task { await store.restore() }
@@ -99,7 +101,7 @@ struct SubscriptionStatusSection: View {
             HStack(spacing: Theme.Spacing.m) {
                 ZStack {
                     Circle()
-                        .fill(Color(.tertiarySystemFill))
+                        .fill(Color.tertiaryFill)
                         .frame(width: 48, height: 48)
                     Image(systemName: "leaf.fill")
                         .font(.title3)

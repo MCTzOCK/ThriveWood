@@ -55,7 +55,9 @@ struct FoodLogSheet: View {
                 Section("Menge") {
                     HStack {
                         TextField("Menge", value: $servingAmount, format: .number)
+                            #if os(iOS)
                             .keyboardType(.decimalPad)
+                            #endif
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 100)
                         Text(food.servingUnit)
@@ -76,7 +78,7 @@ struct FoodLogSheet: View {
                                     .background(
                                         servingAmount == amount
                                         ? Color.accentColor
-                                        : Color(.tertiarySystemFill)
+                                        : Color.tertiaryFill
                                     )
                                     .foregroundStyle(servingAmount == amount ? .white : .primary)
                                     .clipShape(Capsule())
@@ -108,7 +110,9 @@ struct FoodLogSheet: View {
                 }
             }
             .navigationTitle("Hinzufügen")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

@@ -95,7 +95,9 @@ struct DebugMenuView: View {
                 }
             }
             .navigationTitle("Debug")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .sheet(isPresented: $showingPaywall) { PaywallView() }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

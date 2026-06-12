@@ -63,7 +63,7 @@ struct SelectedMuscleCard: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(Color(.systemGray5))
+                                .fill(Color.systemGray5)
                             
                             Capsule()
                                 .fill(data.rank.gradient)
@@ -102,7 +102,7 @@ struct SelectedMuscleCard: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color(.systemBackground))
+                .background(Color.systemBackground)
                 .cornerRadius(8)
             }
             .tint(data.rank.primaryColor)*/
@@ -110,7 +110,7 @@ struct SelectedMuscleCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
+                .fill(colorScheme == .dark ? Color.secondarySystemBackground : Color.systemBackground)
                 .shadow(color: data.rank.glowColor.opacity(0.2), radius: 20)
         )
         .onAppear {

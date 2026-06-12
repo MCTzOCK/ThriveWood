@@ -54,7 +54,7 @@ struct AccentThemePicker: View {
                         .padding(8)
                         .background(
                             RoundedRectangle(cornerRadius: 18)
-                                .fill(Color(.secondarySystemGroupedBackground))
+                                .fill(Color.cardBackground)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 18)
@@ -66,9 +66,11 @@ struct AccentThemePicker: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .navigationTitle("Akzentfarbe")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .sheet(isPresented: $showingPaywall) { PaywallView() }
     }
 }

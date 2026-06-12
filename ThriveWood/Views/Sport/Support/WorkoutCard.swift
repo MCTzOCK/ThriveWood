@@ -36,7 +36,7 @@ struct WorkoutCard: View {
                     Image(systemName: "gear")
                         .font(.callout.weight(.bold))
                         .padding(12)
-                        .background(Circle().fill(Color(.tertiarySystemFill)))
+                        .background(Circle().fill(Color.tertiaryFill))
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)

@@ -55,11 +55,19 @@ struct RootTabView: View {
         .onAppear {
             if needsOnboarding { showOnboarding = true }
         }
+        #if os(iOS)
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isRerun: false) {
                 showOnboarding = false
             }
         }
+        #else
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView(isRerun: false) {
+                showOnboarding = false
+            }
+        }
+        #endif
         .achievementHUD()
     }
 }

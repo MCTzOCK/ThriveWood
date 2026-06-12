@@ -43,7 +43,9 @@ struct FoodAmountSheet: View {
                 Section("Menge") {
                     HStack {
                         TextField("Menge", value: $amount, format: .number)
+                            #if os(iOS)
                             .keyboardType(.decimalPad)
+                            #endif
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 100)
                         Text(food.servingUnit)
@@ -64,7 +66,7 @@ struct FoodAmountSheet: View {
                                     .background(
                                         amount == val
                                         ? Color.accentColor
-                                        : Color(.tertiarySystemFill)
+                                        : Color.tertiaryFill
                                     )
                                     .foregroundStyle(amount == val ? .white : .primary)
                                     .clipShape(Capsule())
@@ -89,7 +91,9 @@ struct FoodAmountSheet: View {
                 }
             }
             .navigationTitle("Menge wählen")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

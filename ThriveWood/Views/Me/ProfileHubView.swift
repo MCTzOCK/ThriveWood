@@ -67,9 +67,11 @@ struct ProfileHubView: View {
                 }
                 .padding(.vertical, Theme.Spacing.xl)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
             .navigationTitle("Mehr")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
             .task { loadStats() }
         }
     }

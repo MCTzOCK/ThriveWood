@@ -17,7 +17,9 @@ struct NutrientField: View {
             Text(label)
             Spacer()
             TextField("0", value: $value, format: .number)
+                #if os(iOS)
                 .keyboardType(.decimalPad)
+                #endif
                 .multilineTextAlignment(.trailing)
                 .frame(width: 80)
             Text(unit)

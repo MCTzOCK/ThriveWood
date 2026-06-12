@@ -31,14 +31,16 @@ struct BodyProgressDetailView: View {
                 }
                 .padding(.vertical, Theme.Spacing.l)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
             .navigationTitle(entry.date.formatted(.dateTime.day().month(.wide).year()))
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .automatic) {
                     Button("Fertig") { dismiss() }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Menu {
                         Button { onEdit() } label: {
                             Label("Bearbeiten", systemImage: "pencil")
@@ -68,19 +70,23 @@ struct BodyProgressDetailView: View {
                 TabView(selection: $selectedPhotoIndex) {
                     ForEach(Array(entry.photoPaths.enumerated()), id: \.offset) { index, path in
                         if let image = loadImage(path) {
-                            Image(uiImage: image)
+                            Image(platformImage: image)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .tag(index)
                         } else {
                             RoundedRectangle(cornerRadius: Theme.Radius.m)
-                                .fill(Color(.tertiarySystemFill))
+                                .fill(Color.tertiaryFill)
                                 .overlay { Image(systemName: "photo").font(.title).foregroundStyle(.secondary) }
                                 .tag(index)
                         }
                     }
                 }
+                #if os(iOS)
                 .tabViewStyle(.page(indexDisplayMode: .always))
+                #else
+                .tabViewStyle(.automatic)
+                #endif
                 .frame(height: 400)
                 .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m))
                 .padding(.horizontal, Theme.Spacing.l)
@@ -235,9 +241,9 @@ struct BodyProgressDetailView: View {
         }
     }
 
-    private func loadImage(_ path: String) -> UIImage? {
+    private func loadImage(_ path: String) -> PlatformImage? {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let url = dir.appendingPathComponent(path)
-        return UIImage(contentsOfFile: url.path)
+        return PlatformImage.fromFile(at: url.path)
     }
 }

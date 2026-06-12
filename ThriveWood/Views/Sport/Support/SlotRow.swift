@@ -73,7 +73,9 @@ struct SlotRow: View {
         HStack {
             Text(label).font(.caption).foregroundStyle(.secondary)
             TextField("0", value: value, format: .number.precision(.fractionLength(decimal ? 0...2 : 0...0)))
+                #if os(iOS)
                 .keyboardType(decimal ? .decimalPad : .numberPad)
+                #endif
                 .textFieldStyle(.roundedBorder)
                 .frame(width: width)
         }

@@ -54,7 +54,9 @@ struct EditDaySheet: View {
             }
         }
         .navigationTitle(day.weekday.label)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Abbrechen") { dismiss() }

@@ -98,7 +98,7 @@ final class Exercise {
 
 
 @Model
-final class Workout {
+final class Workout: Identifiable {
     @Attribute(.unique) var id: UUID
     var name: String
     var details: String

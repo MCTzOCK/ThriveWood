@@ -45,12 +45,14 @@ struct SportView: View {
                 }
                 else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
             .navigationTitle("Sport")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
             .toolbar {
                 if selectedPage == .workouts {
-                    ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarItem(placement: .automatic) {
                         Button {
                             if env.entitlements.canCreateWorkout {
                                 showingNewWorkout = true
@@ -63,7 +65,7 @@ struct SportView: View {
                     }
                 }
                 
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .automatic) {
                     if env.entitlements.isPro {
                         NavigationLink {
                             MuscleRankingScreen()
@@ -90,9 +92,15 @@ struct SportView: View {
             .sheet(item: $selectedExercise) { e in
                 ExerciseDetailsSheet(exercise: e)
             }
+            #if os(iOS)
             .fullScreenCover(item: $presentedSession) { session in
                 ActiveSessionView(session: session).onDisappear { vm?.load() }
             }
+            #else
+            .sheet(item: $presentedSession) { session in
+                ActiveSessionView(session: session).onDisappear { vm?.load() }
+            }
+            #endif
         }
         .task {
             if vm == nil { vm = SportViewModel(env: env) }
@@ -159,12 +167,12 @@ struct SportView: View {
             }
             .padding(.vertical, Theme.Spacing.l)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.groupedBackground)
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
         .navigationDestination(item: $detailSession) { session in
             WorkoutSessionDetailView(session: session)
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+        .searchable(text: $searchText)
     }
 }

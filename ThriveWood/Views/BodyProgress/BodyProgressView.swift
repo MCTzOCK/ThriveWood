@@ -127,11 +127,13 @@ struct BodyProgressView: View {
                 }
                 .padding(.vertical, Theme.Spacing.l)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
             .navigationTitle("Körper")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     HStack(spacing: Theme.Spacing.s) {
                         if entries.contains(where: { !$0.photoPaths.isEmpty }) {
                             Button { showingGallery = true } label: {
@@ -157,6 +159,7 @@ struct BodyProgressView: View {
                     editingEntry = nil
                 }
             }
+            #if os(iOS)
             .fullScreenCover(item: $selectedEntry) { entry in
                 BodyProgressDetailView(entry: entry, env: env) {
                     loadEntries()
@@ -170,9 +173,30 @@ struct BodyProgressView: View {
                     loadEntries()
                 }
             }
+            #else
+            .sheet(item: $selectedEntry) { entry in
+                BodyProgressDetailView(entry: entry, env: env) {
+                    loadEntries()
+                } onEdit: {
+                    editingEntry = entry
+                    selectedEntry = nil
+                } onDelete: {
+                    env.bodyProgressService.deleteEntry(entry)
+                    Haptics.selection()
+                    selectedEntry = nil
+                    loadEntries()
+                }
+            }
+            #endif
+            #if os(iOS)
             .fullScreenCover(isPresented: $showingGallery) {
                 BodyProgressGalleryView(entries: entries.reversed())
             }
+            #else
+            .sheet(isPresented: $showingGallery) {
+                BodyProgressGalleryView(entries: entries.reversed())
+            }
+            #endif
             .errorAlert(errors)
         }
         .task { loadEntries() }

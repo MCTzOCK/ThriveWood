@@ -154,17 +154,19 @@ struct SetRow: View {
             }
             .frame(width: width)
             .padding(.vertical, 6).padding(.horizontal, 8)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color(.tertiarySystemFill)))
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.tertiaryFill))
         } else {
             HStack(spacing: 4) {
                 TextField(placeholder, value: value, format: .number.precision(.fractionLength(0...0)))
-                    .keyboardType(.numberPad)
+                    #if os(iOS)
+.keyboardType(.numberPad)
+#endif
                     .multilineTextAlignment(.center)
                 Text(suffix).font(.caption2).foregroundStyle(.secondary)
             }
             .padding(.vertical, 6).padding(.horizontal, 8)
             .frame(width: width)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color(.tertiarySystemFill)))
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.tertiaryFill))
         }
     }
 
@@ -174,7 +176,9 @@ struct SetRow: View {
                 get: { seconds.wrappedValue / 60 },
                 set: { seconds.wrappedValue = $0 * 60 + (seconds.wrappedValue % 60) }
             ), format: .number)
-                .keyboardType(.numberPad)
+                #if os(iOS)
+.keyboardType(.numberPad)
+#endif
                 .multilineTextAlignment(.center)
                 .frame(width: 36)
             Text(":").font(.callout.monospacedDigit()).foregroundStyle(.secondary)
@@ -182,12 +186,14 @@ struct SetRow: View {
                 get: { seconds.wrappedValue % 60 },
                 set: { seconds.wrappedValue = (seconds.wrappedValue / 60) * 60 + min(59, max(0, $0)) }
             ), format: .number)
-                .keyboardType(.numberPad)
+                #if os(iOS)
+.keyboardType(.numberPad)
+#endif
                 .multilineTextAlignment(.center)
                 .frame(width: 36)
             Text("min").font(.caption2).foregroundStyle(.secondary)
         }
         .padding(.vertical, 6).padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color(.tertiarySystemFill)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color.tertiaryFill))
     }
 }

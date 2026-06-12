@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftUI
+import UserNotifications
 
 @MainActor
 @Observable

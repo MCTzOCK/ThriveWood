@@ -85,7 +85,9 @@ struct TrainingsPlanDetailView: View {
             }
         }
         .navigationTitle("Trainingsplan")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

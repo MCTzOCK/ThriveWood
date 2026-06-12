@@ -44,7 +44,9 @@ struct ExerciseEditorView: View {
                 previewSection
             }
             .navigationTitle("Neue Übung")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -67,7 +69,9 @@ struct ExerciseEditorView: View {
     private var detailsSection: some View {
         Section("Details") {
             TextField("Name", text: $name)
+                #if os(iOS)
                 .textInputAutocapitalization(.sentences)
+                #endif
             TextField("Beschreibung (optional)", text: $details, axis: .vertical)
                 .lineLimit(1...3)
             Picker("Kategorie", selection: $category) {
@@ -135,7 +139,7 @@ struct ExerciseEditorView: View {
                                     RoundedRectangle(cornerRadius: 10)
                                         .fill(icon == name
                                               ? Color.blue.opacity(0.18)
-                                              : Color(.tertiarySystemFill))
+                                              : Color.tertiaryFill)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)

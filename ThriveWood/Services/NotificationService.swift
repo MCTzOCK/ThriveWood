@@ -194,7 +194,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .sound, .badge]
+        #if os(iOS)
+        return [.banner, .sound, .badge]
+        #else
+        return [.banner, .sound]
+        #endif
     }
     
     @MainActor

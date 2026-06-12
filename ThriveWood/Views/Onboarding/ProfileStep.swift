@@ -39,7 +39,7 @@ struct ProfileStep: View {
                         .padding(Theme.Spacing.m)
                         .background(
                             RoundedRectangle(cornerRadius: Theme.Radius.m)
-                                .fill(Color(.secondarySystemGroupedBackground))
+                                .fill(Color.cardBackground)
                         )
                 }
 
@@ -91,7 +91,7 @@ struct ProfileStep: View {
             .padding(Theme.Spacing.l)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.l)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.cardBackground)
             )
             .opacity(appear ? 1 : 0)
             .offset(y: appear ? 0 : 30)

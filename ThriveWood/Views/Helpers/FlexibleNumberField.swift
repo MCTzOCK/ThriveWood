@@ -19,7 +19,9 @@ struct FlexibleNumberField: View {
 
     var body: some View {
         TextField(placeholder, text: $text)
+            #if os(iOS)
             .keyboardType(decimal ? .decimalPad : .numberPad)
+            #endif
             .multilineTextAlignment(.center)
             .focused($isFocused)
             .onChange(of: isFocused) { _, focused in

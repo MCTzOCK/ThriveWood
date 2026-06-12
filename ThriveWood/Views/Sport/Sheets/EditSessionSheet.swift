@@ -63,7 +63,9 @@ struct EditSessionSheet: View {
                 notesSection
             }
             .navigationTitle("Workout bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+.navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -368,14 +370,16 @@ private struct EditableSetRow: View {
                 FlexibleNumberField(value: value, placeholder: placeholder, decimal: true)
             } else {
                 TextField(placeholder, value: value, format: .number.precision(.fractionLength(0...0)))
-                    .keyboardType(.numberPad)
+                    #if os(iOS)
+.keyboardType(.numberPad)
+#endif
                     .multilineTextAlignment(.center)
             }
             Text(suffix).font(.caption2).foregroundStyle(.secondary)
         }
         .frame(width: width)
         .padding(.vertical, 4).padding(.horizontal, 6)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color(.tertiarySystemFill)))
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.tertiaryFill))
     }
 
     private func durationField(seconds: Binding<Int>) -> some View {
@@ -384,7 +388,9 @@ private struct EditableSetRow: View {
                 get: { seconds.wrappedValue / 60 },
                 set: { seconds.wrappedValue = $0 * 60 + (seconds.wrappedValue % 60) }
             ), format: .number)
-                .keyboardType(.numberPad)
+                #if os(iOS)
+.keyboardType(.numberPad)
+#endif
                 .multilineTextAlignment(.center)
                 .frame(width: 32)
             Text(":").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
@@ -392,13 +398,15 @@ private struct EditableSetRow: View {
                 get: { seconds.wrappedValue % 60 },
                 set: { seconds.wrappedValue = (seconds.wrappedValue / 60) * 60 + min(59, max(0, $0)) }
             ), format: .number)
-                .keyboardType(.numberPad)
+                #if os(iOS)
+.keyboardType(.numberPad)
+#endif
                 .multilineTextAlignment(.center)
                 .frame(width: 32)
             Text("min").font(.caption2).foregroundStyle(.secondary)
         }
         .padding(.vertical, 4).padding(.horizontal, 6)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color(.tertiarySystemFill)))
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.tertiaryFill))
     }
 }
 
@@ -449,7 +457,9 @@ private struct ReplaceExerciseSheet: View {
             }
             .searchable(text: $search)
             .navigationTitle("\(originalExercise.name) ersetzen")
-            .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+.navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

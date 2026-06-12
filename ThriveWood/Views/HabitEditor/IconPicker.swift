@@ -25,7 +25,7 @@ struct IconPicker: View {
                             .frame(width: 56, height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: Theme.Radius.s)
-                                    .fill(selection == name ? tint.opacity(0.2) : Color(.secondarySystemGroupedBackground))
+                                    .fill(selection == name ? tint.opacity(0.2) : Color.cardBackground)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: Theme.Radius.s)
@@ -39,6 +39,8 @@ struct IconPicker: View {
             .padding()
         }
         .navigationTitle("Symbol wählen")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }

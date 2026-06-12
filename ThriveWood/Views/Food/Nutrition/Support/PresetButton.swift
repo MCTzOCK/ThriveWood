@@ -23,7 +23,7 @@ struct PresetButton: View {
                 .font(.caption.weight(.medium))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color(.tertiarySystemFill))
+                .background(Color.tertiaryFill)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)

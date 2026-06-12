@@ -32,14 +32,16 @@ struct PaywallView: View {
             }
             .background(
                 LinearGradient(
-                    colors: [.green.opacity(0.08), Color(.systemBackground)],
+                    colors: [.green.opacity(0.08), Color.systemBackground],
                     startPoint: .top, endPoint: .center
                 )
                 .ignoresSafeArea()
             )
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
@@ -105,7 +107,7 @@ struct PaywallView: View {
         .padding(Theme.Spacing.l)
         .background(
             RoundedRectangle(cornerRadius: Theme.Radius.l)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.cardBackground)
         )
     }
 
@@ -170,7 +172,9 @@ struct PaywallView: View {
                     .foregroundStyle(.secondary)
             }
             Button {
+                #if os(iOS)
                 SKPaymentQueue.default().presentCodeRedemptionSheet()
+                #endif
             } label: {
                 Text("Code einlösen")
                     .font(.subheadline.weight(.semibold))
@@ -253,7 +257,7 @@ private struct PricingCard: View {
             .padding(Theme.Spacing.l)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.m)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.cardBackground)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.m)

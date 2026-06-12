@@ -98,7 +98,7 @@ struct FoodDiaryView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color(.tertiarySystemFill))
+                    .background(Color.tertiaryFill)
                     .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m))
                 }
                 .buttonStyle(.plain)
@@ -168,7 +168,7 @@ struct FoodDiaryView: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
         .padding(.horizontal)
     }

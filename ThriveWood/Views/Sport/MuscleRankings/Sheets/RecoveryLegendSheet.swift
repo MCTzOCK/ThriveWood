@@ -62,7 +62,7 @@ struct RecoveryLegendSheet: View {
                                 }
                             }
                             .padding()
-                            .background(Color(.secondarySystemGroupedBackground))
+                            .background(Color.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }
@@ -115,14 +115,16 @@ struct RecoveryLegendSheet: View {
                             .padding(.top, 4)
                     }
                     .padding()
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Color.cardBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .padding(.horizontal)
                 }
                 .padding(.bottom, Theme.Spacing.xl)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.groupedBackground)
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fertig") { dismiss() }

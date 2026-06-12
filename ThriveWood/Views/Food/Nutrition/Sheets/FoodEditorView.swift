@@ -43,7 +43,9 @@ struct FoodEditorView: View {
                     TextField("Name", text: $name)
                     TextField("Marke (optional)", text: $brand)
                     TextField("Barcode (optional)", text: $barcode)
+                        #if os(iOS)
                         .keyboardType(.numberPad)
+                        #endif
                     Picker("Kategorie", selection: $category) {
                         ForEach(FoodCategory.allCases) { cat in
                             Label(cat.label, systemImage: cat.icon).tag(cat)
@@ -54,7 +56,9 @@ struct FoodEditorView: View {
                 Section("Portionsgröße") {
                     HStack {
                         TextField("Menge", value: $servingSize, format: .number)
+                            #if os(iOS)
                             .keyboardType(.decimalPad)
+                            #endif
                             .frame(width: 80)
                         Picker("Einheit", selection: $servingUnit) {
                             Text("g").tag("g")
@@ -82,7 +86,9 @@ struct FoodEditorView: View {
                 }
             }
             .navigationTitle(food == nil ? "Lebensmittel erstellen" : "Bearbeiten")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

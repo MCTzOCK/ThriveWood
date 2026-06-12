@@ -50,7 +50,9 @@ struct SupplementEditorView: View {
                 }
             }
             .navigationTitle(isEditing ? "Supplement bearbeiten" : "Neues Supplement")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }

@@ -53,7 +53,7 @@ struct ConceptStep: View {
                     .padding(Theme.Spacing.m)
                     .background(
                         RoundedRectangle(cornerRadius: Theme.Radius.m)
-                            .fill(Color(.secondarySystemGroupedBackground))
+                            .fill(Color.cardBackground)
                     )
                     .opacity(appear ? 1 : 0)
                     .offset(x: appear ? 0 : 40)

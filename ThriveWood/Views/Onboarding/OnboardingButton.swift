@@ -28,7 +28,7 @@ struct OnboardingButton: View {
             .background(
                 Capsule().fill(
                     isSecondary
-                    ? AnyShapeStyle(Color(.secondarySystemGroupedBackground))
+                    ? AnyShapeStyle(Color.cardBackground)
                     : AnyShapeStyle(accent.color.gradient)
                 )
             )
@@ -47,7 +47,7 @@ struct OnboardingBackButton: View {
                 .font(.headline)
                 .frame(width: 52, height: 52)
                 .background(
-                    Circle().fill(Color(.secondarySystemGroupedBackground))
+                    Circle().fill(Color.cardBackground)
                 )
                 .foregroundStyle(.primary)
         }
