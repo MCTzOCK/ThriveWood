@@ -31,7 +31,8 @@ enum SharedModelContainer {
         MealTemplateItem.self,
         TrainingsPlan.self,
         TrainingsPlanDay.self,
-        AchievementRecord.self
+        AchievementRecord.self,
+        BodyProgressEntry.self
     ])
 
     static let shared: ModelContainer = {

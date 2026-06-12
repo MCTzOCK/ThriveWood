@@ -121,6 +121,35 @@ final class SwiftDataHabitCompletionRepository: SwiftDataRepository, HabitComple
     }
 }
 
+
+protocol BodyProgressRepository {
+    func fetchAll() throws -> [BodyProgressEntry]
+    func add(_ entry: BodyProgressEntry) throws
+    func update(_ entry: BodyProgressEntry) throws
+    func delete(_ entry: BodyProgressEntry) throws
+}
+
+@MainActor
+final class SwiftDataBodyProgressRepository: SwiftDataRepository, BodyProgressRepository {
+    func fetchAll() throws -> [BodyProgressEntry] {
+        try context.fetch(FetchDescriptor<BodyProgressEntry>(sortBy: [SortDescriptor(\.date, order: .reverse)]))
+    }
+    
+    func add(_ entry: BodyProgressEntry) throws {
+        context.insert(entry)
+        try save()
+    }
+    
+    func update(_ entry: BodyProgressEntry) throws { try save() }
+    
+    func delete(_ entry: BodyProgressEntry) throws {
+        context.delete(entry)
+        try save()
+    }
+
+}
+
+
 // MARK: - Forest
 
 @MainActor
@@ -760,3 +789,4 @@ final class TrainingsPlanRepository {
         return nil
     }
 }
+

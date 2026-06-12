@@ -12,18 +12,38 @@ struct SetRow: View {
     let unit: WeightUnit
     let onComplete: () -> Void
     let onDelete: () -> Void
+    var onStartTracker: (() -> Void)? = nil
 
     private var type: ExerciseTrackingType {
         set_.exercise?.trackingType ?? .repsWeight
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.s) {
-            indexBadge
-            inputs
-            Spacer(minLength: 0)
-            completeButton
-            deleteButton
+        let needsVerticalLayout = (type == .distanceDuration) && onStartTracker != nil && !set_.isCompleted
+        VStack(alignment: .leading, spacing: needsVerticalLayout ? 6 : 0) {
+            HStack(spacing: Theme.Spacing.s) {
+                indexBadge
+                if needsVerticalLayout {
+                    VStack(alignment: .leading, spacing: 4) {
+                        numberField(
+                            value: Binding(
+                                get: { (set_.distanceMeters ?? 0) / 1000 },
+                                set: { set_.distanceMeters = $0 == 0 ? nil : $0 * 1000 }),
+                            placeholder: "0,00", suffix: "km",
+                            width: 90, decimal: true)
+                        durationField(
+                            seconds: Binding(
+                                get: { set_.durationSeconds ?? 0 },
+                                set: { set_.durationSeconds = $0 == 0 ? nil : $0 }))
+                    }
+                } else {
+                    inputs
+                }
+                Spacer(minLength: 0)
+                trackerButton
+                completeButton
+                deleteButton
+            }
         }
         .animation(.snappy, value: set_.isCompleted)
     }
@@ -96,6 +116,19 @@ struct SetRow: View {
                 .foregroundStyle(.red)
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var trackerButton: some View {
+        if let onStartTracker, !set_.isCompleted,
+           (type == .duration || type == .distanceDuration) {
+            Button(action: onStartTracker) {
+                Image(systemName: "play.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.tint)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     // MARK: - Field Helpers

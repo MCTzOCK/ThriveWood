@@ -16,11 +16,14 @@ struct ActiveSessionView: View {
     @Bindable var session: WorkoutSession
 
     @State private var rest = RestTimer()
-    @State private var currentExercise: Exercise? = nil
+@State private var exerciseTracker = ExerciseTrackerService()
+@State private var trackingSetEntry: SetEntry?
+@State private var trackingExercise: Exercise?
+@State private var currentExercise: Exercise? = nil
     @State private var showingFinish = false
     @State private var showingCancel = false
-    @State private var showingAddSheet = false
-    @State private var notes: String = ""
+@State private var showingAddSheet = false
+@State private var notes: String = ""
     @State private var rpe: Int = 7
     @State private var errors = ErrorState()
 
@@ -51,7 +54,8 @@ struct ActiveSessionView: View {
                                     withAnimation(.snappy) {
                                         currentExercise = exercise
                                     }
-                                }
+                                },
+                                onStartTracker: { set in startTracker(for: set, exercise: exercise) }
                             )
                             .padding(.horizontal, Theme.Spacing.l)
                         }
@@ -81,7 +85,7 @@ struct ActiveSessionView: View {
                         .fontWeight(.semibold)
                 }
             }
-            .onAppear { recache() }
+            .onAppear { recache(); restoreTrackerIfNeeded() }
             .onChange(of: session.sets.count) { _, _ in recache() }
             .onChange(of: completedSignature) { _, _ in recache() }
             .sheet(isPresented: $showingFinish) {
@@ -111,6 +115,14 @@ struct ActiveSessionView: View {
                 Text("Alle Sätze dieses Workouts gehen verloren.")
             }
             .errorAlert(errors)
+            .fullScreenCover(item: $trackingExercise) { exercise in
+                ExerciseTrackerView(
+                    tracker: exerciseTracker,
+                    exercise: exercise
+                ) { seconds, distance in
+                    trackerCompleted(seconds: seconds, distance: distance)
+                }
+            }
         }
     }
 
@@ -165,7 +177,7 @@ struct ActiveSessionView: View {
         }
         cachedGroups = result
         cachedCompletedCount = session.sets.filter(\.isCompleted).count
-        cachedTotalVolume = session.sets.filter { $0.isCompleted }.reduce(0) { $0 + $1.volumeValue }
+        cachedTotalVolume = session.sets.filter { $0.isCompleted && $0.exercise?.trackingType == .repsWeight }.reduce(0) { $0 + $1.volumeValue }
         cachedExerciseCount = result.count
     }
 
@@ -242,5 +254,47 @@ struct ActiveSessionView: View {
             env.achievementService.checkMuscle()
             dismiss()
         } catch { errors.show(error) }
+    }
+
+    // MARK: Tracker
+
+    private func startTracker(for set: SetEntry, exercise: Exercise) {
+        trackingSetEntry = set
+        trackingExercise = exercise
+        let trackingType: ExerciseTrackingType
+        switch exercise.trackingType {
+        case .duration: trackingType = .duration
+        case .distanceDuration: trackingType = .distanceDuration
+        default: trackingType = .duration
+        }
+        exerciseTracker.start(trackingType: trackingType, setEntryId: set.id, sessionId: session.id)
+    }
+
+    private func restoreTrackerIfNeeded() {
+        guard let state = exerciseTracker.savedState,
+              state.sessionId == session.id,
+              let setEntry = session.sets.first(where: { $0.id == state.setEntryId }),
+              let exercise = setEntry.exercise
+        else { return }
+
+        trackingSetEntry = setEntry
+        trackingExercise = exercise
+        exerciseTracker.restore(from: state)
+    }
+
+    private func trackerCompleted(seconds: Int, distance: Double?) {
+        guard let set = trackingSetEntry else { return }
+        set.durationSeconds = seconds
+        if let distance {
+            set.distanceMeters = distance
+        }
+        set.isCompleted = true
+        set.completedAt = .now
+        try? env.sessionRepo.update(session)
+        Haptics.success()
+        exerciseTracker.stop()
+        trackingSetEntry = nil
+        trackingExercise = nil
+        recache()
     }
 }

@@ -18,6 +18,7 @@ struct ExerciseBlock: View {
     let onDelete: (SetEntry) -> Void
     let removeExercise: () -> Void
     let showDetails: () -> Void
+    var onStartTracker: ((SetEntry) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
@@ -60,15 +61,15 @@ struct ExerciseBlock: View {
             // Header
             HStack {
                 Text("#").frame(width: 24, alignment: .leading)
-                Text("kg" == unit.rawValue ? "kg" : "lb").frame(width: 70, alignment: .center)
+            /*    Text("kg" == unit.rawValue ? "kg" : "lb").frame(width: 70, alignment: .center)
                 Text("Reps").frame(width: 70, alignment: .center)
-                Spacer()
+                Spacer()*/
             }
             .font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
 
             ForEach(Array(sets.enumerated()), id: \.element.id) { idx, set in
-                SetRow(index: idx + 1, set_: set, unit: unit, onComplete: { onComplete(set) }, onDelete: { onDelete(set) })
+                SetRow(index: idx + 1, set_: set, unit: unit, onComplete: { onComplete(set) }, onDelete: { onDelete(set) }, onStartTracker: onStartTracker.map { _ in { onStartTracker?(set) } })
             }
             
 

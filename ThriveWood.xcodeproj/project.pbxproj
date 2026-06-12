@@ -62,6 +62,7 @@
 			membershipExceptions = (
 				Data/AchievementDefinitions.swift,
 				Data/Models/AchievementDomain.swift,
+				Data/Models/BodyDomain.swift,
 				Data/Models/FoodDomain.swift,
 				Data/Models/ForestDomain.swift,
 				Data/Models/HabitDomain.swift,
@@ -425,7 +426,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 308;
+				CURRENT_PROJECT_VERSION = 333;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -433,8 +434,11 @@
 				INFOPLIST_KEY_CFBundleDisplayName = ThriveWood;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSCameraUsageDescription = "ThriveWood nutzt deine Kamera um Barcodes zu scannen";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "ThriveWood benötigt deine FaceID, um Körper-Fortschrittsdaten zu schützen.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "ThriveWood zeigt dir Schritte und Kalorien in der Analyse an.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "ThriveWood speichert deine Workouts in Apple Health.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "ThriveWood benötigt deinen Standort, um die zurückgelegte Distanz während Cardio-übbungen wie Laufen oder Radfahren zu tracken.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "ThriveWood benötigt deinen Standort, um die zurückgelegte Distanz während Cardio-Übungen wie Laufen oder Radfahren zu tracken.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -471,7 +475,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 308;
+				CURRENT_PROJECT_VERSION = 333;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -479,8 +483,11 @@
 				INFOPLIST_KEY_CFBundleDisplayName = ThriveWood;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSCameraUsageDescription = "ThriveWood nutzt deine Kamera um Barcodes zu scannen";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "ThriveWood benötigt deine FaceID, um Körper-Fortschrittsdaten zu schützen.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "ThriveWood zeigt dir Schritte und Kalorien in der Analyse an.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "ThriveWood speichert deine Workouts in Apple Health.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "ThriveWood benötigt deinen Standort, um die zurückgelegte Distanz während Cardio-übbungen wie Laufen oder Radfahren zu tracken.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "ThriveWood benötigt deinen Standort, um die zurückgelegte Distanz während Cardio-Übungen wie Laufen oder Radfahren zu tracken.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -516,7 +523,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 308;
+				CURRENT_PROJECT_VERSION = 333;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
@@ -552,7 +559,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 308;
+				CURRENT_PROJECT_VERSION = 333;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;

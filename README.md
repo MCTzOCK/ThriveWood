@@ -15,6 +15,20 @@ Simple check-offs or measurable goals (water intake, steps, meditation minutes).
 ### 💪 Workout Tracker
 Full session management with set-by-set logging, rest timers, and RPE rating. Build custom workouts, schedule training plans by weekday, and track personal records for every exercise.
 
+**Exercise Tracking Modes:**
+- **Reps × Weight** — Classic strength training (e.g. bench press)
+- **Reps Only** — Bodyweight exercises (e.g. push-ups)
+- **Duration** — Time-based exercises with a built-in fullscreen stopwatch timer (e.g. plank, stretching)
+- **Distance & Time** — Cardio exercises with GPS distance tracking and live pace display (e.g. running, cycling, rowing)
+
+**Smart Tracker (Duration & Cardio):**
+- One-tap fullscreen tracker overlay for duration and distance exercises
+- Automatic timer that counts up from start
+- GPS-based distance tracking for cardio exercises with real-time pace (/km)
+- Start / Pause / Resume controls
+- Persists tracking state across app restarts — if the app closes or crashes mid-exercise, the tracker resumes exactly where it left off when reopened
+- Completed sets show tracked values directly in the set row
+
 ### 🏋️ Muscle Rankings
 An anatomical body map (SVG-based, both front and back) shows which muscles are trained and which need attention. Ranks from Untrained through Bronze, Silver, Gold, Platinum, Diamond, Champion, and Legend — based on volume and sets.
 
@@ -39,6 +53,7 @@ Additional accent themes (Ocean, Sunset, Lavender, Rosé), alternate app icons, 
 |-------|-----------|
 | UI | SwiftUI, iOS 17+ |
 | Data | SwiftData with `ModelContainer` |
+| Location | CoreLocation (GPS distance tracking) |
 | Health | HealthKit |
 | Payments | StoreKit 2 |
 | AI | OpenAI API (supplement analysis) |
@@ -57,6 +72,8 @@ ThriveWood/
 ├── Services/                     # Business logic
 │   ├── HabitService.swift
 │   ├── WorkoutService.swift
+│   ├── ExerciseTrackerService.swift  # Timer & GPS distance tracking
+│   ├── RestTimer.swift
 │   ├── MuscleRankingService.swift
 │   ├── ForestService.swift
 │   ├── SupplementService.swift
@@ -74,6 +91,8 @@ ThriveWood/
 │   │   │       ├── AnatomicMuscleMapView.swift   # SVG body map
 │   │   │       └── AnatomicMuscleHelpers.swift   # Path data
 │   │   └── Sheets/              # Exercise & workout editors
+│   │   └── ExerciseTracker/    # Fullscreen timer & GPS tracker
+│   │       └── ExerciseTrackerView.swift
 │   ├── HabitEditor/
 │   ├── Onboarding/
 │   ├── Settings/

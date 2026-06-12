@@ -21,6 +21,7 @@ final class AppEnvironment {
     let sessionRepo: any WorkoutSessionRepository
     let profileRepo: any UserProfileRepository
     let achievementRepo: AchievementRepository
+    let bodyProgressRepo: BodyProgressRepository
     
     let foodRepo: FoodRepository
     let foodEntryRepo: FoodEntryRepository
@@ -47,8 +48,8 @@ final class AppEnvironment {
     let aiService: AIService
     let trainingsPlanService: TrainingsPlanService
     let achievementService: AchievementService
-    
     var entitlements: EntitlementService
+    let bodyProgressService: BodyProgressService
     
     let workoutLiveActivity = WorkoutLiveActivityManager()
     
@@ -67,6 +68,7 @@ final class AppEnvironment {
         let sessionRepo    = SwiftDataWorkoutSessionRepository(context: context)
         let profileRepo    = SwiftDataUserProfileRepository(context: context)
         self.trainingsPlanRepo = TrainingsPlanRepository(modelContext: context)
+        self.bodyProgressRepo = SwiftDataBodyProgressRepository(context: context)
 
 
         self.habitRepo = habitRepo
@@ -119,6 +121,7 @@ final class AppEnvironment {
             sessionRepo: sessionRepo,
             muscleRankingService: muscleRankingService
         )
+        self.bodyProgressService = BodyProgressService(repo: bodyProgressRepo)
         
         
         // Seed & Bootstrap

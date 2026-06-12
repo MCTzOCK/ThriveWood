@@ -107,7 +107,7 @@ struct HomeView: View {
                 
                 VStack(spacing: Theme.Spacing.m) {
                     ForestPreviewCard(availablePoints: vm.availablePoints)
-
+                    
                     DailySummaryCard(
                         points: vm.pointsToday,
                         goal: vm.dailyGoal,
@@ -123,9 +123,9 @@ struct HomeView: View {
                     ProgressView(value: Double(vm.pointsToday), total: Double(
                         vm.habits.map { $0.points.rawValue }.reduce(0, +)
                     ))
-                        .progressViewStyle(LinearProgressViewStyle(tint: .accentColor))
-                        .padding(.horizontal, Theme.Spacing.l)
-
+                    .progressViewStyle(LinearProgressViewStyle(tint: .accentColor))
+                    .padding(.horizontal, Theme.Spacing.l)
+                    
                     Text("Fortschritt: \(vm.pointsToday) / \(vm.habits.map { $0.points.rawValue }.reduce(0, +)) Punkte")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -188,6 +188,13 @@ struct HomeView: View {
                 Image(systemName: "plus")
             }
             .accessibilityLabel("Neuer Habit")
+        }
+        ToolbarItem(placement: .topBarLeading) {
+            NavigationLink {
+                AchievementsView()
+            } label: {
+                Image(systemName: "trophy")
+            }
         }
 #if DEBUG
         ToolbarItem(placement: .topBarLeading) {

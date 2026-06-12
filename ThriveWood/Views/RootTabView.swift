@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 enum AppTab: Hashable {
-    case home, analytics, sport, achievements, settings
+    case home, analytics, sport, bodyProgress, settings
 }
 
 struct RootTabView: View {
@@ -32,14 +32,14 @@ struct RootTabView: View {
             AnalyticsView()
                 .tabItem { Label("Analyse", systemImage: "chart.bar.xaxis") }
                 .tag(AppTab.analytics)
-
+            
             SportView()
                 .tabItem { Label("Sport", systemImage: "dumbbell.fill") }
                 .tag(AppTab.sport)
-
-            AchievementsView()
-                .tabItem { Label("Erfolge", systemImage: "trophy.fill") }
-                .tag(AppTab.achievements)
+            
+            BodyProgressView()
+                .tabItem { Label("Body", systemImage: "figure.run") }
+                .tag(AppTab.bodyProgress)
 
             SettingsView()
                 .tabItem { Label("Einstellungen", systemImage: "gearshape.2") }
