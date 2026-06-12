@@ -130,7 +130,7 @@ struct WorkoutProvider: TimelineProvider {
 
     @MainActor private func makeEntry() -> WorkoutEntry {
         let sessions = WidgetDataProvider.shared.recentSessions(limit: 5).map { s in
-            let vol = s.sets.filter(\.isCompleted).reduce(0.0) {
+            let vol = (s.sets ?? []).filter(\.isCompleted).reduce(0.0) {
                 $0 + ($1.weight ?? 0) * Double($1.reps ?? 0)
             }
             return (name: s.workout?.name ?? "Freies Training",

@@ -11,14 +11,13 @@ import SwiftData
 
 @Model
 final class Forest {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    /// Manuell ausgegebene Punkte (z.B. für Pflanzungen / Upgrades).
-    var spentPoints: Int
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = "Mein Wald"
+    var spentPoints: Int = 0
+    var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \TreeEntity.forest)
-    var trees: [TreeEntity] = []
+    var trees: [TreeEntity]? = []
 
     init(
         id: UUID = UUID(),
@@ -35,14 +34,12 @@ final class Forest {
 
 @Model
 final class TreeEntity {
-    @Attribute(.unique) var id: UUID
-    var speciesRaw: String
-    /// Position im Wald-Grid (logische Koordinaten, UI rendert daraus).
-    var gridX: Int
-    var gridY: Int
-    /// Akkumulierte Wachstumspunkte dieses spezifischen Baums.
-    var growthPoints: Int
-    var plantedAt: Date
+    var id: UUID = UUID()
+    var speciesRaw: String = ""
+    var gridX: Int = 0
+    var gridY: Int = 0
+    var growthPoints: Int = 0
+    var plantedAt: Date = Date()
     var nickname: String?
 
     var forest: Forest?

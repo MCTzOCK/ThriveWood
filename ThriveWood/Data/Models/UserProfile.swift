@@ -11,22 +11,22 @@ import SwiftData
 
 @Model
 final class UserProfile {
-    @Attribute(.unique) var id: UUID
-    var displayName: String
-    var preferredWeightUnitRaw: String
-    var weekStartsOnRaw: Int           // Weekday.rawValue
-    var dailyPointGoal: Int
-    var enableHapticFeedback: Bool
-    var enableNotifications: Bool
+    var id: UUID = UUID()
+    var displayName: String = ""
+    var preferredWeightUnitRaw: String = "kg"
+    var weekStartsOnRaw: Int = 2
+    var dailyPointGoal: Int = 5
+    var enableHapticFeedback: Bool = true
+    var enableNotifications: Bool = true
     var onboardingCompletedAt: Date?
-    var createdAt: Date
-    var appearanceRaw: String      // AppAppearance
-    var accentThemeRaw: String     // AccentTheme
-    var quietHoursEnabled: Bool
-    var quietHoursStart: Date
-    var quietHoursEnd: Date
-    var defaultRestSeconds: Int
-    var iCloudSyncEnabled: Bool
+    var createdAt: Date = Date()
+    var appearanceRaw: String = "system"
+    var accentThemeRaw: String = "forest"
+    var quietHoursEnabled: Bool = false
+    var quietHoursStart: Date = Date()
+    var quietHoursEnd: Date = Date()
+    var defaultRestSeconds: Int = 90
+    var iCloudSyncEnabled: Bool = true
     var nutritionGoalsData: Data?
 
     init(

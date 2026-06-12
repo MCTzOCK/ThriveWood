@@ -11,15 +11,15 @@ import SwiftData
 
 @Model
 final class MealTemplate {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var iconSystemName: String
-    var colorRaw: String
-    var usageCount: Int
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var iconSystemName: String = "fork.knife"
+    var colorRaw: String = ""
+    var usageCount: Int = 0
+    var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \MealTemplateItem.template)
-    var items: [MealTemplateItem] = []
+    var items: [MealTemplateItem]? = []
 
     init(
         id: UUID = UUID(),
@@ -43,15 +43,15 @@ final class MealTemplate {
     }
 
     var totalNutrition: NutritionValues {
-        items.reduce(.zero) { $0 + $1.nutrition }
+        (items ?? []).reduce(.zero) { $0 + $1.nutrition }
     }
 }
 
 @Model
 final class MealTemplateItem {
-    @Attribute(.unique) var id: UUID
-    var servingAmount: Double
-    var sortOrder: Int
+    var id: UUID = UUID()
+    var servingAmount: Double = 0
+    var sortOrder: Int = 0
 
     var food: Food?
     var template: MealTemplate?

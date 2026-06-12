@@ -42,7 +42,7 @@ enum SharedModelContainer {
             isStoredInMemoryOnly: false,
             allowsSave: true,
             groupContainer: .identifier(appGroupID),
-            cloudKitDatabase: .automatic
+            cloudKitDatabase: .private("iCloud.com.bensiebert.ThriveWood")
         )
 
         do {

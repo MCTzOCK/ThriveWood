@@ -10,30 +10,26 @@ import SwiftData
 
 @Model
 final class Habit {
-    @Attribute(.unique) var id: UUID
-    var title: String
-    var details: String
-    var iconSystemName: String
-    var colorRaw: String
-    var pointsRaw: Int
-    var frequencyRaw: String
-    var activeWeekdays: [Int]
+    var id: UUID = UUID()
+    var title: String = ""
+    var details: String = ""
+    var iconSystemName: String = "leaf.fill"
+    var colorRaw: String = ""
+    var pointsRaw: Int = 0
+    var frequencyRaw: String = ""
+    var activeWeekdays: [Int] = []
     var reminderTime: Date?
-    var sortOrder: Int
-    var createdAt: Date
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
     var archivedAt: Date?
 
-    // MARK: - Tracking-Modus
-    var trackingModeRaw: String
-    /// Zielwert pro Tag (nur bei .measurable, z.B. 2000 für 2000ml)
-    var targetValue: Double
-    /// Schrittgröße pro Tap (z.B. 200 für 200ml)
-    var incrementValue: Double
-    /// Einheiten-Label (z.B. "ml", "Seiten", "min")
-    var unitLabel: String
+    var trackingModeRaw: String = ""
+    var targetValue: Double = 1
+    var incrementValue: Double = 1
+    var unitLabel: String = ""
 
     @Relationship(deleteRule: .cascade, inverse: \HabitCompletion.habit)
-    var completions: [HabitCompletion] = []
+    var completions: [HabitCompletion]? = []
 
     init(
         id: UUID = UUID(),
@@ -71,8 +67,6 @@ final class Habit {
         self.unitLabel = unitLabel
     }
 
-    // MARK: - Typed Accessors
-
     var color: HabitColor {
         get { HabitColor(rawValue: colorRaw) ?? .green }
         set { colorRaw = newValue.rawValue }
@@ -95,15 +89,13 @@ final class Habit {
 
 @Model
 final class HabitCompletion {
-    @Attribute(.unique) var id: UUID
-    var day: Date
-    var completedAt: Date
-    var pointsAwarded: Int
+    var id: UUID = UUID()
+    var day: Date = Date()
+    var completedAt: Date = Date()
+    var pointsAwarded: Int = 0
     var note: String?
 
-    /// Aktueller Fortschritt bei messbaren Habits (z.B. 1400 von 2000ml).
-    /// Bei einfachen Habits immer == targetValue des Habits (also 1).
-    var currentValue: Double
+    var currentValue: Double = 0
 
     var habit: Habit?
 
@@ -132,16 +124,13 @@ final class HabitCompletion {
         }
     }
 
-    /// Fortschritt 0...1
     var progress: Double {
         guard let habit, habit.targetValue > 0 else { return 1 }
         return min(1.0, currentValue / habit.targetValue)
     }
 
-    /// Ist der Zielwert erreicht?
     var isComplete: Bool { progress >= 1.0 }
 
-    /// Berechnet die anteiligen Punkte basierend auf dem Fortschritt.
     func recalculatePoints() {
         guard let habit else { return }
         switch habit.trackingMode {

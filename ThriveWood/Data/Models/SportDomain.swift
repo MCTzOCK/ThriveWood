@@ -11,19 +11,25 @@ import SwiftData
 
 @Model
 final class Exercise {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var details: String
-    var categoryRaw: String
-    var trackingTypeRaw: String
-    var primaryMuscleGroupsRaw: [String]
-    var secondaryMuscleGroupsRaw: [String]
-    var iconSystemName: String
-    var isBuiltIn: Bool
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var details: String = ""
+    var categoryRaw: String = ""
+    var trackingTypeRaw: String = ""
+    var primaryMuscleGroupsRaw: [String] = []
+    var secondaryMuscleGroupsRaw: [String] = []
+    var iconSystemName: String = "dumbbell.fill"
+    var isBuiltIn: Bool = false
+    var createdAt: Date = Date()
     
     var images: [String] = []
     var instructions: [String] = []
+
+    @Relationship(deleteRule: .nullify, inverse: \WorkoutExercise.exercise)
+    var workoutExercises: [WorkoutExercise]? = []
+
+    @Relationship(deleteRule: .nullify, inverse: \SetEntry.exercise)
+    var setEntries: [SetEntry]? = []
 
     init(
         id: UUID = UUID(),
@@ -99,20 +105,23 @@ final class Exercise {
 
 @Model
 final class Workout: Identifiable {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var details: String
-    var colorRaw: String
-    var estimatedDurationMinutes: Int
-    var sortOrder: Int
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var details: String = ""
+    var colorRaw: String = ""
+    var estimatedDurationMinutes: Int = 45
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
     var archivedAt: Date?
 
     @Relationship(deleteRule: .cascade, inverse: \WorkoutExercise.workout)
-    var exercises: [WorkoutExercise] = []
+    var exercises: [WorkoutExercise]? = []
 
     @Relationship(deleteRule: .nullify, inverse: \WorkoutSession.workout)
-    var sessions: [WorkoutSession] = []
+    var sessions: [WorkoutSession]? = []
+
+    @Relationship(deleteRule: .nullify, inverse: \TrainingsPlanDay.workout)
+    var planDays: [TrainingsPlanDay]? = []
 
     init(
         id: UUID = UUID(),
@@ -144,15 +153,15 @@ final class Workout: Identifiable {
 /// Plan-Slot: Exercise innerhalb eines Workouts mit Soll-Vorgaben.
 @Model
 final class WorkoutExercise {
-    @Attribute(.unique) var id: UUID
-    var order: Int
-    var targetSets: Int
+    var id: UUID = UUID()
+    var order: Int = 0
+    var targetSets: Int = 3
     var targetReps: Int?
     var targetWeight: Double?
     var targetDurationSeconds: Int?
     var targetDistanceMeters: Double?
-    var restSeconds: Int
-    var notes: String
+    var restSeconds: Int = 90
+    var notes: String = ""
 
     var workout: Workout?
     var exercise: Exercise?
@@ -178,7 +187,6 @@ final class WorkoutExercise {
         self.restSeconds = restSeconds
         self.notes = notes
 
-        // Sinnvolle Defaults je nach Tracking-Typ
         switch exercise.trackingType {
         case .repsWeight:
             self.targetReps = targetReps ?? 10
@@ -207,17 +215,17 @@ final class WorkoutExercise {
 /// Tatsächlich durchgeführte Trainingseinheit.
 @Model
 final class WorkoutSession {
-    @Attribute(.unique) var id: UUID
-    var startedAt: Date
+    var id: UUID = UUID()
+    var startedAt: Date = Date()
     var endedAt: Date?
-    var perceivedExertion: Int?   // RPE 1–10
-    var notes: String
-    var weightUnitRaw: String
+    var perceivedExertion: Int?
+    var notes: String = ""
+    var weightUnitRaw: String = "kg"
 
     var workout: Workout?
 
     @Relationship(deleteRule: .cascade, inverse: \SetEntry.session)
-    var sets: [SetEntry] = []
+    var sets: [SetEntry]? = []
 
     init(
         id: UUID = UUID(),
@@ -249,14 +257,14 @@ final class WorkoutSession {
 
 @Model
 final class SetEntry {
-    @Attribute(.unique) var id: UUID
-    var order: Int
+    var id: UUID = UUID()
+    var order: Int = 0
     var reps: Int?
     var weight: Double?
     var durationSeconds: Int?
     var distanceMeters: Double?
-    var isWarmup: Bool
-    var isCompleted: Bool
+    var isWarmup: Bool = false
+    var isCompleted: Bool = false
     var completedAt: Date?
 
     var session: WorkoutSession?
@@ -288,11 +296,6 @@ final class SetEntry {
         self.completedAt = completedAt
     }
 
-    /// Volumen-Berechnung je nach Tracking-Typ.
-    /// - Strength: kg × reps
-    /// - Reps: reps (als Pseudo-Volumen)
-    /// - Duration: Sekunden
-    /// - Distance/Duration: Meter
     var volumeValue: Double {
         guard let type = exercise?.trackingType else { return 0 }
         switch type {
@@ -307,7 +310,6 @@ final class SetEntry {
         }
     }
 
-    /// Kompakte Beschreibung für Zusammenfassungen.
     var summaryText: String {
         guard let type = exercise?.trackingType else { return "" }
         switch type {
@@ -334,7 +336,6 @@ final class SetEntry {
 }
 
 extension Double {
-    /// Entfernt unnötige Nachkommastellen ("70.0" → "70", "70.5" → "70.5")
     var clean: String {
         truncatingRemainder(dividingBy: 1) == 0
             ? String(format: "%.0f", self)
@@ -345,16 +346,16 @@ extension Double {
 
 @Model
 final class TrainingsPlan {
-    @Attribute(.unique) var id: UUID
+    var id: UUID = UUID()
     
-    var name: String
-    var details: String
-    var createdAt: Date
-    var isActive: Bool  // Nur ein Plan kann aktiv sein
-    var color: String   // Hex-String für UI-Farbe
+    var name: String = ""
+    var details: String = ""
+    var createdAt: Date = Date()
+    var isActive: Bool = false
+    var color: String = "#4CAF50"
     
     @Relationship(deleteRule: .cascade, inverse: \TrainingsPlanDay.plan)
-    var days: [TrainingsPlanDay]
+    var days: [TrainingsPlanDay]? = []
     
     init(
         id: UUID = UUID(),
@@ -374,36 +375,31 @@ final class TrainingsPlan {
         self.days = days
     }
     
-    /// Sortierte Tage (Montag bis Sonntag)
     var sortedDays: [TrainingsPlanDay] {
-        days.sorted { $0.weekday.rawValue < $1.weekday.rawValue }
+        (days ?? []).sorted { $0.weekday.rawValue < $1.weekday.rawValue }
     }
     
-    /// Workout für einen bestimmten Wochentag
     func workout(for weekday: TPWeekday) -> Workout? {
-        days.first { $0.weekday == weekday }?.workout
+        (days ?? []).first { $0.weekday == weekday }?.workout
     }
     
-    /// Anzahl der Trainingstage pro Woche
     var trainingDaysPerWeek: Int {
-        days.filter { $0.workout != nil }.count
+        (days ?? []).filter { $0.workout != nil }.count
     }
     
-    /// Gesamtanzahl Übungen im Plan
     var totalExercises: Int {
-        days.compactMap(\.workout).reduce(0) { $0 + $1.exercises.count }
+        (days ?? []).compactMap(\.workout).reduce(0) { $0 + ($1.exercises ?? []).count }
     }
 }
 
-// MARK: - TrainingsPlanDay
-
 @Model
 final class TrainingsPlanDay {
-    @Attribute(.unique) var id: UUID
+    var id: UUID = UUID()
     
-    var weekday: TPWeekday
-    var isRestDay: Bool
-    var notes: String
+    var weekdayRaw: Int = 1
+    
+    var isRestDay: Bool = false
+    var notes: String = ""
     
     var plan: TrainingsPlan?
     var workout: Workout?
@@ -417,11 +413,16 @@ final class TrainingsPlanDay {
         workout: Workout? = nil
     ) {
         self.id = id
-        self.weekday = weekday
+        self.weekdayRaw = weekday.rawValue
         self.isRestDay = isRestDay
         self.notes = notes
         self.plan = plan
         self.workout = workout
+    }
+
+    var weekday: TPWeekday {
+        get { TPWeekday(rawValue: weekdayRaw) ?? .monday }
+        set { weekdayRaw = newValue.rawValue }
     }
     
     var displayName: String {
@@ -434,8 +435,6 @@ final class TrainingsPlanDay {
         }
     }
 }
-
-// MARK: - Weekday Enum
 
 enum TPWeekday: Int, Codable, CaseIterable, Identifiable, Comparable {
     case monday = 1
@@ -488,12 +487,9 @@ enum TPWeekday: Int, Codable, CaseIterable, Identifiable, Comparable {
         lhs.rawValue < rhs.rawValue
     }
     
-    /// Aktueller Wochentag
     static var today: TPWeekday {
         let calendar = Calendar.current
         let weekdayInt = calendar.component(.weekday, from: .now)
-        // Calendar.weekday: 1 = Sonntag, 2 = Montag, ...
-        // Unsere Enum: 1 = Montag, 7 = Sonntag
         let adjusted = weekdayInt == 1 ? 7 : weekdayInt - 1
         return TPWeekday(rawValue: adjusted) ?? .monday
     }

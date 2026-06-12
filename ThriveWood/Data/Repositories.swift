@@ -692,7 +692,7 @@ final class TrainingsPlanRepository {
                 weekday: weekday,
                 plan: plan
             )
-            plan.days.append(day)
+            plan.days!.append(day)
             modelContext.insert(day)
         }
         
@@ -720,7 +720,7 @@ final class TrainingsPlanRepository {
     }
     
     func assignWorkout(_ workout: Workout?, to weekday: TPWeekday, in plan: TrainingsPlan) throws {
-        guard let day = plan.days.first(where: { $0.weekday == weekday }) else {
+        guard let day = (plan.days ?? []).first(where: { $0.weekday == weekday }) else {
             throw RepositoryError.notFound
         }
         
@@ -730,7 +730,7 @@ final class TrainingsPlanRepository {
     }
     
     func setRestDay(_ weekday: TPWeekday, in plan: TrainingsPlan, isRest: Bool) throws {
-        guard let day = plan.days.first(where: { $0.weekday == weekday }) else {
+        guard let day = (plan.days ?? []).first(where: { $0.weekday == weekday }) else {
             throw RepositoryError.notFound
         }
         
@@ -742,7 +742,7 @@ final class TrainingsPlanRepository {
     }
     
     func updateDayNotes(_ notes: String, for weekday: TPWeekday, in plan: TrainingsPlan) throws {
-        guard let day = plan.days.first(where: { $0.weekday == weekday }) else {
+        guard let day = (plan.days ?? []).first(where: { $0.weekday == weekday }) else {
             throw RepositoryError.notFound
         }
         

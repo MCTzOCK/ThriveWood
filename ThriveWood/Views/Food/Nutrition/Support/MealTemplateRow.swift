@@ -27,7 +27,7 @@ struct MealTemplateRow: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.primary)
                     HStack(spacing: Theme.Spacing.s) {
-                        Text("\(template.items.count) Zutaten")
+                        Text("\((template.items ?? []).count) Zutaten")
                         Text("•")
                         Text("\(Int(template.totalNutrition.calories)) kcal")
                     }

@@ -183,7 +183,7 @@ struct MealTemplateEditorView: View {
             name = template.name
             icon = template.iconSystemName
             color = template.color
-            items = template.items.compactMap { item in
+            items = (template.items ?? []).compactMap { item in
                 guard let food = item.food else { return nil }
                 return TempItem(food: food, amount: item.servingAmount)
             }
@@ -232,7 +232,7 @@ struct MealTemplateEditorView: View {
                         sortOrder: index
                     )
                     templateItem.template = newTemplate
-                    newTemplate.items.append(templateItem)
+                    newTemplate.items!.append(templateItem)
                 }
                 
                 try env.nutritionService.createTemplate(newTemplate)

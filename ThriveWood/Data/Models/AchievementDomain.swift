@@ -8,9 +8,9 @@ import SwiftData
 
 @Model
 final class AchievementRecord {
-    @Attribute(.unique) var id: UUID
-    var definitionRaw: String
-    var unlockedAt: Date
+    var id: UUID = UUID()
+    var definitionRaw: String = ""
+    var unlockedAt: Date = Date()
 
     init(definition: AchievementDefinition, unlockedAt: Date = .now) {
         self.id = UUID()

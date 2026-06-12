@@ -11,32 +11,33 @@ import SwiftData
 
 @Model
 final class Food {
-    @Attribute(.unique) var id: UUID
-    var name: String
+    var id: UUID = UUID()
+    var name: String = ""
     var brand: String?
     var barcode: String?
 
-    // Nährwerte pro 100g
-    var caloriesPer100g: Double
-    var proteinPer100g: Double
-    var carbsPer100g: Double
-    var fatPer100g: Double
-    var fiberPer100g: Double
-    var sugarPer100g: Double
-    var sodiumPer100g: Double // mg
+    var caloriesPer100g: Double = 0
+    var proteinPer100g: Double = 0
+    var carbsPer100g: Double = 0
+    var fatPer100g: Double = 0
+    var fiberPer100g: Double = 0
+    var sugarPer100g: Double = 0
+    var sodiumPer100g: Double = 0
 
-    // Standard-Portionsgröße
-    var defaultServingSize: Double // in Gramm
-    var servingUnit: String // "g", "ml", "Stück", etc.
+    var defaultServingSize: Double = 100
+    var servingUnit: String = "g"
 
-    var categoryRaw: String
-    var isUserCreated: Bool
-    var isFavorite: Bool
-    var usageCount: Int
-    var createdAt: Date
+    var categoryRaw: String = ""
+    var isUserCreated: Bool = false
+    var isFavorite: Bool = false
+    var usageCount: Int = 0
+    var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \FoodEntry.food)
-    var entries: [FoodEntry] = []
+    var entries: [FoodEntry]? = []
+
+    @Relationship(deleteRule: .nullify, inverse: \MealTemplateItem.food)
+    var templateItems: [MealTemplateItem]? = []
 
     init(
         id: UUID = UUID(),
@@ -88,7 +89,6 @@ final class Food {
         return name
     }
 
-    // Nährwerte für beliebige Grammzahl
     func nutrition(for grams: Double) -> NutritionValues {
         let factor = grams / 100.0
         return NutritionValues(
@@ -105,11 +105,11 @@ final class Food {
 
 @Model
 final class FoodEntry {
-    @Attribute(.unique) var id: UUID
-    var day: Date
-    var mealTypeRaw: String
-    var servingAmount: Double // in Gramm
-    var loggedAt: Date
+    var id: UUID = UUID()
+    var day: Date = Date()
+    var mealTypeRaw: String = ""
+    var servingAmount: Double = 0
+    var loggedAt: Date = Date()
     var note: String?
 
     var food: Food?
@@ -144,25 +144,24 @@ final class FoodEntry {
 
 @Model
 final class Supplement {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var dosage: String // "500mg", "1 Kapsel", etc.
-    var details: String
-    var iconSystemName: String
-    var colorRaw: String
+    var id: UUID = UUID()
+    var name: String = ""
+    var dosage: String = ""
+    var details: String = ""
+    var iconSystemName: String = "pills.fill"
+    var colorRaw: String = ""
 
-    // Frequenz
-    var frequencyRaw: String // daily, custom
-    var activeWeekdays: [Int]
-    var timesPerDay: Int
-    var reminderTimes: [Date]
+    var frequencyRaw: String = ""
+    var activeWeekdays: [Int] = []
+    var timesPerDay: Int = 1
+    var reminderTimes: [Date] = []
 
-    var sortOrder: Int
-    var createdAt: Date
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
     var archivedAt: Date?
 
     @Relationship(deleteRule: .cascade, inverse: \SupplementEntry.supplement)
-    var entries: [SupplementEntry] = []
+    var entries: [SupplementEntry]? = []
 
     init(
         id: UUID = UUID(),
@@ -207,11 +206,11 @@ final class Supplement {
 
 @Model
 final class SupplementEntry {
-    @Attribute(.unique) var id: UUID
-    var day: Date
-    var doseNumber: Int // 1. Einnahme, 2. Einnahme, etc.
-    var takenAt: Date
-    var skipped: Bool
+    var id: UUID = UUID()
+    var day: Date = Date()
+    var doseNumber: Int = 1
+    var takenAt: Date = Date()
+    var skipped: Bool = false
 
     var supplement: Supplement?
 

@@ -10,8 +10,8 @@ import Foundation
 
 @Model
 final class BodyProgressEntry {
-    @Attribute(.unique) var id: UUID
-    var date: Date
+    var id: UUID = UUID()
+    var date: Date = Date()
     
     var weightKg: Double?
     var bodyFatPercentage: Double?
@@ -34,15 +34,15 @@ final class BodyProgressEntry {
     var leftCalfCm: Double?
     var rightCalfCm: Double?
     
-    var photoPaths: [String]
-    var notes: String
+    var photoPaths: [String] = []
+    var notes: String = ""
     
-    var tags: [String]? // z.B. "Diät", "Massephase", "Nüchtern"
-    var energyLevel: Int? // Skala 1-5 oder 1-10
+    var tags: [String]?
+    var energyLevel: Int?
     var onPump: Bool = false
     
-    var weightUnitRaw: String // "kg" oder "lbs"
-    var measurementUnitRaw: String // "cm" oder "in"
+    var weightUnitRaw: String = "kg"
+    var measurementUnitRaw: String = "cm"
     
     init(id: UUID = UUID(), date: Date = Date(), weightUnitRaw: String = "kg", measurementUnitRaw: String = "cm") {
         self.id = id

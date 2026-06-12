@@ -223,7 +223,7 @@ final class NutritionService: ObservableObject {
         date: Date = .now,
         portionMultiplier: Double = 1.0
     ) throws {
-        for item in template.items.sorted(by: { $0.sortOrder < $1.sortOrder }) {
+        for item in (template.items ?? []).sorted(by: { $0.sortOrder < $1.sortOrder }) {
             guard let food = item.food else { continue }
             
             let entry = FoodEntry(
@@ -243,15 +243,14 @@ final class NutritionService: ObservableObject {
 
     func updateTemplate(_ template: MealTemplate, with newItems: [MealTemplateItem]) throws {
         // Alte Items entfernen
-        for item in template.items {
+        for item in template.items ?? [] {
             try templateRepo.deleteItem(item)
         }
-        template.items.removeAll()
+        template.items?.removeAll()
         
-        // Neue Items hinzufügen
         for item in newItems {
             item.template = template
-            template.items.append(item)
+            template.items!.append(item)
         }
         
         try templateRepo.update(template)
@@ -279,7 +278,7 @@ final class NutritionService: ObservableObject {
                 sortOrder: index
             )
             item.template = template
-            template.items.append(item)
+            template.items!.append(item)
         }
         
         try templateRepo.create(template)
