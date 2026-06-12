@@ -12,19 +12,29 @@ import LocalAuthentication
 enum ChartMetric: String, CaseIterable {
     case weight = "Gewicht"
     case bodyFat = "KFA"
-    case waist = "Taille"
+    case neck = "Nacken"
+    case shoulders = "Schultern"
     case chest = "Brust"
+    case biceps = "Oberarm"
+    case forearms = "Unterarm"
+    case waist = "Taille"
     case hip = "Hüfte"
-    case shoulder = "Schultern"
+    case thighs = "Oberschenkel"
+    case calves = "Wade"
 
     var icon: String {
         switch self {
         case .weight: return "scalemass.fill"
         case .bodyFat: return "chart.pie.fill"
-        case .waist: return "ruler"
+        case .neck: return "person.bust"
+        case .shoulders: return "arrow.up.and.down.text.horizontal"
         case .chest: return "figure.strengthtraining.traditional"
+        case .biceps: return "figure.arm"
+        case .forearms: return "hand.raised"
+        case .waist: return "ruler"
         case .hip: return "figure.stand"
-        case .shoulder: return "arrow.up.and.down.text.horizontal"
+        case .thighs: return "figure.walk"
+        case .calves: return "figure.run"
         }
     }
 
@@ -32,10 +42,15 @@ enum ChartMetric: String, CaseIterable {
         switch self {
         case .weight: return .blue
         case .bodyFat: return .orange
-        case .waist: return .purple
+        case .neck: return .mint
+        case .shoulders: return .indigo
         case .chest: return .green
-        case .hip: return .teal
-        case .shoulder: return .indigo
+        case .biceps: return .orange
+        case .forearms: return .teal
+        case .waist: return .purple
+        case .hip: return .pink
+        case .thighs: return .blue
+        case .calves: return .cyan
         }
     }
 
@@ -45,10 +60,15 @@ enum ChartMetric: String, CaseIterable {
         switch self {
         case .weight: return entry.weightKg
         case .bodyFat: return entry.bodyFatPercentage
-        case .waist: return entry.waistCm
+        case .neck: return entry.neckCm
+        case .shoulders: return entry.shoulderCm
         case .chest: return entry.chestCm
+        case .biceps: return entry.leftBicepCm ?? entry.rightBicepCm
+        case .forearms: return entry.leftForearmCm ?? entry.rightForearmCm
+        case .waist: return entry.waistCm
         case .hip: return entry.hipCm
-        case .shoulder: return entry.shoulderCm
+        case .thighs: return entry.leftThighCm ?? entry.rightThighCm
+        case .calves: return entry.leftCalfCm ?? entry.rightCalfCm
         }
     }
 
@@ -75,6 +95,8 @@ struct BodyProgressView: View {
     @State private var editingEntry: BodyProgressEntry?
     @State private var showingGallery = false
     @State private var chartMetric: ChartMetric = .weight
+    @State private var selectedZone: MeasurementZone?
+    @State private var showFront: Bool = true
     @State private var errors = ErrorState()
 
     var body: some View {
@@ -95,7 +117,7 @@ struct BodyProgressView: View {
                     if entries.isEmpty {
                         emptyState
                     } else {
-                        summaryCard
+                        bodyMapCard
                         if entriesForChart.count >= 2 { chartCard }
                         if entries.contains(where: { !$0.photoPaths.isEmpty }) {
                             galleryButton
@@ -154,6 +176,13 @@ struct BodyProgressView: View {
             .errorAlert(errors)
         }
         .task { loadEntries() }
+        .onChange(of: selectedZone) { _, newZone in
+            if let zone = newZone {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    chartMetric = zone.chartMetric
+                }
+            }
+        }
     }
 
     // MARK: - Empty State
@@ -180,9 +209,9 @@ struct BodyProgressView: View {
         .padding(.horizontal, Theme.Spacing.xl)
     }
 
-    // MARK: - Summary Card
+    // MARK: - Body Map Card
 
-    private var summaryCard: some View {
+    private var bodyMapCard: some View {
         let latest = entries.first!
 
         return VStack(spacing: Theme.Spacing.m) {
@@ -195,35 +224,22 @@ struct BodyProgressView: View {
                         .font(.headline)
                 }
                 Spacer()
-                if entries.count >= 2, let first = entries.last {
-                    if let current = chartMetric.value(for: latest), let previous = chartMetric.value(for: first) {
-                        let diff = current - previous
-                        Text(diff >= 0 ? "+\(String(format: "%.1f", diff))" : String(format: "%.1f", diff))
-                            .font(.subheadline.weight(.bold).monospacedDigit())
-                            .foregroundStyle(diff <= 0 ? .green : .red)
-                    }
+                if let w = latest.weightKg {
+                    Text(String(format: "%.1f %@", w, latest.weightUnitRaw == "kg" ? "kg" : "lbs"))
+                        .font(.subheadline.bold().monospacedDigit())
+                        .foregroundStyle(.blue)
+                }
+                if let bf = latest.bodyFatPercentage {
+                    Text(String(format: "%.1f%%", bf))
+                        .font(.subheadline.bold().monospacedDigit())
+                        .foregroundStyle(.orange)
                 }
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.s) {
-                if let dv = ChartMetric.weight.displayValue(for: latest) {
-                    metricTile(metric: .weight, value: dv, isSelected: chartMetric == .weight)
-                }
-                if let dv = ChartMetric.bodyFat.displayValue(for: latest) {
-                    metricTile(metric: .bodyFat, value: dv, isSelected: chartMetric == .bodyFat)
-                }
-                if let dv = ChartMetric.waist.displayValue(for: latest) {
-                    metricTile(metric: .waist, value: dv, isSelected: chartMetric == .waist)
-                }
-                if let dv = ChartMetric.chest.displayValue(for: latest) {
-                    metricTile(metric: .chest, value: dv, isSelected: chartMetric == .chest)
-                }
-                if let dv = ChartMetric.hip.displayValue(for: latest) {
-                    metricTile(metric: .hip, value: dv, isSelected: chartMetric == .hip)
-                }
-                if let dv = ChartMetric.shoulder.displayValue(for: latest) {
-                    metricTile(metric: .shoulder, value: dv, isSelected: chartMetric == .shoulder)
-                }
+            BodyMeasurementMapView(entry: latest, selectedZone: $selectedZone, showFront: $showFront)
+
+            if let zone = selectedZone {
+                zoneDetailRow(for: zone, entry: latest)
             }
         }
         .padding(Theme.Spacing.l)
@@ -231,29 +247,66 @@ struct BodyProgressView: View {
         .padding(.horizontal, Theme.Spacing.l)
     }
 
-    private func metricTile(metric: ChartMetric, value: String, isSelected: Bool) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.25)) {
-                chartMetric = metric
+    private func zoneDetailRow(for zone: MeasurementZone, entry: BodyProgressEntry) -> some View {
+        HStack(spacing: Theme.Spacing.m) {
+            Image(systemName: zoneIcon(for: zone))
+                .font(.callout)
+                .foregroundStyle(Color.accentColor)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(zone.label)
+                    .font(.subheadline.weight(.semibold))
+                if let val = zoneValueText(for: zone, entry: entry) {
+                    Text(val)
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
-            Haptics.selection()
-        } label: {
-            VStack(spacing: 2) {
-                Image(systemName: metric.icon)
-                    .font(.callout)
-                    .foregroundStyle(metric.tint)
-                Text(value)
-                    .font(.subheadline.bold().monospacedDigit())
-                Text(metric.rawValue)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Theme.Spacing.s)
-            .background(RoundedRectangle(cornerRadius: Theme.Radius.s).fill(isSelected ? metric.tint.opacity(0.18) : metric.tint.opacity(0.08)))
-            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.s).stroke(isSelected ? metric.tint : .clear, lineWidth: isSelected ? 2 : 0))
+            Spacer()
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.Spacing.s)
+        .padding(.vertical, Theme.Spacing.xs)
+    }
+
+    private func zoneIcon(for zone: MeasurementZone) -> String {
+        switch zone {
+        case .neck: return "person.bust"
+        case .shoulders: return "arrow.up.and.down.text.horizontal"
+        case .chest: return "figure.strengthtraining.traditional"
+        case .biceps: return "figure.arm"
+        case .forearms: return "hand.raised"
+        case .waist: return "ruler"
+        case .hip: return "figure.stand"
+        case .thighs: return "figure.walk"
+        case .calves: return "figure.run"
+        }
+    }
+
+    private func zoneValueText(for zone: MeasurementZone, entry: BodyProgressEntry) -> String? {
+        switch zone {
+        case .neck:
+            if let v = entry.neckCm { return String(format: "%.1f cm", v) }
+        case .shoulders:
+            if let v = entry.shoulderCm { return String(format: "%.1f cm", v) }
+        case .chest:
+            if let v = entry.chestCm { return String(format: "%.1f cm", v) }
+        case .biceps:
+            if let l = entry.leftBicepCm, let r = entry.rightBicepCm { return String(format: "L: %.1f / R: %.1f cm", l, r) }
+            if let v = entry.leftBicepCm ?? entry.rightBicepCm { return String(format: "%.1f cm", v) }
+        case .forearms:
+            if let l = entry.leftForearmCm, let r = entry.rightForearmCm { return String(format: "L: %.1f / R: %.1f cm", l, r) }
+            if let v = entry.leftForearmCm ?? entry.rightForearmCm { return String(format: "%.1f cm", v) }
+        case .waist:
+            if let v = entry.waistCm { return String(format: "%.1f cm", v) }
+        case .hip:
+            if let v = entry.hipCm { return String(format: "%.1f cm", v) }
+        case .thighs:
+            if let l = entry.leftThighCm, let r = entry.rightThighCm { return String(format: "L: %.1f / R: %.1f cm", l, r) }
+            if let v = entry.leftThighCm ?? entry.rightThighCm { return String(format: "%.1f cm", v) }
+        case .calves:
+            if let l = entry.leftCalfCm, let r = entry.rightCalfCm { return String(format: "L: %.1f / R: %.1f cm", l, r) }
+            if let v = entry.leftCalfCm ?? entry.rightCalfCm { return String(format: "%.1f cm", v) }
+        }
+        return nil
     }
 
     // MARK: - Chart

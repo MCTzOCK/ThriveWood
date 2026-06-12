@@ -215,7 +215,7 @@ struct AnatomicMuscleMapView: View {
 
     // MARK: - SVG Path Parsing
 
-    private static func parseSVGPath(svgPath: String, scale: CGFloat, vbOriginX: CGFloat) -> Path {
+    static func parseSVGPath(svgPath: String, scale: CGFloat, vbOriginX: CGFloat) -> Path {
         let tokens = tokenizeSVG(svgPath: svgPath)
         var path = Path()
         var currentX: CGFloat = 0, currentY: CGFloat = 0
@@ -307,7 +307,7 @@ struct AnatomicMuscleMapView: View {
         return path
     }
 
-    private static func tokenizeSVG(svgPath: String) -> [String] {
+    static func tokenizeSVG(svgPath: String) -> [String] {
         let cmdChars: Set<Character> = ["M","m","L","l","H","h","V","v","C","c","S","s","Q","q","T","t","A","a","Z","z"]
         var tokens: [String] = []
         var current = ""
