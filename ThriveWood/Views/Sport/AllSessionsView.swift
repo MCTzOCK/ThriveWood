@@ -10,7 +10,6 @@ import SwiftUI
 
 struct AllSessionsView: View {
     let sessions: [WorkoutSession]
-    let onSelect: (WorkoutSession) -> Void
 
     private var grouped: [(String, [WorkoutSession])] {
         let groups = Dictionary(grouping: sessions) { session in
@@ -25,12 +24,16 @@ struct AllSessionsView: View {
             ForEach(grouped, id: \.0) { month, list in
                 Section(month) {
                     ForEach(list) { s in
-                        Button { onSelect(s) } label: {
+                        NavigationLink {
+                            WorkoutSessionDetailView(session: s)
+                        } label: {
                             SessionRow(session: s)
                                 .padding(.vertical, 4)
                         }
                         .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                        .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
                 }
             }
@@ -40,3 +43,4 @@ struct AllSessionsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+

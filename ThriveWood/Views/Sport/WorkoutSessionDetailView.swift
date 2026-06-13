@@ -28,6 +28,8 @@ struct WorkoutSessionDetailView: View {
     @State private var aiAvailable = SystemLanguageModel.default.availability
     @State private var newPRs: [(exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)] = []
     @State private var showShareImage = false
+    @State private var muscleMapShowFront = true
+    @State private var selectedMapMuscle: MuscleGroup?
     
     // MARK: - Derived
 
@@ -85,6 +87,33 @@ struct WorkoutSessionDetailView: View {
             .reduce(0) { $0 + ($1.durationSeconds ?? 0) }
     }
 
+    private func normalizedVolume(for set: SetEntry) -> Double {
+        guard let type = set.exercise?.trackingType else { return 0 }
+        switch type {
+        case .repsWeight:       return (set.weight ?? 0) * Double(set.reps ?? 0)
+        case .reps:             return Double(set.reps ?? 0) * 60.0
+        case .duration:         return Double(set.durationSeconds ?? 0) * 0.5
+        case .distanceDuration: return (set.distanceMeters ?? 0) * 0.05
+        }
+    }
+
+    private var muscleVolumes: [MuscleGroup: Double] {
+        var result: [MuscleGroup: Double] = [:]
+        for set in session.sets where set.isCompleted {
+            guard let exercise = set.exercise else { continue }
+            let vol = normalizedVolume(for: set)
+            for muscle in exercise.primaryMuscleGroups {
+                let mapped = SessionMuscleMapView.mapGroup(for: muscle)
+                result[mapped, default: 0] += vol
+            }
+            for muscle in exercise.secondaryMuscleGroups {
+                let mapped = SessionMuscleMapView.mapGroup(for: muscle)
+                result[mapped, default: 0] += vol * 0.5
+            }
+        }
+        return result
+    }
+
     private var heaviestSet: (Exercise, SetEntry)? {
         let candidates = session.sets
             .filter { $0.exercise?.trackingType == .repsWeight && $0.isCompleted }
@@ -106,6 +135,7 @@ struct WorkoutSessionDetailView: View {
                     if !sortedExercises.isEmpty { exerciseBreakdown }
                     if let pr = heaviestSet { highlightCard(pr) }
                     if !newPRs.isEmpty { prSection }
+                    if !muscleVolumes.isEmpty { muscleMapSection }
                     notesCard
                     Spacer(minLength: 40)
                 }
@@ -430,6 +460,30 @@ struct WorkoutSessionDetailView: View {
                 .foregroundStyle(.orange)
         }
         .padding(Theme.Spacing.m)
+        .cardStyle()
+    }
+
+    // MARK: - Muscle Map
+
+    private var muscleMapSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+            HStack {
+                Text("Muskeln").font(.headline)
+                Spacer()
+                Picker("", selection: $muscleMapShowFront) {
+                    Text("Vorne").tag(true)
+                    Text("Hinten").tag(false)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 140)
+            }
+            SessionMuscleMapView(
+                volumes: muscleVolumes,
+                selectedMuscle: $selectedMapMuscle,
+                showFront: $muscleMapShowFront
+            )
+        }
+        .padding(Theme.Spacing.l)
         .cardStyle()
     }
 
