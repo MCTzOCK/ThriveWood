@@ -31,7 +31,7 @@ struct SportView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                pagePicker()
+                //pagePicker()
                 if let vm {
                     if selectedPage == .workouts {
                         content(vm: vm)
@@ -59,22 +59,6 @@ struct SportView: View {
                             }
                         } label: {
                             Image(systemName: "plus")
-                        }
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarLeading) {
-                    if env.entitlements.isPro {
-                        NavigationLink {
-                            MuscleRankingScreen()
-                        } label: {
-                            Image(systemName: "trophy")
-                        }
-                    } else {
-                        Button {
-                            showingPaywall = true
-                        } label: {
-                            Image(systemName: "trophy")
                         }
                     }
                 }
@@ -150,12 +134,18 @@ struct SportView: View {
                 )
                 .padding(.horizontal, Theme.Spacing.l)
                 
+                /*
                 if !vm.recentSessions.isEmpty {
                     RecentSessionsSection(sessions: vm.recentSessions) { selected in
                         detailSession = selected
                     }
                         .padding(.horizontal, Theme.Spacing.l)
+                }*/
+                VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                    Text("Weiteres").font(.headline)
+                    featureGrid()
                 }
+                .padding(.horizontal, Theme.Spacing.l)
             }
             .padding(.vertical, Theme.Spacing.l)
         }
@@ -166,5 +156,45 @@ struct SportView: View {
             WorkoutSessionDetailView(session: session)
         }
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+    }
+    
+    @ViewBuilder
+    private func featureGrid() -> some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.l) {
+            NavigationLink(destination: {
+                AllSessionsView(sessions: vm!.recentSessions)
+            }) {
+                OrganisationCard(title: "Alle Sessions", subtitle: "", icon: "clock.fill", iconColor: .green)
+            }
+            NavigationLink(destination: {
+                MuscleRankingScreen()
+            }) {
+                OrganisationCard(title: "Muskel-Ranking", subtitle: "", icon: "trophy.fill", iconColor: .yellow)
+            }
+            NavigationLink(destination: {
+                ExerciseLibraryView(onSelect: { exercise in
+                    print(exercise)
+                    selectedExercise = exercise
+                    showingExerciseDetails = true
+                }, asSheet: false, onlyFor: nil)
+            }) {
+                OrganisationCard(title: "Übungen", subtitle: "", icon: "figure.strengthtraining.traditional", iconColor: .red)
+            }
+            NavigationLink(destination: {
+                TrainingsPlanListView()
+            }) {
+                OrganisationCard(title: "Trainingspläne", subtitle: "", icon: "list.bullet.rectangle.portrait", iconColor: .blue)
+            }
+            NavigationLink(destination: {
+                PRListView()
+            }) {
+                OrganisationCard(title: "PRs & Fortschritt", subtitle: "", icon: "flame.fill", iconColor: .orange)
+            }
+            NavigationLink(destination: {
+                BodyProgressView()
+            }) {
+                OrganisationCard(title: "Körperfortschritt", subtitle: "", icon: "figure.stand.line.dotted.figure.stand", iconColor: .purple)
+            }
+        }
     }
 }

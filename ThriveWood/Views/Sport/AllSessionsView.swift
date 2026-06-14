@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct AllSessionsView: View {
+    @Environment(AppEnvironment.self) private var env
     let sessions: [WorkoutSession]
 
     private var grouped: [(String, [WorkoutSession])] {

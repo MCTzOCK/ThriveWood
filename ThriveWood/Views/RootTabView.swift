@@ -37,10 +37,6 @@ struct RootTabView: View {
                 .tabItem { Label("Sport", systemImage: "dumbbell.fill") }
                 .tag(AppTab.sport)
             
-            BodyProgressView()
-                .tabItem { Label("Body", systemImage: "figure.run") }
-                .tag(AppTab.bodyProgress)
-
             SettingsView()
                 .tabItem { Label("Einstellungen", systemImage: "gearshape.2") }
                 .tag(AppTab.settings)
