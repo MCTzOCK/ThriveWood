@@ -195,6 +195,11 @@ struct SportView: View {
             }) {
                 OrganisationCard(title: "Körperfortschritt", subtitle: "", icon: "figure.stand.line.dotted.figure.stand", iconColor: .purple)
             }
+            NavigationLink(destination: {
+                MyGymListView()
+            }) {
+                OrganisationCard(title: "Mein Gym", subtitle: "", icon: "building.2.fill", iconColor: .cyan)
+            }
         }
     }
 }

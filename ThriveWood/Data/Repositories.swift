@@ -639,6 +639,48 @@ final class SwiftDataAchievementRepository: SwiftDataRepository, AchievementRepo
 }
 
 
+// MARK: - Gym
+
+@MainActor
+final class SwiftDataGymRepository: SwiftDataRepository, GymRepository {
+    func fetchAll(includeArchived: Bool = false) throws -> [Gym] {
+        let predicate: Predicate<Gym> = includeArchived
+        ? #Predicate { _ in true }
+        : #Predicate { $0.archivedAt == nil }
+        let descriptor = FetchDescriptor<Gym>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+        return try context.fetch(descriptor)
+    }
+
+    func fetch(id: UUID) throws -> Gym? {
+        var d = FetchDescriptor<Gym>(predicate: #Predicate { $0.id == id })
+        d.fetchLimit = 1
+        return try context.fetch(d).first
+    }
+
+    func create(_ gym: Gym) throws {
+        guard !gym.name.trimmingCharacters(in: .whitespaces).isEmpty
+        else { throw RepositoryError.invalidInput("Name darf nicht leer sein.") }
+        context.insert(gym)
+        try save()
+    }
+
+    func update(_ gym: Gym) throws { try save() }
+
+    func archive(_ gym: Gym) throws {
+        gym.archivedAt = .now
+        try save()
+    }
+
+    func delete(_ gym: Gym) throws {
+        context.delete(gym)
+        try save()
+    }
+}
+
+
 // MARK: Training Plans
 
 @MainActor

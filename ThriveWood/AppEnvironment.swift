@@ -29,6 +29,7 @@ final class AppEnvironment {
     let supplementEntryRepo: SupplementEntryRepository
     let templateRepo: MealTemplateRepository
     let trainingsPlanRepo: TrainingsPlanRepository
+    let gymRepo: any GymRepository
     
     
     // Services
@@ -47,6 +48,7 @@ final class AppEnvironment {
     let muscleRecoveryService: MuscleRecoveryService
     let aiService: AIService
     let trainingsPlanService: TrainingsPlanService
+    let gymService: GymService
     let achievementService: AchievementService
     var entitlements: EntitlementService
     let bodyProgressService: BodyProgressService
@@ -69,6 +71,7 @@ final class AppEnvironment {
         let profileRepo    = SwiftDataUserProfileRepository(context: context)
         self.trainingsPlanRepo = TrainingsPlanRepository(modelContext: context)
         self.bodyProgressRepo = SwiftDataBodyProgressRepository(context: context)
+        self.gymRepo = SwiftDataGymRepository(context: context)
 
 
         self.habitRepo = habitRepo
@@ -96,7 +99,7 @@ final class AppEnvironment {
         self.healthService = HealthKitService.shared
         let storeService = StoreService()
         self.storeService = storeService
-        self.entitlements = EntitlementService(store: storeService, habitRepo: habitRepo, workoutRepo: workoutRepo, supplementRepo: supplementRepo)
+        self.entitlements = EntitlementService(store: storeService, habitRepo: habitRepo, workoutRepo: workoutRepo, supplementRepo: supplementRepo, gymRepo: gymRepo)
         self.nutritionService = NutritionService(
             foodRepo: foodRepo,
             entryRepo: foodEntryRepo,
@@ -112,6 +115,7 @@ final class AppEnvironment {
         self.muscleRecoveryService = MuscleRecoveryService(sessionRepo: sessionRepo)
         self.aiService = AIService()
         self.trainingsPlanService = TrainingsPlanService(repo: trainingsPlanRepo)
+        self.gymService = GymService(gymRepo: gymRepo, exerciseRepo: exerciseRepo)
         self.achievementRepo = SwiftDataAchievementRepository(context: context)
         self.achievementService = AchievementService(
             repo: achievementRepo,

@@ -81,3 +81,12 @@ protocol AchievementRepository {
     func add(_ record: AchievementRecord) throws
     func delete(_ record: AchievementRecord) throws
 }
+
+protocol GymRepository {
+    func fetchAll(includeArchived: Bool) throws -> [Gym]
+    func fetch(id: UUID) throws -> Gym?
+    func create(_ gym: Gym) throws
+    func update(_ gym: Gym) throws
+    func archive(_ gym: Gym) throws
+    func delete(_ gym: Gym) throws
+}

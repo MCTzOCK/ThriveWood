@@ -22,6 +22,9 @@ struct WorkoutEditorView: View {
     @State private var showingLibrary = false
     @State private var errors = ErrorState()
     @State private var workoutRef: Workout?
+    @State private var selectedGym: Gym?
+    @State private var gyms: [Gym] = []
+    @State private var filterByGym: Bool = false
     
     private var isEditing: Bool { workout != nil }
     private var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -35,6 +38,17 @@ struct WorkoutEditorView: View {
                     ColorGrid(selection: $color)
                     Stepper("Dauer: \(duration) min",
                             value: $duration, in: 5...240, step: 5)
+                    if !gyms.isEmpty {
+                        Picker("Gym", selection: $selectedGym) {
+                            Text("Kein Gym").tag(Gym?.none)
+                            ForEach(gyms) { g in
+                                Text(g.name).tag(Gym?.some(g))
+                            }
+                        }
+                        if selectedGym != nil {
+                            Toggle("Nur Gym-Übungen anzeigen", isOn: $filterByGym)
+                        }
+                    }
                     if let w = workout {
                         if let url = PDFService.shared.createPDF(for: w) {
                             ShareLink(item: url) { Label("PDF teilen", systemImage: "square.and.arrow.up") }
@@ -87,9 +101,15 @@ struct WorkoutEditorView: View {
                 }
             }
             .sheet(isPresented: $showingLibrary) {
-                ExerciseLibraryView(onSelect: { exercise in
-                    addExercise(exercise)
-                }, asSheet: true, onlyFor: nil)
+                if filterByGym, let gym = selectedGym {
+                    ExerciseLibraryView(onSelect: { exercise in
+                        addExercise(exercise)
+                    }, asSheet: true, onlyFor: nil, onlyIDs: gym.availableExerciseIDs)
+                } else {
+                    ExerciseLibraryView(onSelect: { exercise in
+                        addExercise(exercise)
+                    }, asSheet: true, onlyFor: nil)
+                }
             }
             .errorAlert(errors)
             .onAppear(perform: hydrate)
@@ -106,11 +126,14 @@ struct WorkoutEditorView: View {
             duration = workout.estimatedDurationMinutes
             slots = workout.exercises
             workoutRef = workout
+            selectedGym = (try? env.gymService.allGyms()).flatMap { gyms in
+                gyms.first { $0.name.lowercased() == workout.name.lowercased() }
+            }
         } else {
-            // temporäres Workout-Objekt, damit wir Slots direkt anhängen können
             let w = Workout(name: "", color: color)
             workoutRef = w
         }
+        do { gyms = try env.gymService.allGyms() } catch { errors.show(error) }
     }
     
     private func addExercise(_ exercise: Exercise) {

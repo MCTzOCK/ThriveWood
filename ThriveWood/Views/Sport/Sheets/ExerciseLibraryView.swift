@@ -14,6 +14,7 @@ struct ExerciseLibraryView: View {
     let onSelect: (Exercise) -> Void
     let asSheet: Bool
     let onlyFor: MuscleGroup?
+    var onlyIDs: Set<UUID>? = nil
 
     @State private var exercises: [Exercise] = []
     @State private var search: String = ""
@@ -25,13 +26,14 @@ struct ExerciseLibraryView: View {
         exercises.filter { e in
             let matchesSearch = search.isEmpty || e.name.localizedCaseInsensitiveContains(search)
             let matchesCategory = selectedCategory == nil || e.category == selectedCategory
+            let matchesIDs = onlyIDs == nil || onlyIDs!.contains(e.id)
             if onlyFor != nil {
-                return matchesSearch && matchesCategory && (
+                return matchesSearch && matchesCategory && matchesIDs && (
                     e.primaryMuscleGroups.contains(onlyFor!) ||
                     e.secondaryMuscleGroups.contains(onlyFor!)
                 )
             }
-            return matchesSearch && matchesCategory
+            return matchesSearch && matchesCategory && matchesIDs
         }
     }
 

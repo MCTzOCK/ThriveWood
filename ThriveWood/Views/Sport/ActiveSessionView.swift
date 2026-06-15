@@ -31,6 +31,10 @@ struct ActiveSessionView: View {
     @State private var cachedCompletedCount: Int = 0
     @State private var cachedTotalVolume: Double = 0
     @State private var cachedExerciseCount: Int = 0
+    @State private var gyms: [Gym] = []
+    @State private var selectedGym: Gym?
+    @State private var showingGymMap = false
+    @State private var showingGymPicker = false
 
     var body: some View {
         NavigationStack {
@@ -81,11 +85,28 @@ struct ActiveSessionView: View {
                     ElapsedTimer(sessionStartedAt: session.startedAt)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fertig") { showingFinish = true }
-                        .fontWeight(.semibold)
+                    HStack(spacing: Theme.Spacing.s) {
+                        if !gyms.isEmpty {
+                            Menu {
+                                ForEach(gyms) { g in
+                                    Button {
+                                        selectedGym = g
+                                        Haptics.selection()
+                                        showingGymMap = true
+                                    } label: {
+                                        Label(g.name, systemImage: g.iconSystemName)
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "map.fill")
+                            }
+                        }
+                        Button("Fertig") { showingFinish = true }
+                            .fontWeight(.semibold)
+                    }
                 }
             }
-            .onAppear { recache(); restoreTrackerIfNeeded() }
+            .onAppear { recache(); restoreTrackerIfNeeded(); resolveGym() }
             .onChange(of: session.sets.count) { _, _ in recache() }
             .onChange(of: completedSignature) { _, _ in recache() }
             .sheet(isPresented: $showingFinish) {
@@ -121,6 +142,15 @@ struct ActiveSessionView: View {
                     exercise: exercise
                 ) { seconds, distance in
                     trackerCompleted(seconds: seconds, distance: distance)
+                }
+            }
+            .sheet(isPresented: $showingGymMap) {
+                if let gym = selectedGym {
+                    GymMapNavigatorView(
+                        gym: gym,
+                        currentExerciseID: currentIncompleteExerciseID,
+                        nextExerciseID: nextIncompleteExerciseID
+                    )
                 }
             }
         }
@@ -182,6 +212,22 @@ struct ActiveSessionView: View {
     }
 
     // MARK: Actions
+
+    private var currentIncompleteExerciseID: UUID? {
+        cachedGroups.first(where: { _, sets in sets.contains { !$0.isCompleted } })?.0.id
+    }
+
+    private var nextIncompleteExerciseID: UUID? {
+        let incomplete = cachedGroups.filter { _, sets in sets.contains { !$0.isCompleted } }
+        return incomplete.count > 1 ? incomplete[1].0.id : nil
+    }
+
+    private func resolveGym() {
+        do { gyms = try env.gymService.allGyms() } catch { errors.show(error) }
+        if gyms.count == 1 {
+            selectedGym = gyms[0]
+        }
+    }
 
     private func addSet(for exercise: Exercise) {
         let existing = session.sets.filter { $0.exercise?.id == exercise.id }

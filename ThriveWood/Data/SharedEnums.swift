@@ -1035,6 +1035,100 @@ enum MuscleRestReason {
     case nearLimit
 }
 
+enum GymZone: String, Codable, CaseIterable, Identifiable {
+    case freeWeights
+    case machines
+    case cardio
+    case functional
+    case stretching
+    case platesArea
+    case studio
+    case other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .freeWeights: "Freihantel"
+        case .machines: "Maschinen"
+        case .cardio: "Cardio"
+        case .functional: "Funktionell"
+        case .stretching: "Dehnen"
+        case .platesArea: "Scheiben"
+        case .studio: "Studio"
+        case .other: "Sonstiges"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .freeWeights: "dumbbell.fill"
+        case .machines: "gearshape.fill"
+        case .cardio: "heart.fill"
+        case .functional: "figure.strengthtraining.functional"
+        case .stretching: "figure.flexibility"
+        case .platesArea: "scalemass.fill"
+        case .studio: "building.2.fill"
+        case .other: "square.grid.2x2.fill"
+        }
+    }
+
+    var colorHex: String {
+        switch self {
+        case .freeWeights: "#E53935"
+        case .machines: "#1E88E5"
+        case .cardio: "#43A047"
+        case .functional: "#FB8C00"
+        case .stretching: "#8E24AA"
+        case .platesArea: "#6D4C41"
+        case .studio: "#00897B"
+        case .other: "#757575"
+        }
+    }
+}
+
+enum EquipmentType: String, Codable, CaseIterable, Identifiable {
+    case bench
+    case squatRack
+    case powerRack
+    case cableTower
+    case dumbbellRack
+    case cardioMachine
+    case matArea
+    case pullUpBar
+    case other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .bench: "Bank"
+        case .squatRack: "Squat Rack"
+        case .powerRack: "Power Rack"
+        case .cableTower: "Kabelzug"
+        case .dumbbellRack: "Hantelregal"
+        case .cardioMachine: "Cardio-Gerät"
+        case .matArea: "Matte"
+        case .pullUpBar: "Klimmzugstange"
+        case .other: "Sonstiges"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .bench: "bed.double.fill"
+        case .squatRack: "arrow.up.and.down.text.horizontal"
+        case .powerRack: "square.fill"
+        case .cableTower: "cable.fill"
+        case .dumbbellRack: "dumbbell.fill"
+        case .cardioMachine: "heart.fill"
+        case .matArea: "rectangle.fill"
+        case .pullUpBar: "arrow.up.to.line"
+        case .other: "questionmark.square.fill"
+        }
+    }
+}
+
 extension ActivityProfile {
     static var current: ActivityProfile {
         get {

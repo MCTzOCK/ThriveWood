@@ -23,7 +23,14 @@ enum ThriveWoodSchemaV1: VersionedSchema {
             WorkoutExercise.self,
             WorkoutSession.self,
             SetEntry.self,
-            UserProfile.self
+            UserProfile.self,
+            Gym.self,
+            GymExercise.self,
+            GymEquipment.self,
+            EquipmentExercise.self,
+            FloorPlan.self,
+            FloorZone.self,
+            WallSegment.self
         ]
     }
 }
