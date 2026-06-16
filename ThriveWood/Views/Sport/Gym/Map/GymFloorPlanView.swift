@@ -28,6 +28,14 @@ struct GymFloorPlanView: View {
     @State private var draggingZoneID: UUID? = nil
     @State private var draggingEquipmentID: UUID? = nil
 
+    @State private var zoomScale: CGFloat = 1.0
+    @State private var zoomScaleAtGestureStart: CGFloat = 1.0
+    @State private var panOffset: CGSize = .zero
+    @State private var panOffsetAtGestureStart: CGSize = .zero
+    @State private var snapToGridEnabled: Bool = true
+    @State private var extraCanvasWidth: CGFloat = 0
+    @State private var extraCanvasHeight: CGFloat = 0
+
     @State private var tappedZone: FloorZone? = nil
     @State private var showingZoneActions = false
     @State private var showingZoneRename = false
@@ -61,7 +69,7 @@ struct GymFloorPlanView: View {
         case wall(WallSegment)
     }
 
-    private let baseCanvasSize: CGFloat = 600
+    private let baseCanvasSize: CGFloat = 1200
 
     private var canvasSize: CGFloat {
         let padding: CGFloat = 80
@@ -79,7 +87,7 @@ struct GymFloorPlanView: View {
             let eqPos = max(eq.positionX, eq.positionY) * baseCanvasSize
             maxExtent = max(maxExtent, eqPos + padding)
         }
-        return maxExtent
+        return maxExtent + extraCanvasWidth + extraCanvasHeight
     }
 
     var body: some View {
@@ -263,37 +271,186 @@ struct GymFloorPlanView: View {
     // MARK: - Canvas
 
     private var canvasContent: some View {
+        ZStack {
+            GeometryReader { geo in
+                canvasInternal
+                    .gesture(canvasDragGesture, including: mode == .wall || mode == .zone ? .gesture : .subviews)
+                    .simultaneousGesture(zoomGesture)
+                    .simultaneousGesture(panGesture(geo: geo))
+            }
+            .contentShape(Rectangle())
+            .clipped()
+
+            if !isReadOnly {
+                canvasEdgeControls
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            zoomControls
+                .padding(Theme.Spacing.m)
+        }
+    }
+
+    private var canvasEdgeControls: some View {
         GeometryReader { geo in
-            ScrollView([.horizontal, .vertical], showsIndicators: true) {
-                ZStack(alignment: .topLeading) {
-                    canvasBackground
+            VStack(spacing: 0) {
+                Spacer()
 
-                    zonesLayer
+                HStack(spacing: 0) {
+                    Spacer()
 
-                    wallsLayer
-
-                    equipmentLayer
-
-                    if mode == .zone, let start = zoneCreationStart, let current = zoneCreationCurrent {
-                        let r = pixelRect(from: start, to: current)
-                        if r.width > 10 && r.height > 10 {
-                            RoundedRectangle(cornerRadius: Theme.Radius.s)
-                                .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [8]))
-                                .fill(Color.accentColor.opacity(0.08))
-                                .frame(width: r.width, height: r.height)
-                                .position(x: r.midX, y: r.midY)
+                    VStack(spacing: 4) {
+                        canvasEdgeButton(systemName: "plus") {
+                            withAnimation(.snappy) { extraCanvasWidth += 300 }
+                        }
+                        canvasEdgeButton(systemName: "minus") {
+                            withAnimation(.snappy) { extraCanvasWidth = max(0, extraCanvasWidth - 300) }
                         }
                     }
-
-                    if mode == .wall, let start = wallStart, let preview = wallPreview {
-                        WallLineView(from: start, to: preview, color: .accentColor)
-                    }
+                    .padding(.trailing, 4)
                 }
-                .frame(width: canvasSize, height: canvasSize)
-                .contentShape(Rectangle())
-                .gesture(canvasDragGesture, including: mode == .navigate ? .subviews : .gesture)
+
+                HStack(spacing: 0) {
+                    Spacer()
+
+                    HStack(spacing: 4) {
+                        canvasEdgeButton(systemName: "plus") {
+                            withAnimation(.snappy) { extraCanvasHeight += 300 }
+                        }
+                        canvasEdgeButton(systemName: "minus") {
+                            withAnimation(.snappy) { extraCanvasHeight = max(0, extraCanvasHeight - 300) }
+                        }
+                    }
+                    .padding(.bottom, 4)
+                }
             }
-            .scrollDisabled(mode != .navigate)
+        }
+    }
+
+    private func canvasEdgeButton(systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: { Haptics.selection(); action() }) {
+            Image(systemName: systemName)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.secondary)
+                .frame(width: 24, height: 24)
+                .background(Circle().fill(.ultraThinMaterial))
+                .shadow(color: .black.opacity(0.1), radius: 2)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var canvasInternal: some View {
+        ZStack(alignment: .topLeading) {
+            canvasBackground
+
+            zonesLayer
+
+            wallsLayer
+
+            equipmentLayer
+
+            if mode == .zone, let start = zoneCreationStart, let current = zoneCreationCurrent {
+                let r = pixelRect(from: start, to: current)
+                if r.width > 10 && r.height > 10 {
+                    RoundedRectangle(cornerRadius: Theme.Radius.s)
+                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [8]))
+                        .fill(Color.accentColor.opacity(0.08))
+                        .frame(width: r.width, height: r.height)
+                        .position(x: r.midX, y: r.midY)
+                }
+            }
+
+            if mode == .wall, let start = wallStart, let preview = wallPreview {
+                WallLineView(from: start, to: preview, color: .accentColor)
+            }
+        }
+        .frame(width: canvasSize, height: canvasSize)
+        .scaleEffect(zoomScale, anchor: .topLeading)
+        .offset(panOffset)
+    }
+
+    private func panGesture(geo: GeometryProxy) -> some Gesture {
+        DragGesture(minimumDistance: 2)
+            .onChanged { value in
+                guard (mode == .navigate || mode == .equipment) && draggingEquipmentID == nil && draggingZoneID == nil else { return }
+                panOffset = CGSize(
+                    width: panOffsetAtGestureStart.width + value.translation.width,
+                    height: panOffsetAtGestureStart.height + value.translation.height
+                )
+            }
+            .onEnded { _ in
+                panOffsetAtGestureStart = panOffset
+            }
+    }
+
+    private var zoomGesture: some Gesture {
+        MagnifyGesture()
+            .onChanged { value in
+                let newScale = min(3.0, max(0.3, zoomScaleAtGestureStart * value.magnification))
+                zoomScale = newScale
+            }
+            .onEnded { _ in
+                zoomScaleAtGestureStart = zoomScale
+                panOffsetAtGestureStart = panOffset
+            }
+    }
+
+    private var zoomControls: some View {
+        HStack(spacing: Theme.Spacing.s) {
+            if !isReadOnly {
+                Button {
+                    snapToGridEnabled.toggle()
+                    Haptics.selection()
+                } label: {
+                    Image(systemName: snapToGridEnabled ? "grid" : "grid.circle")
+                        .font(.body)
+                        .foregroundStyle(snapToGridEnabled ? Color.accentColor : .secondary)
+                }
+                .buttonStyle(.bordered)
+            }
+
+            Button {
+                withAnimation(.snappy) {
+                    zoomScale = max(0.3, zoomScale - 0.2)
+                    zoomScaleAtGestureStart = zoomScale
+                }
+                Haptics.selection()
+            } label: {
+                Image(systemName: "minus.magnifyingglass")
+                    .font(.body)
+            }
+            .buttonStyle(.bordered)
+
+            Text("\(Int(zoomScale * 100))%")
+                .font(.caption2.weight(.semibold).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(width: 40)
+
+            Button {
+                withAnimation(.snappy) {
+                    zoomScale = min(3.0, zoomScale + 0.2)
+                    zoomScaleAtGestureStart = zoomScale
+                }
+                Haptics.selection()
+            } label: {
+                Image(systemName: "plus.magnifyingglass")
+                    .font(.body)
+            }
+            .buttonStyle(.bordered)
+
+            Button {
+                withAnimation(.snappy) {
+                    zoomScale = 1.0
+                    zoomScaleAtGestureStart = 1.0
+                    panOffset = .zero
+                    panOffsetAtGestureStart = .zero
+                }
+                Haptics.selection()
+            } label: {
+                Image(systemName: "1.magnifyingglass")
+                    .font(.body)
+            }
+            .buttonStyle(.bordered)
         }
     }
 
@@ -359,8 +516,8 @@ struct GymFloorPlanView: View {
                         resizeHandle(color: zColor) { dx, dy in
                             let newW = max(0.08, zone.width + dx / canvasSize)
                             let newH = max(0.08, zone.height + dy / canvasSize)
-                            zone.width = min(1.0 - zone.x, newW)
-                            zone.height = min(1.0 - zone.y, newH)
+                            zone.width = snapNorm(min(1.0 - zone.x, newW))
+                            zone.height = snapNorm(min(1.0 - zone.y, newH))
                         } onEnded: {
                             try? env.gymService.updateGym(gym)
                         }
@@ -373,10 +530,10 @@ struct GymFloorPlanView: View {
                             let newY = max(0, zone.y + dy / canvasSize)
                             let dw = zone.x - newX
                             let dh = zone.y - newY
-                            zone.x = newX
-                            zone.y = newY
-                            zone.width = max(0.08, zone.width + dw)
-                            zone.height = max(0.08, zone.height + dh)
+                            zone.x = snapNorm(newX)
+                            zone.y = snapNorm(newY)
+                            zone.width = snapNorm(max(0.08, zone.width + dw))
+                            zone.height = snapNorm(max(0.08, zone.height + dh))
                         } onEnded: {
                             try? env.gymService.updateGym(gym)
                         }
@@ -474,18 +631,20 @@ struct GymFloorPlanView: View {
     private var canvasDragGesture: some Gesture {
         DragGesture(minimumDistance: 8)
             .onChanged { value in
+                let start = canvasPointFromGesture(value.startLocation)
+                let current = canvasPointFromGesture(value.location)
                 switch mode {
                 case .navigate: break
                 case .wall:
                     if wallStart == nil {
-                        wallStart = snapToGrid(value.startLocation)
+                        wallStart = snapToGrid(start)
                     }
-                    wallPreview = snapToGrid(value.location)
+                    wallPreview = snapToGrid(current)
                 case .zone:
                     if zoneCreationStart == nil {
-                        zoneCreationStart = value.startLocation
+                        zoneCreationStart = snapToGrid(start)
                     }
-                    zoneCreationCurrent = value.location
+                    zoneCreationCurrent = snapToGrid(current)
                 case .equipment: break
                 }
             }
@@ -521,6 +680,13 @@ struct GymFloorPlanView: View {
             }
     }
 
+    private func canvasPointFromGesture(_ point: CGPoint) -> CGPoint {
+        CGPoint(
+            x: (point.x - panOffset.width) / zoomScale,
+            y: (point.y - panOffset.height) / zoomScale
+        )
+    }
+
     private func zoneMoveGesture(_ zone: FloorZone) -> some Gesture {
         DragGesture(minimumDistance: 5)
             .onChanged { value in
@@ -534,8 +700,8 @@ struct GymFloorPlanView: View {
             .onEnded { value in
                 let dx = value.translation.width / canvasSize
                 let dy = value.translation.height / canvasSize
-                zone.x = max(0, min(1 - zone.width, zone.x + dx))
-                zone.y = max(0, min(1 - zone.height, zone.y + dy))
+                zone.x = snapNorm(max(0, min(1 - zone.width, zone.x + dx)))
+                zone.y = snapNorm(max(0, min(1 - zone.height, zone.y + dy)))
                 try? env.gymService.updateGym(gym)
                 draggingZoneID = nil
             }
@@ -552,8 +718,10 @@ struct GymFloorPlanView: View {
                 state = value.translation
             }
             .onEnded { value in
-                let newX = max(0, min(1, eq.positionX + value.translation.width / canvasSize))
-                let newY = max(0, min(1, eq.positionY + value.translation.height / canvasSize))
+                var newX = max(0, min(1, eq.positionX + value.translation.width / canvasSize))
+                var newY = max(0, min(1, eq.positionY + value.translation.height / canvasSize))
+                newX = snapNorm(newX)
+                newY = snapNorm(newY)
                 eq.positionX = newX
                 eq.positionY = newY
                 eq.zoneRaw = zoneContainingPoint(x: newX, y: newY)?.rawValue
@@ -687,11 +855,18 @@ struct GymFloorPlanView: View {
     }
 
     private func snapToGrid(_ point: CGPoint) -> CGPoint {
-        let step: CGFloat = 15
+        guard snapToGridEnabled else { return point }
+        let step: CGFloat = 30
         return CGPoint(
             x: round(point.x / step) * step,
             y: round(point.y / step) * step
         )
+    }
+
+    private func snapNorm(_ value: Double) -> Double {
+        guard snapToGridEnabled else { return value }
+        let step = 30.0 / Double(canvasSize)
+        return round(value / step) * step
     }
 
     private func pixelRect(from p1: CGPoint, to p2: CGPoint) -> CGRect {
@@ -808,29 +983,31 @@ struct EquipmentPin: View {
     }
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 1) {
             ZStack {
                 Circle()
                     .fill(pinColor)
-                    .frame(width: isHighlighted ? 44 : 36, height: isHighlighted ? 44 : 36)
-                    .shadow(color: .black.opacity(0.25), radius: isHighlighted ? 6 : 3)
+                    .frame(width: isHighlighted ? 22 : 18, height: isHighlighted ? 22 : 18)
+                    .shadow(color: .black.opacity(0.2), radius: 2)
                 Image(systemName: equipment.iconSystemName)
-                    .font(isHighlighted ? .body.weight(.bold) : .callout.weight(.semibold))
+                    .font(.system(size: isHighlighted ? 10 : 8, weight: .bold))
                     .foregroundStyle(.white)
 
                 if isHighlighted {
                     Circle()
-                        .strokeBorder(pinColor.opacity(0.4), lineWidth: 3)
-                        .frame(width: 56, height: 56)
+                        .strokeBorder(pinColor.opacity(0.4), lineWidth: 2)
+                        .frame(width: 28, height: 28)
                 }
             }
-            .frame(width: 56, height: 56)
+            .frame(width: 28, height: 28)
 
             Text(equipment.name)
-                .font(.system(size: isHighlighted ? 11 : 9, weight: .bold))
+                .font(.system(size: 6, weight: .bold))
                 .lineLimit(1)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
+                .truncationMode(.tail)
+                .frame(maxWidth: 36)
+                .padding(.horizontal, 3)
+                .padding(.vertical, 1)
                 .background(
                     Group {
                         if isHighlighted {
@@ -844,20 +1021,22 @@ struct EquipmentPin: View {
 
             if isHighlighted {
                 Text("Hier")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: 6, weight: .bold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
                     .background(Capsule().fill(pinColor))
             } else if isNext {
                 Text("Nächste")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: 6, weight: .bold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
                     .background(Capsule().fill(.orange))
             }
         }
+        .frame(width: 48, height: 48)
+        .contentShape(Rectangle())
         .position(
             x: equipment.positionX * canvasSize + dragOffset.width,
             y: equipment.positionY * canvasSize + dragOffset.height

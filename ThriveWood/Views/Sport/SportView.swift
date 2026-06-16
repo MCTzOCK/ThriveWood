@@ -162,7 +162,7 @@ struct SportView: View {
     private func featureGrid() -> some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.l) {
             NavigationLink(destination: {
-                AllSessionsView(sessions: vm!.recentSessions)
+                AllSessionsView()
             }) {
                 OrganisationCard(title: "Alle Sessions", subtitle: "", icon: "clock.fill", iconColor: .green)
             }

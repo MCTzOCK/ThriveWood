@@ -18,7 +18,7 @@ struct RecentSessionsSection: View {
                 Spacer()
                 if sessions.count > 5 {
                     NavigationLink("Alle") {
-                        AllSessionsView(sessions: sessions)
+                        AllSessionsView()
                     }
                     .font(.subheadline.weight(.semibold))
                 }

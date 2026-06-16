@@ -19,10 +19,13 @@ struct ExerciseBlock: View {
     let removeExercise: () -> Void
     let showDetails: () -> Void
     var onStartTracker: ((SetEntry) -> Void)? = nil
+    var onMoveUp: (() -> Void)? = nil
+    var onMoveDown: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack(spacing: Theme.Spacing.s) {
+
                 Image(systemName: exercise.iconSystemName)
                     .foregroundStyle(.tint)
                     .frame(width: 30, height: 30)
@@ -45,6 +48,31 @@ struct ExerciseBlock: View {
                         .foregroundStyle(.red)
                 }
                 .buttonStyle(.plain)
+
+                if onMoveUp != nil || onMoveDown != nil {
+                    VStack(spacing: 2) {
+                        if let onMoveUp {
+                            Button(action: onMoveUp) {
+                                Image(systemName: "chevron.up")
+                                    .font(.caption.weight(.bold))
+                                    .frame(width: 24, height: 20)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.secondary)
+                        }
+                        if let onMoveDown {
+                            Button(action: onMoveDown) {
+                                Image(systemName: "chevron.down")
+                                    .font(.caption.weight(.bold))
+                                    .frame(width: 24, height: 20)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                }
             }
 
             if let topSet, topSet.volumeValue > 0 {
@@ -58,12 +86,8 @@ struct ExerciseBlock: View {
                 .foregroundStyle(.orange)
             }
 
-            // Header
             HStack {
                 Text("#").frame(width: 24, alignment: .leading)
-            /*    Text("kg" == unit.rawValue ? "kg" : "lb").frame(width: 70, alignment: .center)
-                Text("Reps").frame(width: 70, alignment: .center)
-                Spacer()*/
             }
             .font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
@@ -71,7 +95,6 @@ struct ExerciseBlock: View {
             ForEach(Array(sets.enumerated()), id: \.element.id) { idx, set in
                 SetRow(index: idx + 1, set_: set, unit: unit, onComplete: { onComplete(set) }, onDelete: { onDelete(set) }, onStartTracker: onStartTracker.map { _ in { onStartTracker?(set) } })
             }
-            
 
             Button(action: onAddSet) {
                 HStack {
@@ -93,4 +116,3 @@ struct ExerciseBlock: View {
         .cardStyle()
     }
 }
-

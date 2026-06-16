@@ -81,11 +81,12 @@ final class WorkoutService {
         
         // Prefill Sets aus dem Workout-Plan
         if let workout {
+            var globalOrder = 0
             for slot in workout.exercises.sorted(by: { $0.order < $1.order }) {
                 guard let exercise = slot.exercise else { continue }
-                for i in 0..<slot.targetSets {
+                for _ in 0..<slot.targetSets {
                     let set = SetEntry(
-                        order: i,
+                        order: globalOrder,
                         exercise: exercise,
                         session: session,
                         reps: slot.targetReps,
@@ -93,6 +94,7 @@ final class WorkoutService {
                         durationSeconds: slot.targetDurationSeconds
                     )
                     session.sets.append(set)
+                    globalOrder += 1
                 }
             }
             try sessions.update(session)

@@ -12,6 +12,7 @@ struct GymDetailView: View {
 
     @State private var selectedTab: GymDetailTab = .map
     @State private var showingEditGym = false
+    @State private var exportedFileURL: URL?
     @State private var errors = ErrorState()
 
     private enum GymDetailTab: String, CaseIterable {
@@ -45,10 +46,24 @@ struct GymDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingEditGym = true
+                Menu {
+                    Button {
+                        showingEditGym = true
+                    } label: {
+                        Label("Bearbeiten", systemImage: "gear")
+                    }
+                    Button {
+                        exportGym()
+                    } label: {
+                        Label("JSON exportieren", systemImage: "square.and.arrow.up")
+                    }
+                    if let exportedURL = exportedFileURL {
+                        ShareLink(item: exportedURL) {
+                            Label("Teilen", systemImage: "square.and.arrow.up.fill")
+                        }
+                    }
                 } label: {
-                    Image(systemName: "gear")
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
@@ -56,5 +71,16 @@ struct GymDetailView: View {
             GymEditorView(gym: gym)
         }
         .errorAlert(errors)
+    }
+
+    private func exportGym() {
+        do {
+            let data = try GymPlanExport.export(gym: gym)
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(gym.name.replacingOccurrences(of: " ", with: "-")).json")
+            try data.write(to: tempURL)
+            exportedFileURL = tempURL
+        } catch {
+            errors.show(error)
+        }
     }
 }

@@ -10,7 +10,13 @@ import SwiftUI
 
 struct AllSessionsView: View {
     @Environment(AppEnvironment.self) private var env
-    let sessions: [WorkoutSession]
+    @State private var refreshID = UUID()
+
+    private var sessions: [WorkoutSession] {
+        _ = refreshID
+        return (try? env.sessionRepo.fetchAll()) ?? []
+    }
+    
 
     private var grouped: [(String, [WorkoutSession])] {
         let groups = Dictionary(grouping: sessions) { session in
@@ -40,6 +46,9 @@ struct AllSessionsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .refreshable {
+            refreshID = UUID()
+        }
         .navigationTitle("Trainings-Historie")
         .navigationBarTitleDisplayMode(.inline)
     }
