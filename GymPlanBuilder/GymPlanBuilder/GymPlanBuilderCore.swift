@@ -78,16 +78,14 @@ public struct EquipmentJSON: Codable, Identifiable {
     }
 }
 
-public struct WallJSON: Codable, Identifiable {
-    public var id: UUID
+public struct WallJSON: Codable {
     public var startX: Double
     public var startY: Double
     public var endX: Double
     public var endY: Double
     public var floorIndex: Int
 
-    public init(id: UUID = UUID(), startX: Double = 0, startY: Double = 0, endX: Double = 0.5, endY: Double = 0, floorIndex: Int = 0) {
-        self.id = id
+    public init(startX: Double = 0, startY: Double = 0, endX: Double = 0.5, endY: Double = 0, floorIndex: Int = 0) {
         self.startX = startX
         self.startY = startY
         self.endX = endX

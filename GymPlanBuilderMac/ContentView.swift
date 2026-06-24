@@ -5,7 +5,6 @@
 
 
 import SwiftUI
-import GymPlanBuilderCore
 
 struct ContentView: View {
     @Binding var plan: GymPlanJSON

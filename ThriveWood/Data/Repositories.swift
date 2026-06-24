@@ -639,6 +639,68 @@ final class SwiftDataAchievementRepository: SwiftDataRepository, AchievementRepo
 }
 
 
+// MARK: - HabitGroup
+
+@MainActor
+final class SwiftDataHabitGroupRepository: SwiftDataRepository, HabitGroupRepository {
+    func fetchAll() throws -> [HabitGroup] {
+        try context.fetch(FetchDescriptor<HabitGroup>(
+            sortBy: [SortDescriptor(\.sortOrder), SortDescriptor(\.createdAt)]
+        ))
+    }
+
+    func fetch(id: UUID) throws -> HabitGroup? {
+        var d = FetchDescriptor<HabitGroup>(predicate: #Predicate { $0.id == id })
+        d.fetchLimit = 1
+        return try context.fetch(d).first
+    }
+
+    func create(_ group: HabitGroup) throws {
+        guard !group.title.trimmingCharacters(in: .whitespaces).isEmpty
+        else { throw RepositoryError.invalidInput("Titel darf nicht leer sein.") }
+        context.insert(group)
+        try save()
+    }
+
+    func update(_ group: HabitGroup) throws { try save() }
+
+    func delete(_ group: HabitGroup) throws {
+        context.delete(group)
+        try save()
+    }
+
+    func reorder(_ groups: [HabitGroup]) throws {
+        for (index, group) in groups.enumerated() { group.sortOrder = index }
+        try save()
+    }
+
+    func addHabit(_ habitID: UUID, to groupID: UUID) throws {
+        guard let group = try fetch(id: groupID) else { return }
+        if !group.habitIDs.contains(habitID) {
+            group.habitIDs.append(habitID)
+            try save()
+        }
+    }
+
+    func removeHabit(_ habitID: UUID, from groupID: UUID) throws {
+        guard let group = try fetch(id: groupID) else { return }
+        group.habitIDs.removeAll { $0 == habitID }
+        try save()
+    }
+
+    func removeHabitFromAllGroups(_ habitID: UUID) throws {
+        let all = try fetchAll()
+        for group in all where group.habitIDs.contains(habitID) {
+            group.habitIDs.removeAll { $0 == habitID }
+        }
+        if context.hasChanges { try save() }
+    }
+
+    func groupForHabit(_ habitID: UUID) throws -> HabitGroup? {
+        try fetchAll().first { $0.habitIDs.contains(habitID) }
+    }
+}
+
 // MARK: - Gym
 
 @MainActor

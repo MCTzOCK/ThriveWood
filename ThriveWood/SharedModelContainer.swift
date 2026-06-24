@@ -15,6 +15,7 @@ enum SharedModelContainer {
     private static let schema = Schema([
         Habit.self,
         HabitCompletion.self,
+        HabitGroup.self,
         Forest.self,
         TreeEntity.self,
         UserProfile.self,

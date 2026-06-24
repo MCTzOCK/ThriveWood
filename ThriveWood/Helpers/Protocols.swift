@@ -90,3 +90,16 @@ protocol GymRepository {
     func archive(_ gym: Gym) throws
     func delete(_ gym: Gym) throws
 }
+
+protocol HabitGroupRepository {
+    func fetchAll() throws -> [HabitGroup]
+    func fetch(id: UUID) throws -> HabitGroup?
+    func create(_ group: HabitGroup) throws
+    func update(_ group: HabitGroup) throws
+    func delete(_ group: HabitGroup) throws
+    func reorder(_ groups: [HabitGroup]) throws
+    func addHabit(_ habitID: UUID, to groupID: UUID) throws
+    func removeHabit(_ habitID: UUID, from groupID: UUID) throws
+    func removeHabitFromAllGroups(_ habitID: UUID) throws
+    func groupForHabit(_ habitID: UUID) throws -> HabitGroup?
+}

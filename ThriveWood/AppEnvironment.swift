@@ -30,6 +30,7 @@ final class AppEnvironment {
     let templateRepo: MealTemplateRepository
     let trainingsPlanRepo: TrainingsPlanRepository
     let gymRepo: any GymRepository
+    let groupRepo: any HabitGroupRepository
     
     
     // Services
@@ -47,6 +48,7 @@ final class AppEnvironment {
     let muscleRankingService: MuscleRankingService
     let muscleRecoveryService: MuscleRecoveryService
     let aiService: AIService
+    private(set) var setRecommendationService: SetRecommendationService!
     let trainingsPlanService: TrainingsPlanService
     let gymService: GymService
     let achievementService: AchievementService
@@ -72,6 +74,7 @@ final class AppEnvironment {
         self.trainingsPlanRepo = TrainingsPlanRepository(modelContext: context)
         self.bodyProgressRepo = SwiftDataBodyProgressRepository(context: context)
         self.gymRepo = SwiftDataGymRepository(context: context)
+        self.groupRepo = SwiftDataHabitGroupRepository(context: context)
 
 
         self.habitRepo = habitRepo
@@ -142,6 +145,12 @@ final class AppEnvironment {
 #endif
         self.backupService = BackupService(env: self)
         self.workoutService = WorkoutService(workouts: workoutRepo, sessions: sessionRepo, exercises: exerciseRepo, profile: profileRepo, env: self)
+        self.setRecommendationService = SetRecommendationService(
+            workoutService: workoutService,
+            rankingService: muscleRankingService,
+            recoveryService: muscleRecoveryService,
+            aiService: aiService
+        )
     }
     
     func saveHabit(_ habit: Habit, isNew: Bool) async throws {
@@ -153,12 +162,34 @@ final class AppEnvironment {
     
     func archiveHabit(_ habit: Habit) async throws {
         try habitRepo.archive(habit)
+        try groupRepo.removeHabitFromAllGroups(habit.id)
         try await notificationService.cancelReminders(for: habit)
     }
     
     func deleteHabit(_ habit: Habit) async throws {
         try await notificationService.cancelReminders(for: habit)
+        try groupRepo.removeHabitFromAllGroups(habit.id)
         try habitRepo.delete(habit)
+    }
+
+    func saveGroup(_ group: HabitGroup, isNew: Bool) throws {
+        if isNew { try groupRepo.create(group) }
+        else     { try groupRepo.update(group) }
+    }
+
+    func deleteGroup(_ group: HabitGroup) throws {
+        try groupRepo.delete(group)
+    }
+
+    func moveHabitToGroup(_ habitID: UUID, from oldGroupID: UUID?, to newGroupID: UUID?) throws {
+        if let oldID = oldGroupID {
+            try groupRepo.removeHabit(habitID, from: oldID)
+        } else {
+            try groupRepo.removeHabitFromAllGroups(habitID)
+        }
+        if let newID = newGroupID {
+            try groupRepo.addHabit(habitID, to: newID)
+        }
     }
     
 }

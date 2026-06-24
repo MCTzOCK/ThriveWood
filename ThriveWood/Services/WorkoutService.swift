@@ -288,6 +288,43 @@ final class WorkoutService {
         
         return result.sorted { $0.exercise.name.localizedStandardCompare($1.exercise.name) == .orderedAscending }
     }
+
+    struct ExerciseWorkingStats {
+        let avgWeight: Double
+        let avgReps: Int
+        let recentSessionCount: Int
+    }
+
+    func getRecentWorkingStats(for exercise: Exercise, lastNSessions: Int = 5) -> ExerciseWorkingStats? {
+        let allSessions = (try? sessions.fetchAll()) ?? []
+        let relevantSessions = allSessions
+            .filter { $0.endedAt != nil }
+            .filter { session in
+                session.sets.contains { $0.exercise?.id == exercise.id && $0.isCompleted && !$0.isWarmup }
+            }
+            .sorted { ($0.endedAt ?? $0.startedAt) > ($1.endedAt ?? $1.startedAt) }
+
+        guard !relevantSessions.isEmpty else { return nil }
+
+        let recentSessions = Array(relevantSessions.prefix(lastNSessions))
+        let recentSets = recentSessions.flatMap { session in
+            session.sets.filter { $0.exercise?.id == exercise.id && $0.isCompleted && !$0.isWarmup }
+        }
+
+        let weights = recentSets.compactMap { $0.weight }
+        let reps = recentSets.compactMap { $0.reps }
+
+        guard !weights.isEmpty, !reps.isEmpty else { return nil }
+
+        let avgWeight = weights.reduce(0, +) / Double(weights.count)
+        let avgReps = Double(reps.reduce(0, +)) / Double(reps.count)
+
+        return ExerciseWorkingStats(
+            avgWeight: avgWeight,
+            avgReps: Int(avgReps.rounded()),
+            recentSessionCount: recentSessions.count
+        )
+    }
 }
 
 private extension ServiceError {

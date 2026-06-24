@@ -16,6 +16,7 @@ final class HomeViewModel {
     
     var selectedDate: Date = Calendar.app.startOfDay()
     var habits: [Habit] = []
+    var groups: [HabitGroup] = []
     var completedHabitIDs: Set<UUID> = []
     var pointsToday: Int = 0
     var dailyGoal: Int = 5
@@ -29,6 +30,28 @@ final class HomeViewModel {
         let q = searchText.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return habits }
         return habits.filter { $0.title.localizedCaseInsensitiveContains(q) }
+    }
+    
+    var groupedDisplaySections: [(group: HabitGroup?, habits: [Habit])] {
+        let q = searchText.trimmingCharacters(in: .whitespaces)
+        guard q.isEmpty else {
+            let filtered = habits.filter { $0.title.localizedCaseInsensitiveContains(q) }
+            return filtered.isEmpty ? [] : [(nil, filtered)]
+        }
+        
+        var sections: [(HabitGroup?, [Habit])] = []
+        for group in groups {
+            let groupHabits = group.habitIDs.compactMap { id in
+                habits.first { $0.id == id }
+            }
+            sections.append((group, groupHabits))
+        }
+        let groupedIDs = Set(groups.flatMap(\.habitIDs))
+        let ungrouped = habits.filter { !groupedIDs.contains($0.id) }
+        if !ungrouped.isEmpty {
+            sections.append((nil, ungrouped))
+        }
+        return sections
     }
     
     var progress: Double {
@@ -45,6 +68,7 @@ final class HomeViewModel {
     func load() {
         do {
             habits = try env.habitService.habitsDue(on: selectedDate)
+            groups = try env.groupRepo.fetchAll()
             completedHabitIDs = try Set(
                 habits.compactMap {
                     try env.habitService.isCompleted($0, on: selectedDate) ? $0.id : nil
@@ -173,6 +197,49 @@ final class HomeViewModel {
             reloadPoints()
             env.achievementService.checkHabits()
         } catch { errors.show(error) }
+    }
+
+    // MARK: - Group Actions
+    
+    func toggleCollapsed(_ group: HabitGroup) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            group.isCollapsed.toggle()
+            try? env.groupRepo.update(group)
+        }
+    }
+    
+    func moveGroup(from offsets: IndexSet, to destination: Int) {
+        var reordered = groups
+        reordered.move(fromOffsets: offsets, toOffset: destination)
+        groups = reordered
+        try? env.groupRepo.reorder(reordered)
+    }
+    
+    func moveHabitInGroup(from offsets: IndexSet, to destination: Int, in group: HabitGroup) {
+        var ids = group.habitIDs
+        ids.move(fromOffsets: offsets, toOffset: destination)
+        group.habitIDs = ids
+        try? env.groupRepo.update(group)
+        load()
+    }
+    
+    func addHabitToGroup(_ habitID: UUID, groupID: UUID?) {
+        do {
+            let oldGroup = try env.groupRepo.groupForHabit(habitID)
+            try env.moveHabitToGroup(habitID, from: oldGroup?.id, to: groupID)
+        } catch {
+            errors.show(error)
+        }
+        load()
+    }
+    
+    func deleteGroup(_ group: HabitGroup) {
+        do {
+            try env.deleteGroup(group)
+            withAnimation { groups.removeAll { $0.id == group.id } }
+        } catch {
+            errors.show(error)
+        }
     }
 
     private func reloadPoints() {

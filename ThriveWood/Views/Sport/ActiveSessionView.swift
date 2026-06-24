@@ -34,6 +34,8 @@ struct ActiveSessionView: View {
     @State private var gyms: [Gym] = []
     @State private var selectedGym: Gym?
     @State private var sessionMode: SessionMode = .classic
+    @State private var recommendations: [UUID: SetRecommendation] = [:]
+    @State private var collapsedExercises: Set<UUID> = []
 
     enum SessionMode: String, CaseIterable {
         case classic = "Klassisch"
@@ -115,6 +117,7 @@ struct ActiveSessionView: View {
             ScrollView {
                 VStack(spacing: Theme.Spacing.l) {
                     header
+
                     ForEach(Array(cachedGroups.enumerated()), id: \.element.0.id) { index, group in
                         let (exercise, sets) = group
                         ExerciseBlock(
@@ -122,6 +125,9 @@ struct ActiveSessionView: View {
                             sets: sets,
                             unit: session.weightUnit,
                             topSet: env.workoutService.getTopSet(for: exercise),
+                            recommendation: recommendations[exercise.id],
+                            isCollapsed: collapsedExercises.contains(exercise.id),
+                            aiService: env.aiService,
                             onAddSet: { addSet(for: exercise) },
                             onComplete: { toggleComplete($0, for: exercise) },
                             onDelete: { deleteSet($0) },
@@ -135,7 +141,21 @@ struct ActiveSessionView: View {
                             },
                             onStartTracker: { set in startTracker(for: set, exercise: exercise) },
                             onMoveUp: index > 0 ? { moveExercise(from: index, to: index - 1) } : nil,
-                            onMoveDown: index < cachedGroups.count - 1 ? { moveExercise(from: index, to: index + 1) } : nil
+                            onMoveDown: index < cachedGroups.count - 1 ? { moveExercise(from: index, to: index + 1) } : nil,
+                            onToggleCollapse: {
+                                withAnimation(.snappy(duration: 0.2)) {
+                                    if collapsedExercises.contains(exercise.id) {
+                                        collapsedExercises.remove(exercise.id)
+                                    } else {
+                                        collapsedExercises.insert(exercise.id)
+                                    }
+                                }
+                            },
+                            onApplyRecommendation: {
+                                if let rec = recommendations[exercise.id] {
+                                    applyRecommendation(rec, for: exercise)
+                                }
+                            }
                         )
                         .padding(.horizontal, Theme.Spacing.l)
                     }
@@ -275,6 +295,28 @@ struct ActiveSessionView: View {
         cachedCompletedCount = session.sets.filter(\.isCompleted).count
         cachedTotalVolume = session.sets.filter { $0.isCompleted && $0.exercise?.trackingType == .repsWeight }.reduce(0) { $0 + $1.volumeValue }
         cachedExerciseCount = result.count
+        updateRecommendations()
+    }
+
+    private func updateRecommendations() {
+        guard env.entitlements.canUseSetRecommendations else {
+            recommendations = [:]
+            return
+        }
+        var newRecs: [UUID: SetRecommendation] = [:]
+        for (exercise, sets) in cachedGroups {
+            guard exercise.trackingType == .repsWeight else { continue }
+            let hasIncomplete = sets.contains { !$0.isCompleted }
+            guard hasIncomplete else { continue }
+            if let rec = env.setRecommendationService.recommend(
+                for: exercise,
+                currentSets: sets,
+                weightUnit: session.weightUnit
+            ) {
+                newRecs[exercise.id] = rec
+            }
+        }
+        recommendations = newRecs
     }
 
     // MARK: Actions
@@ -299,16 +341,39 @@ struct ActiveSessionView: View {
         let existing = session.sets.filter { $0.exercise?.id == exercise.id }
         let last = existing.max(by: { $0.order < $1.order })
         let newOrder = (existing.map(\.order).max() ?? -1) + 1
+
+        let initialWeight: Double?
+        let initialReps: Int?
+
+        if let rec = recommendations[exercise.id] {
+            initialWeight = rec.recommendedWeight
+            initialReps = rec.recommendedReps
+        } else {
+            initialWeight = last?.weight
+            initialReps = last?.reps
+        }
+
         let set = SetEntry(
             order: newOrder, exercise: exercise, session: session,
-            reps: last?.reps,
-            weight: last?.weight,
+            reps: initialReps,
+            weight: initialWeight,
             durationSeconds: last?.durationSeconds,
             distanceMeters: last?.distanceMeters
         )
         session.sets.append(set)
         try? env.sessionRepo.update(session)
         Haptics.selection()
+    }
+
+    private func applyRecommendation(_ rec: SetRecommendation, for exercise: Exercise) {
+        let incompleteSets = session.sets.filter {
+            $0.exercise?.id == exercise.id && !$0.isCompleted
+        }
+        guard let target = incompleteSets.first else { return }
+        target.weight = rec.recommendedWeight
+        target.reps = rec.recommendedReps
+        try? env.sessionRepo.update(session)
+        Haptics.success()
     }
 
     private func addExercise() {

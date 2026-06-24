@@ -13,6 +13,9 @@ struct ExerciseBlock: View {
     let sets: [SetEntry]
     let unit: WeightUnit
     let topSet: SetEntry?
+    let recommendation: SetRecommendation?
+    let isCollapsed: Bool
+    let aiService: AIService?
     let onAddSet: () -> Void
     let onComplete: (SetEntry) -> Void
     let onDelete: (SetEntry) -> Void
@@ -21,10 +24,22 @@ struct ExerciseBlock: View {
     var onStartTracker: ((SetEntry) -> Void)? = nil
     var onMoveUp: (() -> Void)? = nil
     var onMoveDown: (() -> Void)? = nil
+    var onToggleCollapse: (() -> Void)? = nil
+    var onApplyRecommendation: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack(spacing: Theme.Spacing.s) {
+
+                if let onToggleCollapse {
+                    Button(action: onToggleCollapse) {
+                        Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 18)
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 Image(systemName: exercise.iconSystemName)
                     .foregroundStyle(.tint)
@@ -75,42 +90,57 @@ struct ExerciseBlock: View {
                 }
             }
 
-            if let topSet, topSet.volumeValue > 0 {
-                HStack(spacing: 4) {
-                    Image(systemName: "trophy.fill")
-                    Text(topSet.summaryText)
+            if !isCollapsed {
+                if let topSet, topSet.volumeValue > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "trophy.fill")
+                        Text(topSet.summaryText)
+                    }
+                    .font(.caption2.weight(.bold))
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.orange.opacity(0.15)))
+                    .foregroundStyle(.orange)
                 }
-                .font(.caption2.weight(.bold))
-                .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(Capsule().fill(Color.orange.opacity(0.15)))
-                .foregroundStyle(.orange)
-            }
 
-            HStack {
-                Text("#").frame(width: 24, alignment: .leading)
-            }
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
+                if let recommendation, let aiService {
+                    SetRecommendationBadge(
+                        recommendation: recommendation,
+                        unit: unit,
+                        exerciseName: exercise.name,
+                        aiService: aiService,
+                        onApply: {
+                            Haptics.selection()
+                            onApplyRecommendation?()
+                        }
+                    )
+                }
 
-            ForEach(Array(sets.enumerated()), id: \.element.id) { idx, set in
-                SetRow(index: idx + 1, set_: set, unit: unit, onComplete: { onComplete(set) }, onDelete: { onDelete(set) }, onStartTracker: onStartTracker.map { _ in { onStartTracker?(set) } })
-            }
-
-            Button(action: onAddSet) {
                 HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Satz hinzufügen")
+                    Text("#").frame(width: 24, alignment: .leading)
                 }
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Radius.s)
-                        .fill(Color.accentColor.opacity(0.10))
-                )
-                .foregroundStyle(.tint)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+                ForEach(Array(sets.enumerated()), id: \.element.id) { idx, set in
+                    SetRow(index: idx + 1, set_: set, unit: unit, onComplete: { onComplete(set) }, onDelete: { onDelete(set) }, onStartTracker: onStartTracker.map { _ in { onStartTracker?(set) } })
+                }
+
+                Button(action: onAddSet) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Satz hinzufügen")
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.Radius.s)
+                            .fill(Color.accentColor.opacity(0.10))
+                    )
+                    .foregroundStyle(.tint)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(Theme.Spacing.l)
         .cardStyle()

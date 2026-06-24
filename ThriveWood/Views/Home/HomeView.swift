@@ -20,6 +20,9 @@ struct HomeView: View {
     @State private var vm: HomeViewModel?
     @State private var showingNewHabit = false
     @State private var editingHabit: Habit?
+    @State private var editingGroup: HabitGroup?
+    @State private var showingNewGroup = false
+    @State private var showingReorder = false
     
     @State private var showingDebug: Bool = false
     @State private var showingPaywall = false
@@ -61,6 +64,19 @@ struct HomeView: View {
             .sheet(item: $editingHabit) { habit in
                 HabitEditorView(habit: habit)
                     .onDisappear { vm?.load() }
+            }
+            .sheet(isPresented: $showingNewGroup) {
+                HabitGroupEditorView(group: nil)
+                    .onDisappear { vm?.load() }
+            }
+            .sheet(item: $editingGroup) { group in
+                HabitGroupEditorView(group: group)
+                    .onDisappear { vm?.load() }
+            }
+            .sheet(isPresented: $showingReorder) {
+                if let vm {
+                    HabitReorderView(vm: vm)
+                }
             }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
             .sheet(isPresented: $showingDebug) {
@@ -150,23 +166,54 @@ struct HomeView: View {
                 .frame(height: 240)
         } else {
             LazyVStack(spacing: Theme.Spacing.m) {
-                ForEach(vm.filteredHabits) { habit in
-                    HabitRowView(
-                        habit: habit,
-                        isCompleted: vm.completedHabitIDs.contains(habit.id),
-                        streak: vm.streak(for: habit),
-                        progress: vm.habitProgress[habit.id],
-                        onToggle: { vm.toggle(habit) },
-                        onIncrement: { vm.incrementMeasurable(habit) },
-                        onDecrement: { vm.decrementMeasurable(habit) },
-                        onEdit: {
-                            editingHabit = habit
+                let sections = vm.groupedDisplaySections
+                ForEach(sections, id: \.group?.id) { section in
+                    VStack(spacing: Theme.Spacing.s) {
+                        if let group = section.group {
+                            HabitGroupHeaderView(
+                                group: group,
+                                habitCount: section.habits.count,
+                                onToggle: { vm.toggleCollapsed(group) },
+                                onEdit: { editingGroup = group }
+                            )
+                        } else {
+                            UngroupedHeaderView(habitCount: section.habits.count)
                         }
-                    )
-                    .contextMenu {
-                        Button("Bearbeiten", systemImage: "pencil") { editingHabit = habit }
-                        Button("Archivieren", systemImage: "archivebox", role: .destructive) {
-                            vm.delete(habit)
+
+                        if section.group?.isCollapsed != true {
+                            ForEach(section.habits) { habit in
+                                HabitRowView(
+                                    habit: habit,
+                                    isCompleted: vm.completedHabitIDs.contains(habit.id),
+                                    streak: vm.streak(for: habit),
+                                    progress: vm.habitProgress[habit.id],
+                                    onToggle: { vm.toggle(habit) },
+                                    onIncrement: { vm.incrementMeasurable(habit) },
+                                    onDecrement: { vm.decrementMeasurable(habit) },
+                                    onEdit: {
+                                        editingHabit = habit
+                                    }
+                                )
+                                .contextMenu {
+                                    Button("Bearbeiten", systemImage: "pencil") { editingHabit = habit }
+                                    Button("Archivieren", systemImage: "archivebox", role: .destructive) {
+                                        vm.delete(habit)
+                                    }
+
+                                    if !vm.groups.isEmpty {
+                                        Menu("In Gruppe verschieben", systemImage: "folder") {
+                                            ForEach(vm.groups) { g in
+                                                Button(g.title) {
+                                                    vm.addHabitToGroup(habit.id, groupID: g.id)
+                                                }
+                                            }
+                                            Button("Ohne Gruppe") {
+                                                vm.addHabitToGroup(habit.id, groupID: nil)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -188,6 +235,18 @@ struct HomeView: View {
                 Image(systemName: "plus")
             }
             .accessibilityLabel("Neuer Habit")
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button { showingReorder = true } label: {
+                Image(systemName: "arrow.up.arrow.down")
+            }
+            .accessibilityLabel("Reihenfolge")
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button { showingNewGroup = true } label: {
+                Image(systemName: "folder.badge.plus")
+            }
+            .accessibilityLabel("Neue Gruppe")
         }
         ToolbarItem(placement: .topBarLeading) {
             NavigationLink {

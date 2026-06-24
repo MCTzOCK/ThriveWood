@@ -72,6 +72,7 @@ final class EntitlementService {
     var canUseThemes: Bool { isPro }
     var canUseQuietHours: Bool { isPro }
     var canUseCustomIcons: Bool { isPro }
+    var canUseSetRecommendations: Bool { isPro }
 
     /// Wie viele Habits der User noch erstellen kann (0 = Limit erreicht).
     var remainingFreeHabits: Int {

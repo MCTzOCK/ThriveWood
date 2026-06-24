@@ -37,9 +37,13 @@ struct HabitEditorView: View {
     @State private var unitLabel: String = "ml"
     @State private var selectedUnit: HabitUnit = .milliliters
     
+    @State private var selectedGroupID: UUID?
+    @State private var availableGroups: [HabitGroup] = []
+    @State private var showingNewGroupFromPicker = false
+    
     @State private var didHydrate = false
     
-    private let iconOptions: [String] = [
+    public static let iconOptions: [String] = [
         // MARK: - Gesundheit & Körperpflege
         "heart.fill", "brain.head.profile", "pills.fill", "cross.case.fill",
         "eye.fill", "ear.fill", "lungs.fill", "comb.fill",
@@ -106,6 +110,7 @@ struct HabitEditorView: View {
         NavigationStack {
             Form {
                 detailsSection
+                groupSection
                 trackingModeSection
                 appearanceSection
                 pointsSection
@@ -130,6 +135,11 @@ struct HabitEditorView: View {
                 guard !didHydrate else { return }
                 didHydrate = true
                 hydrate()
+                loadGroups()
+            }
+            .sheet(isPresented: $showingNewGroupFromPicker) {
+                HabitGroupEditorView(group: nil)
+                    .onDisappear { loadGroups() }
             }
         }
     }
@@ -142,6 +152,27 @@ struct HabitEditorView: View {
                 .textInputAutocapitalization(.sentences)
             TextField("Beschreibung (optional)", text: $details, axis: .vertical)
                 .lineLimit(1...3)
+        }
+    }
+    
+    private var groupSection: some View {
+        Section("Gruppe") {
+            Picker("Gruppe", selection: $selectedGroupID) {
+                Text("Ohne Gruppe").tag(nil as UUID?)
+                ForEach(availableGroups) { group in
+                    HStack {
+                        Image(systemName: group.iconSystemName)
+                        Text(group.title)
+                    }
+                    .tag(group.id as UUID?)
+                }
+            }
+            .pickerStyle(.menu)
+            
+            Button("Neue Gruppe erstellen...") {
+                showingNewGroupFromPicker = true
+            }
+            .foregroundStyle(.tint)
         }
     }
     
@@ -166,7 +197,7 @@ struct HabitEditorView: View {
             }
             
             NavigationLink {
-                IconPicker(selection: $icon, options: iconOptions, tint: color.color)
+                IconPicker(selection: $icon, options: HabitEditorView.iconOptions, tint: color.color)
             } label: {
                 LabeledContent("Symbol") { Image(systemName: icon) }
             }
@@ -261,7 +292,11 @@ struct HabitEditorView: View {
         incrementValue = habit.incrementValue
         unitLabel = habit.unitLabel
         selectedUnit = HabitUnit.allCases.first { $0.rawValue == habit.unitLabel } ?? .custom
-        
+        selectedGroupID = (try? env.groupRepo.groupForHabit(habit.id))?.id
+    }
+    
+    private func loadGroups() {
+        availableGroups = (try? env.groupRepo.fetchAll()) ?? []
     }
     
     private func save() {
@@ -287,6 +322,11 @@ struct HabitEditorView: View {
                     habit.unitLabel = trackingMode == .measurable ? unitLabel : ""
                     
                     try await env.saveHabit(habit, isNew: false)
+                    
+                    let oldGroupID = (try? env.groupRepo.groupForHabit(habit.id))?.id
+                    if oldGroupID != selectedGroupID {
+                        try env.moveHabitToGroup(habit.id, from: oldGroupID, to: selectedGroupID)
+                    }
                 } else {
                     let new = Habit(
                         title: title.trimmingCharacters(in: .whitespaces),
@@ -304,6 +344,10 @@ struct HabitEditorView: View {
                         unitLabel: trackingMode == .measurable ? unitLabel : ""
                     )
                     try await env.saveHabit(new, isNew: true)
+                    
+                    if let groupID = selectedGroupID {
+                        try env.groupRepo.addHabit(new.id, to: groupID)
+                    }
                 }
                 Haptics.success()
                 dismiss()

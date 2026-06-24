@@ -5,7 +5,6 @@
 
 
 import SwiftUI
-import GymPlanBuilderCore
 
 struct ContentView: View {
     @Binding var plan: GymPlanJSON
@@ -14,6 +13,8 @@ struct ContentView: View {
 
     @State private var zoomScale: CGFloat = 1.0
     @State private var zoomScaleAtStart: CGFloat = 1.0
+    @State private var panOffset: CGSize = .zero
+    @State private var panAtStart: CGSize = .zero
 
     @State private var dragOffset: CGSize = .zero
     @State private var draggingZoneIdx: Int? = nil
@@ -28,11 +29,7 @@ struct ContentView: View {
     @State private var selectedEqIdx: Int? = nil
 
     @State private var editingZone: ZoneJSON? = nil
-    @State private var editingZoneFloorIdx: Int = 0
     @State private var editingEq: EquipmentJSON? = nil
-
-    @State private var resizeStartZone: CGRect = .zero
-    @State private var isResizing: Bool = false
 
     private enum EditMode: String, CaseIterable {
         case navigate = "Navigieren"
@@ -80,11 +77,11 @@ struct ContentView: View {
                 canvasScroller
             }
         }
-        .sheet(item: $editingZone) { _ in
-            ZoneEditorSheet(plan: $plan, floorIdx: editingZoneFloorIdx, zone: editingZone ?? ZoneJSON())
+        .sheet(item: $editingZone) { zone in
+            ZoneEditorSheet(plan: $plan, floorIdx: currentFloorIdx, zone: zone)
         }
-        .sheet(item: $editingEq) { _ in
-            EquipmentEditorSheet(plan: $plan, equipment: editingEq ?? EquipmentJSON())
+        .sheet(item: $editingEq) { eq in
+            EquipmentEditorSheet(plan: $plan, equipment: eq)
         }
     }
 
@@ -143,8 +140,7 @@ struct ContentView: View {
                         Spacer()
                         if mode == .zone {
                             Button {
-                                editingZoneFloorIdx = currentFloorIdx
-                                editingZone = plan.floors[currentFloorIdx].zones[i]
+                                editingZone = currentFloor.zones[i]
                             } label: {
                                 Image(systemName: "pencil")
                                     .font(.caption)
@@ -210,9 +206,7 @@ struct ContentView: View {
                             Text("Wand \(i + 1)")
                             Spacer()
                             Button(role: .destructive) {
-                                if i < plan.walls.count && wall.startX == plan.walls[i].startX && wall.startY == plan.walls[i].startY {
-                                    plan.walls.remove(at: i)
-                                }
+                                plan.walls.remove(at: i)
                             } label: {
                                 Image(systemName: "trash")
                                     .font(.caption)
@@ -264,24 +258,39 @@ struct ContentView: View {
             .buttonStyle(.borderless)
             .keyboardShortcut("+", modifiers: [.command])
 
-            Button { zoomScale = 1.0; zoomScaleAtStart = 1.0 } label: {
+            Button { zoomScale = 1.0; zoomScaleAtStart = 1.0; panOffset = .zero; panAtStart = .zero } label: {
                 Image(systemName: "1.magnifyingglass")
             }
             .buttonStyle(.borderless)
             .keyboardShortcut("0", modifiers: [.command])
 
-            Button { mode = .navigate } label: { Image(systemName: "hand.draw") }
-                .buttonStyle(.borderless)
-                .keyboardShortcut("1", modifiers: [])
-            Button { mode = .zone } label: { Image(systemName: "rectangle.on.rectangle.angled") }
-                .buttonStyle(.borderless)
-                .keyboardShortcut("2", modifiers: [])
-            Button { mode = .equipment } label: { Image(systemName: "dumbbell.fill") }
-                .buttonStyle(.borderless)
-                .keyboardShortcut("3", modifiers: [])
-            Button { mode = .wall } label: { Image(systemName: "line.diagonal") }
-                .buttonStyle(.borderless)
-                .keyboardShortcut("4", modifiers: [])
+            Button { mode = .navigate } label: {
+                Image(systemName: "hand.draw")
+            }
+            .buttonStyle(.borderless)
+            .keyboardShortcut("1", modifiers: [])
+            .help("Navigieren (1)")
+
+            Button { mode = .zone } label: {
+                Image(systemName: "rectangle.on.rectangle.angled")
+            }
+            .buttonStyle(.borderless)
+            .keyboardShortcut("2", modifiers: [])
+            .help("Zonen (2)")
+
+            Button { mode = .equipment } label: {
+                Image(systemName: "dumbbell.fill")
+            }
+            .buttonStyle(.borderless)
+            .keyboardShortcut("3", modifiers: [])
+            .help("Geräte (3)")
+
+            Button { mode = .wall } label: {
+                Image(systemName: "line.diagonal")
+            }
+            .buttonStyle(.borderless)
+            .keyboardShortcut("4", modifiers: [])
+            .help("Wände (4)")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -297,14 +306,13 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Canvas
-
-    private var sc: CGFloat { canvasSize * zoomScale }
+    // MARK: - Canvas (ScrollView + zoom/pan)
 
     private var canvasScroller: some View {
         ScrollView([.horizontal, .vertical]) {
             canvasInternal
-                .frame(width: sc, height: sc, alignment: .topLeading)
+                .scaleEffect(zoomScale, anchor: .topLeading)
+                .frame(width: canvasSize * zoomScale, height: canvasSize * zoomScale, alignment: .topLeading)
         }
         .clipped()
         .gesture(scrollZoomGesture, including: .subviews)
@@ -323,8 +331,8 @@ struct ContentView: View {
             if mode == .zone, let start = zoneCreationStart, let current = zoneCreationCurrent {
                 let r = pixelRect(from: start, to: current)
                 if r.width > 5 && r.height > 5 {
-                    RoundedRectangle(cornerRadius: 4 * zoomScale)
-                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2 * zoomScale, dash: [6 * zoomScale]))
+                    RoundedRectangle(cornerRadius: 4)
+                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6]))
                         .fill(Color.accentColor.opacity(0.06))
                         .frame(width: r.width, height: r.height)
                         .position(x: r.midX, y: r.midY)
@@ -340,14 +348,14 @@ struct ContentView: View {
 
     private var gridBackground: some View {
         Canvas { ctx, size in
-            let step = gridSize * zoomScale
-            var x = step
+            let step = gridSize
+            var x: CGFloat = step
             while x < size.width {
                 ctx.stroke(Path { p in p.move(to: CGPoint(x: x, y: 0)); p.addLine(to: CGPoint(x: x, y: size.height)) },
                            with: .color(Color.gray.opacity(0.15)), lineWidth: 0.5)
                 x += step
             }
-            var y = step
+            var y: CGFloat = step
             while y < size.height {
                 ctx.stroke(Path { p in p.move(to: CGPoint(x: 0, y: y)); p.addLine(to: CGPoint(x: size.width, y: y)) },
                            with: .color(Color.gray.opacity(0.15)), lineWidth: 0.5)
@@ -362,7 +370,7 @@ struct ContentView: View {
     private var zonesLayer: some View {
         ForEach(currentFloor.zones.indices, id: \.self) { i in
             let zone = currentFloor.zones[i]
-            let rect = CGRect(x: zone.x * sc, y: zone.y * sc, width: zone.width * sc, height: zone.height * sc)
+            let rect = CGRect(x: zone.x * canvasSize, y: zone.y * canvasSize, width: zone.width * canvasSize, height: zone.height * canvasSize)
             let isDragging = draggingZoneIdx == i
             let isSelected = selectedZoneIdx == i
 
@@ -373,68 +381,59 @@ struct ContentView: View {
                 .gesture(mode == .zone ? zoneDragGesture(index: i) : nil)
                 .contextMenu {
                     Button("Umbenennen / Farbe ändern...") {
-                        editingZoneFloorIdx = currentFloorIdx
                         editingZone = plan.floors[currentFloorIdx].zones[i]
                     }
                     Button("Duplizieren") {
                         let z = plan.floors[currentFloorIdx].zones[i]
-                        plan.floors[currentFloorIdx].zones.append(ZoneJSON(name: z.name, colorHex: z.colorHex, x: z.x + 0.02, y: z.y + 0.02, width: z.width, height: z.height))
+                        let dup = ZoneJSON(name: z.name, colorHex: z.colorHex, x: z.x + 0.02, y: z.y + 0.02, width: z.width, height: z.height)
+                        plan.floors[currentFloorIdx].zones.append(dup)
                     }
                     Button("Löschen", role: .destructive) {
                         plan.floors[currentFloorIdx].zones.remove(at: i)
                         selectedZoneIdx = nil
                     }
                 }
-
-            if mode == .zone {
-                let hs: CGFloat = 10
-                ZoneResizeHandle()
-                    .frame(width: hs, height: hs)
-                    .position(x: rect.minX, y: rect.minY)
-                    .gesture(zoneResizeGesture(index: i, corner: .topLeading))
-                ZoneResizeHandle()
-                    .frame(width: hs, height: hs)
-                    .position(x: rect.maxX, y: rect.minY)
-                    .gesture(zoneResizeGesture(index: i, corner: .topTrailing))
-                ZoneResizeHandle()
-                    .frame(width: hs, height: hs)
-                    .position(x: rect.minX, y: rect.maxY)
-                    .gesture(zoneResizeGesture(index: i, corner: .bottomLeading))
-                ZoneResizeHandle()
-                    .frame(width: hs, height: hs)
-                    .position(x: rect.maxX, y: rect.maxY)
-                    .gesture(zoneResizeGesture(index: i, corner: .bottomTrailing))
-            }
+                .overlay(alignment: .bottomTrailing) {
+                    if mode == .zone { ZoneResizeHandle().gesture(zoneResizeGesture(index: i, corner: .bottomTrailing)) }
+                }
+                .overlay(alignment: .topLeading) {
+                    if mode == .zone { ZoneResizeHandle().gesture(zoneResizeGesture(index: i, corner: .topLeading)) }
+                }
+                .overlay(alignment: .bottomLeading) {
+                    if mode == .zone { ZoneResizeHandle().gesture(zoneResizeGesture(index: i, corner: .bottomLeading)) }
+                }
+                .overlay(alignment: .topTrailing) {
+                    if mode == .zone { ZoneResizeHandle().gesture(zoneResizeGesture(index: i, corner: .topTrailing)) }
+                }
         }
     }
 
     // MARK: - Walls Layer
 
     private var wallsLayer: some View {
-        ForEach(plan.walls) { wall in
+        ForEach(Array(plan.walls.enumerated()), id: \.offset) { i, wall in
             if wall.floorIndex == selectedFloor {
                 WallLineView(
-                    from: CGPoint(x: wall.startX * sc, y: wall.startY * sc),
-                    to: CGPoint(x: wall.endX * sc, y: wall.endY * sc),
+                    from: CGPoint(x: wall.startX * canvasSize, y: wall.startY * canvasSize),
+                    to: CGPoint(x: wall.endX * canvasSize, y: wall.endY * canvasSize),
                     color: .secondary
                 )
+                .contentShape(Rectangle())
                 .onTapGesture {
                     if mode == .wall {
-                        plan.walls.removeAll { $0.id == wall.id }
+                        plan.walls.remove(at: i)
                     }
                 }
                 .contextMenu {
-                    if mode == .wall {
-                        Button("Löschen", role: .destructive) {
-                            plan.walls.removeAll { $0.id == wall.id }
-                        }
+                    Button("Löschen", role: .destructive) {
+                        plan.walls.remove(at: i)
                     }
                 }
             }
         }
     }
 
-// MARK: - Equipment Layer
+    // MARK: - Equipment Layer
 
     private var equipmentLayer: some View {
         ForEach(plan.equipment.indices, id: \.self) { i in
@@ -443,15 +442,16 @@ struct ContentView: View {
                 let isDragging = draggingEqIdx == i
                 EquipmentPinView(name: eq.name, icon: eq.iconSystemName, isSelected: selectedEqIdx == i || mode == .equipment)
                     .offset(isDragging ? dragOffset : .zero)
-                    .position(x: eq.positionX * sc, y: eq.positionY * sc)
+                    .position(x: eq.positionX * canvasSize, y: eq.positionY * canvasSize)
                     .gesture(mode == .equipment ? eqDragGesture(index: i) : nil)
                     .contextMenu {
                         Button("Bearbeiten...") {
                             editingEq = plan.equipment[i]
                         }
                         Button("Duplizieren") {
-                            let e = plan.equipment[i]
-                            plan.equipment.append(EquipmentJSON(name: e.name, type: e.type, iconSystemName: e.iconSystemName, positionX: min(1, e.positionX + 0.03), positionY: min(1, e.positionY + 0.03), floorIndex: e.floorIndex, zone: e.zone, exerciseNames: e.exerciseNames))
+                            let eq = plan.equipment[i]
+                            let dup = EquipmentJSON(name: eq.name, type: eq.type, iconSystemName: eq.iconSystemName, positionX: min(1, eq.positionX + 0.03), positionY: min(1, eq.positionY + 0.03), floorIndex: eq.floorIndex, zone: eq.zone, exerciseNames: eq.exerciseNames)
+                            plan.equipment.append(dup)
                         }
                         Button("Löschen", role: .destructive) {
                             plan.equipment.remove(at: i)
@@ -494,15 +494,16 @@ struct ContentView: View {
                 switch mode {
                 case .navigate, .equipment: break
                 case .wall:
-                    if let start = wallStart, let end = wallPreview, hypot(end.x - start.x, end.y - start.y) > 10 * zoomScale {
-                        plan.walls.append(WallJSON(startX: start.x / sc, startY: start.y / sc, endX: end.x / sc, endY: end.y / sc, floorIndex: selectedFloor))
+                    if let start = wallStart, let end = wallPreview, hypot(end.x - start.x, end.y - start.y) > 10 {
+                        plan.walls.append(WallJSON(startX: start.x / canvasSize, startY: start.y / canvasSize, endX: end.x / canvasSize, endY: end.y / canvasSize, floorIndex: selectedFloor))
                     }
                     wallStart = nil; wallPreview = nil
                 case .zone:
                     if let start = zoneCreationStart, let current = zoneCreationCurrent {
                         let r = normalizedRect(from: start, to: current)
                         if r.width > 0.02 && r.height > 0.02 {
-                            plan.floors[currentFloorIdx].zones.append(ZoneJSON(x: r.minX, y: r.minY, width: r.width, height: r.height))
+                            let newZone = ZoneJSON(x: r.minX, y: r.minY, width: r.width, height: r.height)
+                            plan.floors[currentFloorIdx].zones.append(newZone)
                         }
                     }
                     zoneCreationStart = nil; zoneCreationCurrent = nil
@@ -517,8 +518,8 @@ struct ContentView: View {
                 dragOffset = value.translation
             }
             .onEnded { value in
-                let dx = value.translation.width / sc
-                let dy = value.translation.height / sc
+                let dx = value.translation.width / canvasSize
+                let dy = value.translation.height / canvasSize
                 let z = plan.floors[currentFloorIdx].zones[index]
                 plan.floors[currentFloorIdx].zones[index].x = snapNorm(max(0, min(1 - z.width, z.x + dx)))
                 plan.floors[currentFloorIdx].zones[index].y = snapNorm(max(0, min(1 - z.height, z.y + dy)))
@@ -529,45 +530,33 @@ struct ContentView: View {
     private enum ResizeCorner { case topLeading, topTrailing, bottomLeading, bottomTrailing }
 
     private func zoneResizeGesture(index: Int, corner: ResizeCorner) -> some Gesture {
-        DragGesture(minimumDistance: 1)
+        DragGesture(minimumDistance: 2)
             .onChanged { value in
-                if !isResizing {
-                    isResizing = true
-                    let z = plan.floors[currentFloorIdx].zones[index]
-                    resizeStartZone = CGRect(x: z.x, y: z.y, width: z.width, height: z.height)
-                }
-                let dx = snapNorm(Double(value.translation.width) / sc)
-                let dy = snapNorm(Double(value.translation.height) / sc)
-                let orig = resizeStartZone
+                let dz = value.translation.width / canvasSize
+                let dv = value.translation.height / canvasSize
+                let z = plan.floors[currentFloorIdx].zones[index]
                 switch corner {
                 case .topLeading:
-                    let newX = snapNorm(max(0, min(orig.maxX - snapNorm(0.05), orig.minX + dx)))
-                    let newY = snapNorm(max(0, min(orig.maxY - snapNorm(0.05), orig.minY + dy)))
+                    let newX = max(0, z.x + dz)
+                    plan.floors[currentFloorIdx].zones[index].width = max(0.05, z.width + (z.x - newX))
                     plan.floors[currentFloorIdx].zones[index].x = newX
-                    plan.floors[currentFloorIdx].zones[index].width = snapNorm(orig.maxX - newX)
+                    let newY = max(0, z.y + dv)
+                    plan.floors[currentFloorIdx].zones[index].height = max(0.05, z.height + (z.y - newY))
                     plan.floors[currentFloorIdx].zones[index].y = newY
-                    plan.floors[currentFloorIdx].zones[index].height = snapNorm(orig.maxY - newY)
                 case .topTrailing:
-                    let newW = snapNorm(max(snapNorm(0.05), min(1 - orig.minX, orig.width + dx)))
-                    let newY = snapNorm(max(0, min(orig.maxY - snapNorm(0.05), orig.minY + dy)))
-                    plan.floors[currentFloorIdx].zones[index].width = newW
+                    plan.floors[currentFloorIdx].zones[index].width = snapNorm(max(0.05, min(1 - z.x, z.width + dz)))
+                    let newY = max(0, z.y + dv)
+                    plan.floors[currentFloorIdx].zones[index].height = max(0.05, z.height + (z.y - newY))
                     plan.floors[currentFloorIdx].zones[index].y = newY
-                    plan.floors[currentFloorIdx].zones[index].height = snapNorm(orig.maxY - newY)
                 case .bottomLeading:
-                    let newX = snapNorm(max(0, min(orig.maxX - snapNorm(0.05), orig.minX + dx)))
-                    let newH = snapNorm(max(snapNorm(0.05), min(1 - orig.minY, orig.height + dy)))
+                    let newX = max(0, z.x + dz)
+                    plan.floors[currentFloorIdx].zones[index].width = max(0.05, z.width + (z.x - newX))
                     plan.floors[currentFloorIdx].zones[index].x = newX
-                    plan.floors[currentFloorIdx].zones[index].width = snapNorm(orig.maxX - newX)
-                    plan.floors[currentFloorIdx].zones[index].height = newH
+                    plan.floors[currentFloorIdx].zones[index].height = snapNorm(max(0.05, min(1 - z.y, z.height + dv)))
                 case .bottomTrailing:
-                    let newW = snapNorm(max(snapNorm(0.05), min(1 - orig.minX, orig.width + dx)))
-                    let newH = snapNorm(max(snapNorm(0.05), min(1 - orig.minY, orig.height + dy)))
-                    plan.floors[currentFloorIdx].zones[index].width = newW
-                    plan.floors[currentFloorIdx].zones[index].height = newH
+                    plan.floors[currentFloorIdx].zones[index].width = snapNorm(max(0.05, min(1 - z.x, z.width + dz)))
+                    plan.floors[currentFloorIdx].zones[index].height = snapNorm(max(0.05, min(1 - z.y, z.height + dv)))
                 }
-            }
-            .onEnded { _ in
-                isResizing = false
             }
     }
 
@@ -579,8 +568,8 @@ struct ContentView: View {
             }
             .onEnded { value in
                 let eq = plan.equipment[index]
-                plan.equipment[index].positionX = snapNorm(max(0, min(1, eq.positionX + value.translation.width / sc)))
-                plan.equipment[index].positionY = snapNorm(max(0, min(1, eq.positionY + value.translation.height / sc)))
+                plan.equipment[index].positionX = snapNorm(max(0, min(1, eq.positionX + value.translation.width / canvasSize)))
+                plan.equipment[index].positionY = snapNorm(max(0, min(1, eq.positionY + value.translation.height / canvasSize)))
                 draggingEqIdx = nil; dragOffset = .zero
             }
     }
@@ -588,12 +577,14 @@ struct ContentView: View {
     // MARK: - Helpers
 
     private func canvasPoint(_ gesturePoint: CGPoint) -> CGPoint {
-        CGPoint(x: gesturePoint.x, y: gesturePoint.y)
+        CGPoint(
+            x: (gesturePoint.x - panOffset.width) / zoomScale,
+            y: (gesturePoint.y - panOffset.height) / zoomScale
+        )
     }
 
     private func snap(_ point: CGPoint) -> CGPoint {
-        let step = gridSize * zoomScale
-        return CGPoint(x: round(point.x / step) * step, y: round(point.y / step) * step)
+        CGPoint(x: round(point.x / gridSize) * gridSize, y: round(point.y / gridSize) * gridSize)
     }
 
     private func snapNorm(_ v: Double) -> Double {
@@ -607,11 +598,9 @@ struct ContentView: View {
 
     private func normalizedRect(from p1: CGPoint, to p2: CGPoint) -> CGRect {
         let px = pixelRect(from: p1, to: p2)
-        return CGRect(x: px.origin.x / sc, y: px.origin.y / sc, width: px.width / sc, height: px.height / sc)
+        return CGRect(x: px.origin.x / canvasSize, y: px.origin.y / canvasSize, width: px.width / canvasSize, height: px.height / canvasSize)
     }
 }
-
-// MARK: - Zone Editor Sheet
 
 struct ZoneEditorSheet: View {
     @Binding var plan: GymPlanJSON
@@ -671,10 +660,14 @@ struct ZoneEditorSheet: View {
             HStack {
                 Button("Abbrechen") { dismiss() }
                 Button("Speichern") {
-                    for i in plan.floors[floorIdx].zones.indices {
-                        if abs(plan.floors[floorIdx].zones[i].x - zone.x) < 0.001 && abs(plan.floors[floorIdx].zones[i].y - zone.y) < 0.001 {
-                            plan.floors[floorIdx].zones[i] = zone
-                            break
+                    if let idx = plan.floors[floorIdx].zones.firstIndex(where: { $0.name == zone.name && $0.colorHex == zone.colorHex }) {
+                        plan.floors[floorIdx].zones[idx] = zone
+                    } else {
+                        for i in plan.floors[floorIdx].zones.indices {
+                            if abs(plan.floors[floorIdx].zones[i].x - zone.x) < 0.001 && abs(plan.floors[floorIdx].zones[i].y - zone.y) < 0.001 {
+                                plan.floors[floorIdx].zones[i] = zone
+                                break
+                            }
                         }
                     }
                     dismiss()
@@ -714,13 +707,9 @@ struct EquipmentEditorSheet: View {
                     }
                 }
 
-                LabeledContent("Icon (SF Symbol)") {
-                    HStack {
-                        TextField("dumbbell.fill", text: $equipment.iconSystemName)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 180)
-                        Image(systemName: equipment.iconSystemName)
-                            .foregroundStyle(.secondary)
+                Picker("Icon", selection: $equipment.iconSystemName) {
+                    ForEach(equipmentIcons, id: \.self) { icon in
+                        Label(icon, systemImage: icon).tag(icon)
                     }
                 }
 
@@ -765,10 +754,14 @@ struct EquipmentEditorSheet: View {
             HStack {
                 Button("Abbrechen") { dismiss() }
                 Button("Speichern") {
-                    for i in plan.equipment.indices {
-                        if abs(plan.equipment[i].positionX - equipment.positionX) < 0.001 && abs(plan.equipment[i].positionY - equipment.positionY) < 0.001 && plan.equipment[i].floorIndex == equipment.floorIndex {
-                            plan.equipment[i] = equipment
-                            break
+                    if let idx = plan.equipment.firstIndex(where: { $0.iconSystemName == equipment.iconSystemName && abs($0.positionX - equipment.positionX) < 0.001 && abs($0.positionY - equipment.positionY) < 0.001 }) {
+                        plan.equipment[idx] = equipment
+                    } else {
+                        for i in plan.equipment.indices {
+                            if plan.equipment[i].name == equipment.name && plan.equipment[i].floorIndex == equipment.floorIndex {
+                                plan.equipment[i] = equipment
+                                break
+                            }
                         }
                     }
                     dismiss()
@@ -791,6 +784,18 @@ struct EquipmentEditorSheet: View {
     }
 }
 
+// MARK: - Constants
+
+private let equipmentIcons = [
+    "dumbbell.fill", "barbell.fill", "figure.strengthtraining.traditional",
+    "heart.fill", "figure.run", "figure.walk",
+    "bed.double.fill", "arrow.up.and.down.text.horizontal",
+    "cable.fill", "scalemass.fill", "rectangle.fill",
+    "arrow.up.to.line", "circle.fill", "star.fill",
+    "bolt.fill", "flame.fill", "drop.fill",
+    "figure.core.training", "figure.flexibility"
+]
+
 // MARK: - Subviews
 
 struct ZoneView: View {
@@ -803,18 +808,21 @@ struct ZoneView: View {
             .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color(hex: colorHex).opacity(isSelected ? 0.9 : 0.4), lineWidth: isSelected ? 2.5 : 1.5))
             .overlay(alignment: .topLeading) {
                 Text(name)
-                    .font(.caption2.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(Color(hex: colorHex))
-                    .padding(4)
+                    .padding(6)
             }
     }
 }
 
 struct ZoneResizeHandle: View {
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
-            .fill(.background)
-            .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(.secondary.opacity(0.6), lineWidth: 1))
+        Image(systemName: "arrow.up.left.and.arrow.down.right")
+            .font(.system(size: 8, weight: .bold))
+            .foregroundStyle(.secondary)
+            .frame(width: 16, height: 16)
+            .background(Circle().fill(.background))
+            .overlay(Circle().strokeBorder(.secondary.opacity(0.5), lineWidth: 1))
     }
 }
 
@@ -823,29 +831,18 @@ struct EquipmentPinView: View {
     let icon: String
     let isSelected: Bool
     var body: some View {
-        VStack(spacing: 1) {
-            ZStack {
-                Circle()
-                    .fill(isSelected ? Color.accentColor : Color(hex: "#555555"))
-                    .frame(width: 18, height: 18)
-                    .shadow(color: .black.opacity(0.2), radius: 2)
-                Image(systemName: icon)
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-            .frame(width: 28, height: 28)
-
+        VStack(spacing: 2) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 24, height: 24)
+                .background(Circle().fill(isSelected ? Color.accentColor : Color(hex: "#555555")))
             Text(name)
-                .font(.system(size: 6, weight: .bold))
+                .font(.system(size: 9, weight: .medium))
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .frame(maxWidth: 36)
-                .padding(.horizontal, 3)
-                .padding(.vertical, 1)
-                .background(Capsule().fill(.regularMaterial))
+                .frame(maxWidth: 50)
         }
-        .frame(width: 48, height: 48)
-        .contentShape(Rectangle())
     }
 }
 
@@ -856,11 +853,11 @@ struct WallLineView: View {
     var body: some View {
         Path { p in p.move(to: from); p.addLine(to: to) }
             .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-            .contentShape(
-                Path { p in p.move(to: from); p.addLine(to: to) }
-                    .strokedPath(StrokeStyle(lineWidth: 12, lineCap: .round)),
-                eoFill: false
-            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Path { p in
+                p.move(to: from)
+                p.addLine(to: to)
+            }.strokedPath(StrokeStyle(lineWidth: 14)))
     }
 }
 
