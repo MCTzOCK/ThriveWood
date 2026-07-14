@@ -75,7 +75,7 @@ struct SportView: View {
                 ExerciseDetailsSheet(exercise: e)
             }
             .fullScreenCover(item: $presentedSession) { session in
-                ActiveSessionView(session: session).onDisappear { vm?.load() }
+                ActiveSessionViewV2(session: session).onDisappear { vm?.load() }
             }
         }
         .task {

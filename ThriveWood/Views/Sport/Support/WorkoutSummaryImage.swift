@@ -768,9 +768,16 @@ private struct PillBadge: View {
 }
 
 struct WorkoutSummaryShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
+    let image: UIImage
+
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ThriveWood_Share_\(Int(Date().timeIntervalSince1970)).jpg")
+        if let data = image.jpegData(compressionQuality: 0.92) {
+            try? data.write(to: url)
+        }
+        return UIActivityViewController(activityItems: [url], applicationActivities: nil)
     }
+
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

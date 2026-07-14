@@ -267,7 +267,7 @@ struct WorkoutPhotoShareSheet: View {
                 }
             }
             .sheet(item: $shareItem) { item in
-                WorkoutSummaryShareSheet(items: [item.image])
+                WorkoutSummaryShareSheet(image: item.image)
             }
             .onChange(of: photoItem) { _, item in
                 Task {
