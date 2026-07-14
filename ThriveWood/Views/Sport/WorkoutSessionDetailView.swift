@@ -28,6 +28,7 @@ struct WorkoutSessionDetailView: View {
     @State private var aiAvailable = SystemLanguageModel.default.availability
     @State private var newPRs: [(exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)] = []
     @State private var showShareImage = false
+    @State private var showPhotoShare = false
     @State private var muscleMapShowFront = true
     @State private var selectedMapMuscle: MuscleGroup?
     
@@ -163,6 +164,9 @@ struct WorkoutSessionDetailView: View {
         .sheet(isPresented: $showShareImage) {
             WorkoutSummaryImageSheet(session: session)
         }
+        .sheet(isPresented: $showPhotoShare) {
+            WorkoutPhotoShareSheet(session: session)
+        }
         .confirmationDialog(
             "Workout löschen?",
             isPresented: $showDeleteConfirm,
@@ -194,6 +198,10 @@ struct WorkoutSessionDetailView: View {
                 Button {
                     showShareImage = true
                 } label: { Label("Zusammenfassung teilen", systemImage: "photo.on.rectangle.angled") }
+
+                Button {
+                    showPhotoShare = true
+                } label: { Label("Bild mit Keyfacts teilen", systemImage: "photo.badge.plus") }
 
                 ShareLink(item: shareText) {
                     Label("Als Text teilen", systemImage: "square.and.arrow.up")
