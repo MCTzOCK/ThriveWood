@@ -5,7 +5,6 @@
 //  Created by Ben Siebert on 23.04.26.
 //
 
-
 import SwiftUI
 
 struct SportView: View {
@@ -16,53 +15,21 @@ struct SportView: View {
     @State private var presentedSession: WorkoutSession?
     @State private var detailSession: WorkoutSession?
     @State private var showingPaywall = false
-    @State private var selectedPage: SportPage = .workouts
-    @State private var showingExerciseDetails = false
-    @State private var selectedExercise: Exercise?
     @State private var searchText: String = ""
-    
-    private enum SportPage {
-        case workouts
-        case plans
-        case library
-        case prs
-    }
-    
+
     var body: some View {
         NavigationStack {
-            VStack {
-                //pagePicker()
+            Group {
                 if let vm {
-                    if selectedPage == .workouts {
-                        content(vm: vm)
-                    } else if selectedPage == .library {
-                        libraryContent(vm: vm)
-                    } else if selectedPage == .prs {
-                        PRListView()
-                    } else {
-                        TrainingsPlanListView()
-                    }
-                }
-                else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Sport")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                if selectedPage == .workouts {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            if env.entitlements.canCreateWorkout {
-                                showingNewWorkout = true
-                            } else {
-                                showingPaywall = true
-                            }
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
+                    content(vm: vm)
+                } else {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemGroupedBackground))
                 }
             }
+            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingNewWorkout) {
                 WorkoutEditorView(workout: nil).onDisappear { vm?.load() }
             }
@@ -70,7 +37,6 @@ struct SportView: View {
                 WorkoutEditorView(workout: w).onDisappear { vm?.load() }
             }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
-            
             .sheet(item: $selectedExercise) { e in
                 ExerciseDetailsSheet(exercise: e)
             }
@@ -83,49 +49,31 @@ struct SportView: View {
             vm?.load()
         }
     }
-    
-    @ViewBuilder
-    private func pagePicker() -> some View {
-        Picker(selection: $selectedPage) {
-            Text("Workouts").tag(SportPage.workouts)
-            Text("Pläne").tag(SportPage.plans)
-            Text("Bibliothek").tag(SportPage.library)
-            Text("PRs").tag(SportPage.prs)
-        } label: {
-            Text("Seite auswählen")
-        }
-        .pickerStyle(.segmented)
-        .padding(.horizontal)
-        .padding(.bottom, 4)
-    }
-    
-    @ViewBuilder
-    private func libraryContent(vm: SportViewModel) -> some View {
-        ExerciseLibraryView(onSelect: { exercise in
-            print(exercise)
-            selectedExercise = exercise
-            showingExerciseDetails = true
-        }, asSheet: false, onlyFor: nil)
-    }
-    
+
+    @State private var selectedExercise: Exercise?
+
     @ViewBuilder
     private func content(vm: SportViewModel) -> some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
+                premiumHeader
+
                 if let active = vm.activeSession {
                     ActiveSessionBanner(session: active) {
                         presentedSession = active
                     }
                     .padding(.horizontal, Theme.Spacing.l)
                 }
-                
+
                 QuickStartCard {
                     if let s = vm.startSession(for: nil) { presentedSession = s }
                 }
                 .padding(.horizontal, Theme.Spacing.l)
-                
+
                 WorkoutsSection(
-                    workouts: vm.workouts.filter { searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased()) },
+                    workouts: vm.workouts.filter {
+                        searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased())
+                    },
                     onStart: { w in
                         if let s = vm.startSession(for: w) { presentedSession = s }
                     },
@@ -133,73 +81,101 @@ struct SportView: View {
                     onDelete: vm.delete
                 )
                 .padding(.horizontal, Theme.Spacing.l)
-                
-                /*
-                if !vm.recentSessions.isEmpty {
-                    RecentSessionsSection(sessions: vm.recentSessions) { selected in
-                        detailSession = selected
-                    }
-                        .padding(.horizontal, Theme.Spacing.l)
-                }*/
-                VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                    Text("Weiteres").font(.headline)
-                    featureGrid()
-                }
-                .padding(.horizontal, Theme.Spacing.l)
+
+                featureGrid(vm: vm)
             }
             .padding(.vertical, Theme.Spacing.l)
+            .padding(.bottom, 100)
         }
         .background(Color(.systemGroupedBackground))
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
         .navigationDestination(item: $detailSession) { session in
             WorkoutSessionDetailView(session: session)
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
     }
-    
+
+    // MARK: - Premium Header
+
+    private var premiumHeader: some View {
+        HStack(alignment: .center, spacing: Theme.Spacing.m) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Training")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+                Text("Sport")
+                    .font(Theme.Typography.largeTitle)
+                    .foregroundStyle(.primary)
+            }
+            Spacer(minLength: 0)
+
+            Button {
+                if env.entitlements.canCreateWorkout {
+                    showingNewWorkout = true
+                } else {
+                    showingPaywall = true
+                }
+            } label: {
+                Image(systemName: "plus")
+                    .font(Theme.Typography.body.weight(.bold))
+                    .frame(width: 38, height: 38)
+                    .foregroundStyle(.white)
+                    .background(
+                        Circle()
+                            .fill(Color.accentColor)
+                            .shadow(color: Color.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                    )
+            }
+            .buttonStyle(BounceButtonStyle())
+        }
+        .padding(.horizontal, Theme.Spacing.l)
+    }
+
+    // MARK: - Feature Grid
+
     @ViewBuilder
-    private func featureGrid() -> some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.l) {
-            NavigationLink(destination: {
-                AllSessionsView()
-            }) {
-                OrganisationCard(title: "Alle Sessions", subtitle: "", icon: "clock.fill", iconColor: .green)
-            }
-            NavigationLink(destination: {
-                MuscleRankingScreen()
-            }) {
-                OrganisationCard(title: "Muskel-Ranking", subtitle: "", icon: "trophy.fill", iconColor: .yellow)
-            }
-            NavigationLink(destination: {
-                ExerciseLibraryView(onSelect: { exercise in
-                    print(exercise)
-                    selectedExercise = exercise
-                    showingExerciseDetails = true
-                }, asSheet: false, onlyFor: nil)
-            }) {
-                OrganisationCard(title: "Übungen", subtitle: "", icon: "figure.strengthtraining.traditional", iconColor: .red)
-            }
-            NavigationLink(destination: {
-                TrainingsPlanListView()
-            }) {
-                OrganisationCard(title: "Trainingspläne", subtitle: "", icon: "list.bullet.rectangle.portrait", iconColor: .blue)
-            }
-            NavigationLink(destination: {
-                PRListView()
-            }) {
-                OrganisationCard(title: "PRs & Fortschritt", subtitle: "", icon: "flame.fill", iconColor: .orange)
-            }
-            NavigationLink(destination: {
-                BodyProgressView()
-            }) {
-                OrganisationCard(title: "Körperfortschritt", subtitle: "", icon: "figure.stand.line.dotted.figure.stand", iconColor: .purple)
-            }
-            NavigationLink(destination: {
-                MyGymListView()
-            }) {
-                OrganisationCard(title: "Mein Gym", subtitle: "", icon: "building.2.fill", iconColor: .cyan)
+    private func featureGrid(vm: SportViewModel) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+            Text("Entdecken")
+                .font(Theme.Typography.headline)
+
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.Spacing.m), GridItem(.flexible(), spacing: Theme.Spacing.m)], spacing: Theme.Spacing.m) {
+                NavigationLink(destination: { AllSessionsView() }) {
+                    OrganisationCard(title: "Alle Sessions", subtitle: "Verlauf", icon: "clock.fill", iconColor: .green)
+                }
+                .buttonStyle(BounceButtonStyle())
+
+                NavigationLink(destination: { MuscleRankingScreen() }) {
+                    OrganisationCard(title: "Muskel-Ranking", subtitle: "Erholung", icon: "trophy.fill", iconColor: .yellow)
+                }
+                .buttonStyle(BounceButtonStyle())
+
+                NavigationLink(destination: {
+                    ExerciseLibraryView(onSelect: { exercise in
+                        selectedExercise = exercise
+                    }, asSheet: false, onlyFor: nil)
+                }) {
+                    OrganisationCard(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", iconColor: .red)
+                }
+                .buttonStyle(BounceButtonStyle())
+
+                NavigationLink(destination: { TrainingsPlanListView() }) {
+                    OrganisationCard(title: "Trainingspläne", subtitle: "Pläne", icon: "list.bullet.rectangle.portrait", iconColor: .blue)
+                }
+                .buttonStyle(BounceButtonStyle())
+
+                NavigationLink(destination: { PRListView() }) {
+                    OrganisationCard(title: "PRs", subtitle: "Rekorde", icon: "flame.fill", iconColor: .orange)
+                }
+                .buttonStyle(BounceButtonStyle())
+
+                NavigationLink(destination: { BodyProgressView() }) {
+                    OrganisationCard(title: "Körper", subtitle: "Fortschritt", icon: "figure.stand.line.dotted.figure.stand", iconColor: .purple)
+                }
+                .buttonStyle(BounceButtonStyle())
             }
         }
+        .padding(.horizontal, Theme.Spacing.l)
     }
 }

@@ -118,6 +118,8 @@ struct HabitEditorView: View {
                 reminderSection
                 if isEditing { deleteSection }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(isEditing ? "Habit bearbeiten" : "Neuer Habit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

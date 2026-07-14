@@ -5,7 +5,6 @@
 //  Created by Ben Siebert on 23.04.26.
 //
 
-
 import SwiftUI
 import Charts
 
@@ -18,10 +17,14 @@ struct AnalyticsView: View {
         NavigationStack {
             Group {
                 if let vm { content(vm: vm) }
-                else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
+                else {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemGroupedBackground))
+                }
             }
-            .navigationTitle("Analyse")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
         }
         .task {
             if vm == nil { vm = AnalyticsViewModel(env: env) }
@@ -34,15 +37,11 @@ struct AnalyticsView: View {
         @Bindable var vm = vm
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
-                Picker("Zeitraum", selection: $vm.range) {
-                    Text("7T").tag(AnalyticsRange.week)
-                    ForEach([AnalyticsRange.month, .quarter, .year]) { r in
-                        HStack {
-                            Text(r.rawValue)
-                        }.tag(r)
-                    }
+                premiumHeader
+
+                PremiumSegmentedPicker(selection: $vm.range, options: AnalyticsRange.allCases) { range in
+                    Text(range.rawValue)
                 }
-                .pickerStyle(.segmented)
                 .padding(.horizontal, Theme.Spacing.l)
                 .onChange(of: vm.range) { _, newRange in
                     if newRange != .week && !env.entitlements.canAccessFullAnalytics {
@@ -89,10 +88,26 @@ struct AnalyticsView: View {
                 }
             }
             .padding(.vertical, Theme.Spacing.l)
+            .padding(.bottom, 100)
         }
-        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .background(Color(.systemGroupedBackground))
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
+    }
+
+    private var premiumHeader: some View {
+        HStack(alignment: .center, spacing: Theme.Spacing.m) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Statistiken")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+                Text("Analyse")
+                    .font(Theme.Typography.largeTitle)
+                    .foregroundStyle(.primary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, Theme.Spacing.l)
     }
 }

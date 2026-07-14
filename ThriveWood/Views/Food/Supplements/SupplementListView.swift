@@ -72,26 +72,13 @@ struct SupplementListView: View {
     }
     
     private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.m) {
-            Image(systemName: "pills.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.tertiary)
-            Text(isToday ? "Keine Supplements" : "Keine Supplements an diesem Tag")
-                .font(.headline)
-            if isToday {
-                Text("Füge deine täglichen Supplements hinzu und werde an die Einnahme erinnert.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Button {
-                    showCreateSheet = true
-                } label: {
-                    Label("Supplement hinzufügen", systemImage: "plus")
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-        .padding()
+        PremiumEmptyState(
+            icon: "pills.fill",
+            title: isToday ? "Keine Supplements" : "Keine Supplements an diesem Tag",
+            message: isToday ? "Füge deine täglichen Supplements hinzu und werde an die Einnahme erinnert." : "",
+            actionTitle: isToday ? "Supplement hinzufügen" : nil,
+            action: isToday ? { showCreateSheet = true } : nil
+        )
     }
     
     private func load() async {

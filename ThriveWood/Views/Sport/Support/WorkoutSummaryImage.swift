@@ -153,8 +153,8 @@ private struct DarkDesign: View {
                 Spacer()
             }
             HStack(spacing: Theme.Spacing.s) {
-                PillBadge(icon: "clock.fill", text: data.durationText, tint: color)
-                PillBadge(icon: "checkmark.circle.fill", text: "\(data.completedSets) Sätze", tint: .green)
+                SummaryPillBadge(icon: "clock.fill", text: data.durationText, tint: color)
+                SummaryPillBadge(icon: "checkmark.circle.fill", text: "\(data.completedSets) Sätze", tint: .green)
             }
         }
         .padding(.horizontal, Theme.Spacing.xl).padding(.top, Theme.Spacing.xl).padding(.bottom, Theme.Spacing.m)
@@ -751,7 +751,7 @@ private struct StatsOnlyDesign: View {
     }
 }
 
-private struct PillBadge: View {
+private struct SummaryPillBadge: View {
     let icon: String
     let text: String
     let tint: Color

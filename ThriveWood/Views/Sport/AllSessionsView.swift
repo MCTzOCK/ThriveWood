@@ -5,7 +5,6 @@
 //  Created by Ben Siebert on 26.04.26.
 //
 
-
 import SwiftUI
 
 struct AllSessionsView: View {
@@ -16,7 +15,6 @@ struct AllSessionsView: View {
         _ = refreshID
         return (try? env.sessionRepo.fetchAll()) ?? []
     }
-    
 
     private var grouped: [(String, [WorkoutSession])] {
         let groups = Dictionary(grouping: sessions) { session in
@@ -27,30 +25,45 @@ struct AllSessionsView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(grouped, id: \.0) { month, list in
-                Section(month) {
-                    ForEach(list) { s in
-                        NavigationLink {
-                            WorkoutSessionDetailView(session: s)
-                        } label: {
-                            SessionRow(session: s)
-                                .padding(.vertical, 4)
+        ScrollView {
+            VStack(spacing: Theme.Spacing.l) {
+                if grouped.isEmpty {
+                    PremiumEmptyState(
+                        icon: "calendar.badge.exclamationmark",
+                        title: "Keine Sessions",
+                        message: "Starte dein erstes Workout, um deine Trainings-Historie zu sehen."
+                    )
+                    .padding(.top, Theme.Spacing.xxl)
+                } else {
+                    ForEach(grouped, id: \.0) { month, list in
+                        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                            Text(month)
+                                .font(Theme.Typography.footnote.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .textCase(.uppercase)
+                                .padding(.horizontal, Theme.Spacing.l)
+
+                            VStack(spacing: Theme.Spacing.s) {
+                                ForEach(list) { s in
+                                    NavigationLink {
+                                        WorkoutSessionDetailView(session: s)
+                                    } label: {
+                                        SessionRow(session: s)
+                                    }
+                                    .buttonStyle(PressScaleStyle())
+                                }
+                            }
+                            .padding(.horizontal, Theme.Spacing.l)
                         }
-                        .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
                     }
                 }
             }
+            .padding(.vertical, Theme.Spacing.l)
+            .padding(.bottom, 100)
         }
-        .listStyle(.insetGrouped)
-        .refreshable {
-            refreshID = UUID()
-        }
+        .background(Color(.systemGroupedBackground))
+        .refreshable { refreshID = UUID() }
         .navigationTitle("Trainings-Historie")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
-

@@ -18,8 +18,8 @@ struct ForestView: View {
                 if let vm { content(vm: vm) }
                 else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
-            .navigationTitle("Mein Wald")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
         }
         .task {
             if vm == nil { vm = ForestViewModel(env: env) }
@@ -32,6 +32,19 @@ struct ForestView: View {
         @Bindable var vm = vm
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
+                HStack(alignment: .center, spacing: Theme.Spacing.m) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Deine Bäume")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(.secondary)
+                        Text("Mein Wald")
+                            .font(Theme.Typography.largeTitle)
+                            .foregroundStyle(.primary)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, Theme.Spacing.l)
+
                 ForestStatsHeader(
                     available: vm.availablePoints,
                     total: vm.totalEarned,
@@ -47,7 +60,9 @@ struct ForestView: View {
                     .padding(.horizontal, Theme.Spacing.l)
             }
             .padding(.vertical, Theme.Spacing.l)
+            .padding(.bottom, 100)
         }
+        .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $vm.showingSpeciesPicker) {
             SpeciesPickerSheet(vm: vm)
                 .presentationDetents([.medium, .large])

@@ -60,6 +60,20 @@ extension View {
                 RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
                     .fill(Color(.secondarySystemGroupedBackground))
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
+            )
             .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
     }
     

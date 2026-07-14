@@ -9,28 +9,46 @@ import SwiftUI
 
 struct QuickStartCard: View {
     let onStart: () -> Void
-    
+
     var body: some View {
         Button(action: onStart) {
             HStack(spacing: Theme.Spacing.m) {
-                Image(systemName: "play.circle.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(.white)
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "play.fill")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(.white)
+                }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Freies Training").font(.headline).foregroundStyle(.white)
-                    Text("Ohne Plan loslegen").font(.caption)
+                    Text("Freies Training")
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(.white)
+                    Text("Sofort loslegen")
+                        .font(Theme.Typography.caption)
                         .foregroundStyle(.white.opacity(0.8))
                 }
                 Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(.white.opacity(0.8))
+                Image(systemName: "arrow.right")
+                    .font(Theme.Typography.body.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.6))
             }
             .padding(Theme.Spacing.l)
             .background(
-                LinearGradient(colors: [.accentColor, .mint],
-                               startPoint: .leading, endPoint: .trailing)
+                LinearGradient(
+                    colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
             )
-            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+            )
+            .shadow(color: Color.accentColor.opacity(0.3), radius: 12, x: 0, y: 6)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(BounceButtonStyle())
     }
 }

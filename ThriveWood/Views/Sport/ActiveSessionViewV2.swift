@@ -478,15 +478,7 @@ struct ActiveSessionViewV2: View {
     }
 }
 
-// MARK: - Bounce Button Style
 
-private struct BounceButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.spring(duration: 0.2), value: configuration.isPressed)
-    }
-}
 
 // MARK: - Exercise Card V2
 

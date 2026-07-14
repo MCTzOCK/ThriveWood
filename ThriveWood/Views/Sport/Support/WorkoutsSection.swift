@@ -12,25 +12,43 @@ struct WorkoutsSection: View {
     let onStart: (Workout) -> Void
     let onEdit: (Workout) -> Void
     let onDelete: (Workout) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Meine Workouts").font(.headline)
-            
+            Text("Meine Workouts")
+                .font(Theme.Typography.headline)
+
             if workouts.isEmpty {
                 VStack(spacing: Theme.Spacing.m) {
                     Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 40, weight: .light))
+                        .foregroundStyle(.tertiary)
                     Text("Noch keine Workouts")
-                        .font(.subheadline.weight(.semibold))
+                        .font(Theme.Typography.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
                     Text("Erstelle deinen ersten Plan über das Plus-Symbol.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(Theme.Spacing.xl)
-                .cardStyle()
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.5
+                        )
+                )
+                .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
             } else {
                 VStack(spacing: Theme.Spacing.s) {
                     ForEach(workouts) { w in

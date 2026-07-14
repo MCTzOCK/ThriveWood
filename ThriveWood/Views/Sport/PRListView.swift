@@ -35,13 +35,17 @@ struct PRListView: View {
     var body: some View {
         Group {
             if entries.isEmpty {
-                emptyState
+                PremiumEmptyState(
+                    icon: "trophy",
+                    title: "Noch keine PRs",
+                    message: "Schließe dein erstes Workout ab, um hier deine persönlichen Rekorde zu sehen."
+                )
             } else {
                 prContent
             }
         }
         .navigationTitle("PRs")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Übung suchen")
         .onAppear { load() }
         .sheet(item: $selectedPR) { selection in
@@ -49,33 +53,35 @@ struct PRListView: View {
         }
     }
 
-    private var emptyState: some View {
-        ContentUnavailableView(
-            "Noch keine PRs",
-            systemImage: "trophy",
-            description: Text("Schließe dein erstes Workout ab, um hier deine persönlichen Rekorde zu sehen.")
-        )
-    }
-
     private var prContent: some View {
-        ScrollViewReader { proxy in
-            ZStack(alignment: .trailing) {
-                List {
-                    ForEach(sections, id: \.letter) { letter, items in
-                        Section(letter) {
+        ScrollView {
+            VStack(spacing: Theme.Spacing.l) {
+                ForEach(sections, id: \.letter) { letter, items in
+                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                        Text(letter)
+                            .font(Theme.Typography.footnote.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .textCase(.uppercase)
+                            .padding(.horizontal, Theme.Spacing.l)
+
+                        VStack(spacing: Theme.Spacing.s) {
                             ForEach(items, id: \.exercise.id) { exercise, topSet in
                                 Button {
                                     selectedPR = PRSelection(exercise: exercise, topSet: topSet)
                                 } label: {
                                     PRRow(exercise: exercise, topSet: topSet)
                                 }
+                                .buttonStyle(PressScaleStyle())
                             }
                         }
+                        .padding(.horizontal, Theme.Spacing.l)
                     }
                 }
-                .listStyle(.insetGrouped)
             }
+            .padding(.vertical, Theme.Spacing.l)
+            .padding(.bottom, 100)
         }
+        .background(Color(.systemGroupedBackground))
     }
 
     private func load() {

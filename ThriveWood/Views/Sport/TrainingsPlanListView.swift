@@ -5,45 +5,93 @@
 //  Created by Ben Siebert on 10.05.26.
 //
 
-
 import SwiftUI
 
 struct TrainingsPlanListView: View {
     @Environment(AppEnvironment.self) private var env
-    
+
     @State private var plans: [TrainingsPlan] = []
     @State private var showCreateSheet = false
     @State private var selectedPlan: TrainingsPlan?
     @State private var searchText: String = ""
-    
+
+    private var filteredPlans: [TrainingsPlan] {
+        guard !searchText.isEmpty else { return plans }
+        return plans.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+
     var body: some View {
-        List {
-            // Aktiver Plan Highlight
-            if let activePlan = plans.first(where: \.isActive) {
-                Section {
-                    ActivePlanCard(plan: activePlan) {
-                        selectedPlan = activePlan
+        ScrollView {
+            VStack(spacing: Theme.Spacing.l) {
+                if let activePlan = plans.first(where: \.isActive) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                        Text("Aktiver Plan")
+                            .font(Theme.Typography.footnote.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .textCase(.uppercase)
+                            .padding(.horizontal, Theme.Spacing.l)
+
+                        Button {
+                            selectedPlan = activePlan
+                        } label: {
+                            ActivePlanCard(plan: activePlan, onTap: { selectedPlan = activePlan })
+                        }
+                        .buttonStyle(BounceButtonStyle())
+                        .padding(.horizontal, Theme.Spacing.l)
                     }
-                } header: {
-                    Text("Aktiver Plan")
+                }
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                    Text("Alle Pläne")
+                        .font(Theme.Typography.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                        .padding(.horizontal, Theme.Spacing.l)
+
+                    if filteredPlans.isEmpty {
+                        PremiumEmptyState(
+                            icon: "calendar.badge.plus",
+                            title: "Keine Trainingspläne",
+                            message: "Erstelle deinen ersten Trainingsplan über das Plus-Symbol.",
+                            actionTitle: "Plan erstellen"
+                        ) {
+                            showCreateSheet = true
+                        }
+                        .padding(.horizontal, Theme.Spacing.l)
+                        .padding(.top, Theme.Spacing.xl)
+                    } else {
+                        VStack(spacing: Theme.Spacing.s) {
+                            ForEach(filteredPlans) { plan in
+                                Button {
+                                    selectedPlan = plan
+                                } label: {
+                                    TrainingsPlanRow(plan: plan, onTap: { selectedPlan = plan })
+                                }
+                                .buttonStyle(PressScaleStyle())
+                                .contextMenu {
+                                    if !plan.isActive {
+                                        Button {
+                                            setActive(plan)
+                                        } label: {
+                                            Label("Aktivieren", systemImage: "checkmark.circle")
+                                        }
+                                    }
+                                    Button(role: .destructive) {
+                                        deletePlan(plan)
+                                    } label: {
+                                        Label("Löschen", systemImage: "trash")
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, Theme.Spacing.l)
+                    }
                 }
             }
-            
-            // Alle Pläne
-            Section {
-                if plans.isEmpty {
-                    ContentUnavailableView(
-                        "Keine Trainingspläne",
-                        systemImage: "calendar.badge.plus",
-                        description: Text("Erstelle deinen ersten Trainingsplan")
-                    )
-                } else {
-                    planList(plans: plans)
-                }
-            } header: {
-                Text("Alle Pläne")
-            }
+            .padding(.vertical, Theme.Spacing.l)
+            .padding(.bottom, 100)
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Trainingspläne")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -56,9 +104,7 @@ struct TrainingsPlanListView: View {
         }
         .sheet(isPresented: $showCreateSheet) {
             CreateTrainingsPlanSheet(onCreate: {
-                Task {
-                    await load()
-                }
+                Task { await load() }
             })
         }
         .sheet(item: $selectedPlan) { plan in
@@ -66,37 +112,11 @@ struct TrainingsPlanListView: View {
                 TrainingsPlanDetailView(plan: plan)
             }
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Pläne durchsuchen") {
-            planList(plans: plans.filter { $0.name.lowercased().contains(searchText.lowercased()) })
-        }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
         .task { await load() }
         .refreshable { await load() }
     }
-    
-    private func planList(plans: [TrainingsPlan]) -> some View {
-        ForEach(plans) { plan in
-            TrainingsPlanRow(plan: plan) {
-                selectedPlan = plan
-            }
-            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                Button(role: .destructive) {
-                    deletePlan(plan)
-                } label: {
-                    Label("Löschen", systemImage: "trash")
-                }
-                
-                if !plan.isActive {
-                    Button {
-                        setActive(plan)
-                    } label: {
-                        Label("Aktivieren", systemImage: "checkmark.circle")
-                    }
-                    .tint(.green)
-                }
-            }
-        }
-    }
-    
+
     private func load() async {
         do {
             plans = try env.trainingsPlanService.fetchAll()
@@ -104,7 +124,7 @@ struct TrainingsPlanListView: View {
             print("Load error: \(error)")
         }
     }
-    
+
     private func setActive(_ plan: TrainingsPlan) {
         do {
             try env.trainingsPlanService.setActivePlan(plan)
@@ -114,7 +134,7 @@ struct TrainingsPlanListView: View {
             print("Set active error: \(error)")
         }
     }
-    
+
     private func deletePlan(_ plan: TrainingsPlan) {
         do {
             try env.trainingsPlanService.deletePlan(plan)
@@ -125,7 +145,3 @@ struct TrainingsPlanListView: View {
         }
     }
 }
-
-// MARK: - Active Plan Card
-
-// MARK: - Plan Row

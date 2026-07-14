@@ -5,84 +5,72 @@
 //  Created by Ben Siebert on 22.04.26.
 //
 
-
 import SwiftUI
 
-fileprivate enum HomeTab {
+fileprivate enum HomeTab: Hashable, CaseIterable {
     case habits
     case supplements
+
+    var label: String {
+        switch self {
+        case .habits: "Habits"
+        case .supplements: "Supplements"
+        }
+    }
 }
 
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(NotificationRouter.self) private var router
-    
+
     @State private var vm: HomeViewModel?
     @State private var showingNewHabit = false
     @State private var editingHabit: Habit?
     @State private var editingGroup: HabitGroup?
     @State private var showingNewGroup = false
     @State private var showingReorder = false
-    
     @State private var showingDebug: Bool = false
     @State private var showingPaywall = false
-    
     @State private var selectedTab: HomeTab = .habits
     @State private var selectedDate: Date = .now
     @State private var supplementSearch = ""
-    
-    
+
     var body: some View {
         NavigationStack {
             Group {
                 if let vm {
-                    VStack(spacing: Theme.Spacing.l) {
-                        picker()
-                            .padding(.horizontal, Theme.Spacing.l)
-                        if selectedTab == .habits {
-                            content(vm: vm)
-                        } else {
-                            SupplementListView(selectedDate: $selectedDate, search: $supplementSearch)
-                                .background(Color(.systemGroupedBackground))
-                                .searchable(text: $supplementSearch, placement: .navigationBarDrawer(displayMode: .automatic))
-                        }
+                    VStack(spacing: 0) {
+                        premiumHeader(vm: vm)
+                        content(vm: vm)
                     }
-                    .background(Color(.systemGroupedBackground))
                 } else {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(.systemGroupedBackground))
                 }
             }
-            .navigationTitle(
-                selectedTab == .habits ? "Habits" : "Supplements"
-            )
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar { toolbar }
+            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingNewHabit) {
-                HabitEditorView(habit: nil)
-                    .onDisappear { vm?.load() }
+                HabitEditorView(habit: nil).onDisappear { vm?.load() }
             }
             .sheet(item: $editingHabit) { habit in
-                HabitEditorView(habit: habit)
-                    .onDisappear { vm?.load() }
+                HabitEditorView(habit: habit).onDisappear { vm?.load() }
             }
             .sheet(isPresented: $showingNewGroup) {
-                HabitGroupEditorView(group: nil)
-                    .onDisappear { vm?.load() }
+                HabitGroupEditorView(group: nil).onDisappear { vm?.load() }
             }
             .sheet(item: $editingGroup) { group in
-                HabitGroupEditorView(group: group)
-                    .onDisappear { vm?.load() }
+                HabitGroupEditorView(group: group).onDisappear { vm?.load() }
             }
             .sheet(isPresented: $showingReorder) {
-                if let vm {
-                    HabitReorderView(vm: vm)
-                }
+                if let vm { HabitReorderView(vm: vm) }
             }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
             .sheet(isPresented: $showingDebug) {
-#if DEBUG
+                #if DEBUG
                 DebugMenuView()
-#endif
+                #endif
             }
         }
         .task {
@@ -91,25 +79,117 @@ struct HomeView: View {
         }
         .onChange(of: router.pendingHabitID) { _, id in
             guard let id else { return }
-            
             if let habit = try? env.habitRepo.fetch(id: id) {
                 editingHabit = habit
             }
-            
             router.pendingHabitID = nil
         }
     }
-    
-    private func picker() -> some View {
-        Picker("", selection: $selectedTab) {
-            Text("Habits").tag(HomeTab.habits)
-            Text("Supplements").tag(HomeTab.supplements)
+
+    // MARK: - Premium Header
+
+    @ViewBuilder
+    private func premiumHeader(vm: HomeViewModel) -> some View {
+        HStack(alignment: .center, spacing: Theme.Spacing.m) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(greetingText)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+                Text(selectedTab == .habits ? "Habits" : "Supplements")
+                    .font(Theme.Typography.largeTitle)
+                    .foregroundStyle(.primary)
+            }
+            Spacer(minLength: 0)
+
+            actionButtons
         }
-        .pickerStyle(.segmented)
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.top, Theme.Spacing.l)
+        .padding(.bottom, Theme.Spacing.s)
+
+        PremiumSegmentedPicker(selection: $selectedTab, options: HomeTab.allCases) { tab in
+            Text(tab.label)
+        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.bottom, Theme.Spacing.s)
+        .animation(Theme.Animation.spring, value: selectedTab)
     }
-    
+
+    private var greetingText: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        switch hour {
+        case 0..<5: return "Gute Nacht"
+        case 5..<12: return "Guten Morgen"
+        case 12..<18: return "Guten Tag"
+        default: return "Guten Abend"
+        }
+    }
+
+    private var actionButtons: some View {
+        HStack(spacing: Theme.Spacing.s) {
+            NavigationLink {
+                AchievementsView()
+            } label: {
+                Image(systemName: "trophy.fill")
+                    .font(Theme.Typography.body)
+                    .frame(width: 38, height: 38)
+                    .foregroundStyle(Color.orange)
+                    .background(
+                        Circle()
+                            .fill(Color.orange.opacity(0.12))
+                    )
+            }
+            .buttonStyle(PressScaleStyle())
+
+            Button {
+                if env.entitlements.canCreateHabit {
+                    showingNewHabit = true
+                } else {
+                    showingPaywall = true
+                }
+            } label: {
+                Image(systemName: "plus")
+                    .font(Theme.Typography.body.weight(.bold))
+                    .frame(width: 38, height: 38)
+                    .foregroundStyle(.white)
+                    .background(
+                        Circle()
+                            .fill(Color.accentColor)
+                            .shadow(color: Color.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                    )
+            }
+            .buttonStyle(BounceButtonStyle())
+
+            #if DEBUG
+            Button {
+                showingDebug = true
+            } label: {
+                Image(systemName: "hammer.fill")
+                    .font(Theme.Typography.caption)
+                    .frame(width: 32, height: 32)
+                    .foregroundStyle(.secondary)
+                    .background(Circle().fill(Color(.tertiarySystemFill)))
+            }
+            .buttonStyle(PressScaleStyle())
+            #endif
+        }
+    }
+
+    // MARK: - Content
+
     @ViewBuilder
     private func content(vm: HomeViewModel) -> some View {
+        if selectedTab == .habits {
+            habitsContent(vm: vm)
+        } else {
+            SupplementListView(selectedDate: $selectedDate, search: $supplementSearch)
+                .background(Color(.systemGroupedBackground))
+                .searchable(text: $supplementSearch, placement: .navigationBarDrawer(displayMode: .automatic))
+        }
+    }
+
+    @ViewBuilder
+    private func habitsContent(vm: HomeViewModel) -> some View {
         @Bindable var vm = vm
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
@@ -120,50 +200,111 @@ struct HomeView: View {
                     )
                 )
                 .padding(.horizontal, Theme.Spacing.l)
-                
-                VStack(spacing: Theme.Spacing.m) {
-                    ForestPreviewCard(availablePoints: vm.availablePoints)
-                    
-                    DailySummaryCard(
-                        points: vm.pointsToday,
-                        goal: vm.dailyGoal,
-                        progress: vm.progress,
-                        availablePoints: vm.availablePoints
-                    )
-                }
-                .padding(.horizontal, Theme.Spacing.l)
-                
+
+                heroSummaryCard(vm: vm)
+
                 habitList(vm: vm)
-                
-                VStack(spacing: Theme.Spacing.m) {
-                    ProgressView(value: Double(vm.pointsToday), total: Double(
-                        vm.habits.map { $0.points.rawValue }.reduce(0, +)
-                    ))
-                    .progressViewStyle(LinearProgressViewStyle(tint: .accentColor))
-                    .padding(.horizontal, Theme.Spacing.l)
-                    
-                    Text("Fortschritt: \(vm.pointsToday) / \(vm.habits.map { $0.points.rawValue }.reduce(0, +)) Punkte")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
             }
             .padding(.vertical, Theme.Spacing.l)
+            .padding(.bottom, 100)
         }
         .background(Color(.systemGroupedBackground))
         .searchable(text: $vm.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
     }
-    
+
+    // MARK: - Hero Summary Card
+
+    @ViewBuilder
+    private func heroSummaryCard(vm: HomeViewModel) -> some View {
+        NavigationLink {
+            ForestView()
+        } label: {
+            HStack(spacing: Theme.Spacing.l) {
+                ZStack {
+                    ProgressRing(progress: vm.progress, lineWidth: 7)
+                        .frame(width: 76, height: 76)
+                    VStack(spacing: 0) {
+                        AnimatedNumberText(value: Double(vm.pointsToday), color: .primary)
+                        Text("/ \(vm.dailyGoal)")
+                            .font(Theme.Typography.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(vm.progress >= 1 ? "Ziel erreicht!" : "Tagesziel")
+                        .font(Theme.Typography.title3)
+                        .foregroundStyle(.primary)
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "leaf.fill")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Color.accentColor)
+                        Text("\(vm.availablePoints) Punkte verfügbar")
+                            .font(Theme.Typography.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "tree.fill")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Color.green)
+                        Text("Wald entdecken")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(Theme.Spacing.l)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.accentColor.opacity(0.08),
+                                Color.green.opacity(0.04),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
+                    .stroke(Color.accentColor.opacity(0.15), lineWidth: 1)
+            )
+            .shadow(color: Theme.Shadow.card, radius: 12, x: 0, y: 4)
+        }
+        .buttonStyle(PressScaleStyle())
+        .padding(.horizontal, Theme.Spacing.l)
+    }
+
+    // MARK: - Habit List
+
     @ViewBuilder
     private func habitList(vm: HomeViewModel) -> some View {
         if vm.habits.isEmpty {
-            EmptyHabitsView { showingNewHabit = true }
-                .padding(.horizontal, Theme.Spacing.l)
-                .padding(.top, Theme.Spacing.xl)
+            PremiumEmptyState(
+                icon: "leaf.circle.fill",
+                title: "Starte deinen Wald",
+                message: "Lege deinen ersten Habit an und sammle Punkte, um Bäume zu pflanzen.",
+                actionTitle: "Habit erstellen"
+            ) {
+                showingNewHabit = true
+            }
+            .padding(.horizontal, Theme.Spacing.l)
+            .padding(.top, Theme.Spacing.xl)
         } else if vm.filteredHabits.isEmpty {
-            ContentUnavailableView.search(text: vm.searchText)
-                .frame(height: 240)
+            PremiumEmptyState(
+                icon: "magnifyingglass",
+                title: "Keine Treffer",
+                message: "Für \"\(vm.searchText)\" wurden keine Habits gefunden."
+            )
+            .padding(.horizontal, Theme.Spacing.l)
+            .padding(.top, Theme.Spacing.xl)
         } else {
             LazyVStack(spacing: Theme.Spacing.m) {
                 let sections = vm.groupedDisplaySections
@@ -190,16 +331,13 @@ struct HomeView: View {
                                     onToggle: { vm.toggle(habit) },
                                     onIncrement: { vm.incrementMeasurable(habit) },
                                     onDecrement: { vm.decrementMeasurable(habit) },
-                                    onEdit: {
-                                        editingHabit = habit
-                                    }
+                                    onEdit: { editingHabit = habit }
                                 )
                                 .contextMenu {
                                     Button("Bearbeiten", systemImage: "pencil") { editingHabit = habit }
                                     Button("Archivieren", systemImage: "archivebox", role: .destructive) {
                                         vm.delete(habit)
                                     }
-
                                     if !vm.groups.isEmpty {
                                         Menu("In Gruppe verschieben", systemImage: "folder") {
                                             ForEach(vm.groups) { g in
@@ -220,47 +358,5 @@ struct HomeView: View {
             }
             .padding(.horizontal, Theme.Spacing.l)
         }
-    }
-    
-    @ToolbarContentBuilder
-    private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                if env.entitlements.canCreateHabit {
-                    showingNewHabit = true
-                } else {
-                    showingPaywall = true
-                }
-            } label: {
-                Image(systemName: "plus")
-            }
-            .accessibilityLabel("Neuer Habit")
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-            Button { showingReorder = true } label: {
-                Image(systemName: "arrow.up.arrow.down")
-            }
-            .accessibilityLabel("Reihenfolge")
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-            Button { showingNewGroup = true } label: {
-                Image(systemName: "folder.badge.plus")
-            }
-            .accessibilityLabel("Neue Gruppe")
-        }
-        ToolbarItem(placement: .topBarLeading) {
-            NavigationLink {
-                AchievementsView()
-            } label: {
-                Image(systemName: "trophy")
-            }
-        }
-#if DEBUG
-        ToolbarItem(placement: .topBarLeading) {
-            Button { showingDebug = true } label: {
-                Image(systemName: "hammer.fill")
-            }
-        }
-#endif
     }
 }

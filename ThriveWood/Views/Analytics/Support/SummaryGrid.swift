@@ -10,11 +10,11 @@ import SwiftUI
 struct SummaryGrid: View {
     let summary: AnalyticsSummary
 
-    private let columns = [GridItem(.flexible(), spacing: 12),
-                           GridItem(.flexible(), spacing: 12)]
+    private let columns = [GridItem(.flexible(), spacing: Theme.Spacing.m),
+                           GridItem(.flexible(), spacing: Theme.Spacing.m)]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
+        LazyVGrid(columns: columns, spacing: Theme.Spacing.m) {
             SummaryTile(
                 icon: "leaf.fill", tint: .green,
                 value: "\(summary.totalPoints)", label: "Punkte gesamt"
@@ -36,20 +36,46 @@ struct SummaryGrid: View {
     }
 
     private struct SummaryTile: View {
-        let icon: String; let tint: Color; let value: String; let label: String
+        let icon: String
+        let tint: Color
+        let value: String
+        let label: String
+
         var body: some View {
-            VStack(alignment: .leading, spacing: 6) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(tint)
-                    .padding(8)
-                    .background(Circle().fill(tint.opacity(0.15)))
-                Text(value).font(.title2.bold()).contentTransition(.numericText())
-                Text(label).font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                ZStack {
+                    Circle()
+                        .fill(tint.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: icon)
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(tint)
+                }
+                Text(value)
+                    .font(Theme.Typography.title2.weight(.bold))
+                    .contentTransition(.numericText())
+                Text(label)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Theme.Spacing.m)
-            .cardStyle()
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
+            )
+            .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
         }
     }
 }
