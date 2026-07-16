@@ -636,6 +636,11 @@ struct SetRowV2: View {
     var onDuplicate: (() -> Void)? = nil
     var onStartTracker: (() -> Void)? = nil
 
+    @State private var weightText: String = ""
+    @State private var repsText: String = ""
+    @State private var distanceText: String = ""
+    @State private var hasSynced: Bool = false
+
     private var type: ExerciseTrackingType { set_.exercise?.trackingType ?? .repsWeight }
 
     var body: some View {
@@ -650,6 +655,15 @@ struct SetRowV2: View {
         .padding(.vertical, 12)
         .background(set_.isCompleted ? Color.green.opacity(0.06) : Color.clear)
         .animation(.snappy(duration: 0.25), value: set_.isCompleted)
+        .onAppear { syncFromModel() }
+        .onChange(of: set_.weight) { _, _ in if !hasSynced { syncFromModel() } }
+        .onChange(of: set_.reps) { _, _ in if !hasSynced { syncFromModel() } }
+    }
+
+    private func syncFromModel() {
+        weightText = set_.weight.map { $0.clean } ?? ""
+        repsText = set_.reps.map { String($0) } ?? ""
+        distanceText = set_.distanceMeters.map { String(format: "%.2f", $0 / 1000).replacingOccurrences(of: ".", with: ",") } ?? ""
     }
 
     private var checkmarkButton: some View {
@@ -677,29 +691,39 @@ struct SetRowV2: View {
     private var inputs: some View {
         switch type {
         case .repsWeight:
-            stringField(text: Binding(
-                get: { set_.weight.map { $0.clean } ?? "" },
-                set: { set_.weight = $0.isEmpty ? nil : Double($0.replacingOccurrences(of: ",", with: ".")) }
-            ), placeholder: "0", suffix: unit.rawValue, keyboard: .decimalPad)
+            stringField(text: $weightText, placeholder: "0", suffix: unit.rawValue, keyboard: .decimalPad)
+                .onChange(of: weightText) { _, newValue in
+                    hasSynced = true
+                    if newValue.isEmpty { set_.weight = nil }
+                    else if let parsed = Double(newValue.replacingOccurrences(of: ",", with: ".")) { set_.weight = parsed }
+                    hasSynced = false
+                }
             Text("×")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
-            stringField(text: Binding(
-                get: { set_.reps.map { String($0) } ?? "" },
-                set: { set_.reps = $0.isEmpty ? nil : Int($0) }
-            ), placeholder: "0", suffix: "Reps", keyboard: .numberPad)
+            stringField(text: $repsText, placeholder: "0", suffix: "Reps", keyboard: .numberPad)
+                .onChange(of: repsText) { _, newValue in
+                    hasSynced = true
+                    set_.reps = newValue.isEmpty ? nil : Int(newValue)
+                    hasSynced = false
+                }
         case .reps:
-            stringField(text: Binding(
-                get: { set_.reps.map { String($0) } ?? "" },
-                set: { set_.reps = $0.isEmpty ? nil : Int($0) }
-            ), placeholder: "0", suffix: "Reps", keyboard: .numberPad)
+            stringField(text: $repsText, placeholder: "0", suffix: "Reps", keyboard: .numberPad)
+                .onChange(of: repsText) { _, newValue in
+                    hasSynced = true
+                    set_.reps = newValue.isEmpty ? nil : Int(newValue)
+                    hasSynced = false
+                }
         case .duration:
             durationField(seconds: Binding(get: { set_.durationSeconds ?? 0 }, set: { set_.durationSeconds = $0 == 0 ? nil : $0 }))
         case .distanceDuration:
-            stringField(text: Binding(
-                get: { set_.distanceMeters.map { String(format: "%.2f", $0 / 1000).replacingOccurrences(of: ".", with: ",") } ?? "" },
-                set: { set_.distanceMeters = $0.isEmpty ? nil : (Double($0.replacingOccurrences(of: ",", with: ".")) ?? 0) * 1000 }
-            ), placeholder: "0,00", suffix: "km", keyboard: .decimalPad)
+            stringField(text: $distanceText, placeholder: "0,00", suffix: "km", keyboard: .decimalPad)
+                .onChange(of: distanceText) { _, newValue in
+                    hasSynced = true
+                    if newValue.isEmpty { set_.distanceMeters = nil }
+                    else { set_.distanceMeters = (Double(newValue.replacingOccurrences(of: ",", with: ".")) ?? 0) * 1000 }
+                    hasSynced = false
+                }
             durationField(seconds: Binding(get: { set_.durationSeconds ?? 0 }, set: { set_.durationSeconds = $0 == 0 ? nil : $0 }))
         }
     }

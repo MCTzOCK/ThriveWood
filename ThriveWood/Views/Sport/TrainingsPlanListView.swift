@@ -22,7 +22,7 @@ struct TrainingsPlanListView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 if let activePlan = plans.first(where: \.isActive) {
                     VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                         Text("Aktiver Plan")

@@ -81,6 +81,7 @@ struct MuscleRankingScreen: View {
                 }
             }
             .padding(.vertical)
+            .padding(.bottom, 100)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(mapMode == .ranking ? "Muskel-Ranking" : "Erholung")

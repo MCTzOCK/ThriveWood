@@ -5,15 +5,14 @@
 //  Created by Ben Siebert on 23.04.26.
 //
 
-
 import SwiftUI
 
 struct WorkoutEditorView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
-    
+
     let workout: Workout?
-    
+
     @State private var name: String = ""
     @State private var details: String = ""
     @State private var color: HabitColor = .blue
@@ -22,13 +21,10 @@ struct WorkoutEditorView: View {
     @State private var showingLibrary = false
     @State private var errors = ErrorState()
     @State private var workoutRef: Workout?
-    @State private var selectedGym: Gym?
-    @State private var gyms: [Gym] = []
-    @State private var filterByGym: Bool = false
-    
+
     private var isEditing: Bool { workout != nil }
     private var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -38,24 +34,13 @@ struct WorkoutEditorView: View {
                     ColorGrid(selection: $color)
                     Stepper("Dauer: \(duration) min",
                             value: $duration, in: 5...240, step: 5)
-                    if !gyms.isEmpty {
-                        Picker("Gym", selection: $selectedGym) {
-                            Text("Kein Gym").tag(Gym?.none)
-                            ForEach(gyms) { g in
-                                Text(g.name).tag(Gym?.some(g))
-                            }
-                        }
-                        if selectedGym != nil {
-                            Toggle("Nur Gym-Übungen anzeigen", isOn: $filterByGym)
-                        }
-                    }
                     if let w = workout {
                         if let url = PDFService.shared.createPDF(for: w) {
                             ShareLink(item: url) { Label("PDF teilen", systemImage: "square.and.arrow.up") }
                         }
                     }
                 }
-                
+
                 Section {
                     if slots.isEmpty {
                         Text("Noch keine Übungen").foregroundStyle(.secondary)
@@ -78,7 +63,7 @@ struct WorkoutEditorView: View {
                         if !slots.isEmpty { EditButton().font(.caption) }
                     }
                 }
-                
+
                 if isEditing {
                     Section {
                         Button(role: .destructive) {
@@ -101,23 +86,17 @@ struct WorkoutEditorView: View {
                 }
             }
             .sheet(isPresented: $showingLibrary) {
-                if filterByGym, let gym = selectedGym {
-                    ExerciseLibraryView(onSelect: { exercise in
-                        addExercise(exercise)
-                    }, asSheet: true, onlyFor: nil, onlyIDs: gym.availableExerciseIDs)
-                } else {
-                    ExerciseLibraryView(onSelect: { exercise in
-                        addExercise(exercise)
-                    }, asSheet: true, onlyFor: nil)
-                }
+                ExerciseLibraryView(onSelect: { exercise in
+                    addExercise(exercise)
+                }, asSheet: true, onlyFor: nil)
             }
             .errorAlert(errors)
             .onAppear(perform: hydrate)
         }
     }
-    
+
     // MARK: - Actions
-    
+
     private func hydrate() {
         if let workout {
             name = workout.name
@@ -126,16 +105,12 @@ struct WorkoutEditorView: View {
             duration = workout.estimatedDurationMinutes
             slots = workout.exercises
             workoutRef = workout
-            selectedGym = (try? env.gymService.allGyms()).flatMap { gyms in
-                gyms.first { $0.name.lowercased() == workout.name.lowercased() }
-            }
         } else {
             let w = Workout(name: "", color: color)
             workoutRef = w
         }
-        do { gyms = try env.gymService.allGyms() } catch { errors.show(error) }
     }
-    
+
     private func addExercise(_ exercise: Exercise) {
         guard let w = workoutRef else { return }
         let defaultRest = (try? env.profileRepo.currentProfile().defaultRestSeconds) ?? 90
@@ -145,20 +120,20 @@ struct WorkoutEditorView: View {
         )
         slots.append(slot)
     }
-    
+
     private func deleteSlots(at offsets: IndexSet) {
         let sorted = slots.sorted { $0.order < $1.order }
         for i in offsets { slots.removeAll { $0.id == sorted[i].id } }
         for (i, s) in slots.sorted(by: { $0.order < $1.order }).enumerated() { s.order = i }
     }
-    
+
     private func moveSlots(from source: IndexSet, to destination: Int) {
         var sorted = slots.sorted { $0.order < $1.order }
         sorted.move(fromOffsets: source, toOffset: destination)
         for (i, s) in sorted.enumerated() { s.order = i }
         slots = sorted
     }
-    
+
     private func save() {
         do {
             if let workout {
@@ -188,6 +163,3 @@ struct WorkoutEditorView: View {
         } catch { errors.show(error) }
     }
 }
-
-
-

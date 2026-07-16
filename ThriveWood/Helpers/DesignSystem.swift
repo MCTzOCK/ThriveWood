@@ -115,7 +115,6 @@ struct ErrorAlertModifier: ViewModifier {
 struct GlassCard<Content: View>: View {
     var radius: CGFloat = Theme.Radius.l
     var padding: CGFloat = Theme.Spacing.l
-    var hasShadow: Bool = true
     var bgColor: Color? = nil
     @Environment(\.colorScheme) private var scheme
     let content: () -> Content
@@ -125,26 +124,8 @@ struct GlassCard<Content: View>: View {
             .padding(padding)
             .background(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(bgColor ?? (scheme == .dark
-                        ? Color.white.opacity(0.06)
-                        : Color.white))
+                    .fill(bgColor ?? Color(.secondarySystemGroupedBackground))
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(scheme == .dark ? 0.12 : 0.6),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.5
-                    )
-            )
-            .shadow(color: Theme.Shadow.card, radius: hasShadow ? 12 : 0, x: 0, y: 4)
-            .shadow(color: Theme.Shadow.cardSoft, radius: hasShadow ? 4 : 0, x: 0, y: 1)
     }
 }
 
@@ -368,21 +349,12 @@ struct AnimatedNumberText: View {
     @State private var hasAppeared = false
 
     var body: some View {
-        Text(String(format: format, displayValue))
+        Text(String(format: format, value))
             .font(font)
             .foregroundStyle(color)
-            .contentTransition(.numericText())
             .onAppear {
                 guard !hasAppeared else { return }
                 hasAppeared = true
-                withAnimation(Theme.Animation.spring) {
-                    displayValue = value
-                }
-            }
-            .onChange(of: value) { _, newValue in
-                withAnimation(Theme.Animation.spring) {
-                    displayValue = newValue
-                }
             }
     }
 }

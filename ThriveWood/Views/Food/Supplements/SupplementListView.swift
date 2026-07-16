@@ -25,7 +25,7 @@ struct SupplementListView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 WeekStripView(selectedDate: $selectedDate)
                     .padding(.horizontal)
                 
@@ -54,6 +54,7 @@ struct SupplementListView: View {
                 }
             }
             .padding(.vertical)
+            .padding(.bottom, 100)
         }
         .task { await load() }
         .refreshable { await load() }

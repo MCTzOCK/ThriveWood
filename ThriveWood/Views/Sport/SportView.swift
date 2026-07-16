@@ -55,7 +55,7 @@ struct SportView: View {
     @ViewBuilder
     private func content(vm: SportViewModel) -> some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 premiumHeader
 
                 if let active = vm.activeSession {
@@ -143,6 +143,11 @@ struct SportView: View {
             LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.Spacing.m), GridItem(.flexible(), spacing: Theme.Spacing.m)], spacing: Theme.Spacing.m) {
                 NavigationLink(destination: { AllSessionsView() }) {
                     OrganisationCard(title: "Alle Sessions", subtitle: "Verlauf", icon: "clock.fill", iconColor: .green)
+                }
+                .buttonStyle(BounceButtonStyle())
+
+                NavigationLink(destination: { SportInsightsView() }) {
+                    OrganisationCard(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", iconColor: .teal)
                 }
                 .buttonStyle(BounceButtonStyle())
 

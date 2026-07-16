@@ -16,8 +16,6 @@ struct HabitRowView: View {
     let onDecrement: () -> Void
     let onEdit: () -> Void
 
-    @State private var isPressed: Bool = false
-
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
             iconBadge
@@ -45,32 +43,12 @@ struct HabitRowView: View {
             }
         }
         .padding(Theme.Spacing.m)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.5),
-                            Color.white.opacity(0)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
-                )
-        )
-        .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
+        .cardStyle()
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(habit.title)
         .accessibilityValue(accessibilityValueText)
     }
-
-    // MARK: - Edit Button
 
     private var settingsButton: some View {
         Button {
@@ -84,8 +62,6 @@ struct HabitRowView: View {
         }
         .buttonStyle(.plain)
     }
-
-    // MARK: - Icon Badge
 
     private var iconBadge: some View {
         ZStack {
@@ -101,35 +77,38 @@ struct HabitRowView: View {
                     .animation(Theme.Animation.spring, value: p.progress)
             }
             RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [habit.color.color, habit.color.color.opacity(0.7)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(habit.color.color)
                 .frame(width: habit.isMeasurable ? 36 : 44,
                        height: habit.isMeasurable ? 36 : 44)
-                .shadow(color: habit.color.color.opacity(0.3), radius: 4, x: 0, y: 2)
             Image(systemName: habit.iconSystemName)
                 .font(habit.isMeasurable ? Theme.Typography.callout.weight(.semibold) : Theme.Typography.title3.weight(.semibold))
                 .foregroundStyle(.white)
         }
     }
 
-    // MARK: - Measurable Label
-
     private func measurableLabel(_ p: (value: Double, target: Double, progress: Double)) -> some View {
         HStack(spacing: 2) {
             Text(formatValue(p.value))
                 .font(Theme.Typography.caption.weight(.bold).monospacedDigit())
-            Text("/ \(formatValue(p.target)) \(habit.unitLabel)")
+            Text("/ \(formatValue(p.target)) \(abbreviatedUnit)")
                 .font(Theme.Typography.caption)
         }
         .foregroundStyle(p.progress >= 1 ? .primary : .secondary)
     }
 
-    // MARK: - Measurable Controls
+    private var abbreviatedUnit: String {
+        switch habit.unitLabel {
+        case "Milliliter": "ml"
+        case "Liter": "l"
+        case "Gläser": "Gl."
+        case "Schritte": "Sch."
+        case "Minuten": "min"
+        case "Stunden": "Std"
+        case "Seiten": "S."
+        case "Kapseln": "Kap."
+        default: habit.unitLabel
+        }
+    }
 
     private var measurableControls: some View {
         HStack(spacing: 8) {
@@ -153,7 +132,6 @@ struct HabitRowView: View {
                     Circle()
                         .fill(isCompleted ? Color.accentColor : habit.color.color)
                         .frame(width: 34, height: 34)
-                        .shadow(color: (isCompleted ? Color.accentColor : habit.color.color).opacity(0.3), radius: 4, x: 0, y: 2)
                     Image(systemName: isCompleted ? "checkmark" : "plus")
                         .font(Theme.Typography.callout.weight(.bold))
                         .foregroundStyle(.white)
@@ -162,8 +140,6 @@ struct HabitRowView: View {
             .buttonStyle(BounceButtonStyle())
         }
     }
-
-    // MARK: - Simple Toggle
 
     private var simpleToggleButton: some View {
         HStack(spacing: 8) {
@@ -175,7 +151,6 @@ struct HabitRowView: View {
                         .frame(width: 34, height: 34)
                     if isCompleted {
                         Circle().fill(Color.accentColor).frame(width: 34, height: 34)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
                         Image(systemName: "checkmark")
                             .font(Theme.Typography.body.weight(.bold))
                             .foregroundStyle(.white)
@@ -187,8 +162,6 @@ struct HabitRowView: View {
             .animation(Theme.Animation.spring, value: isCompleted)
         }
     }
-
-    // MARK: - Badges
 
     private var pointsBadge: some View {
         HStack(spacing: 2) {
@@ -211,8 +184,6 @@ struct HabitRowView: View {
         .padding(.vertical, 2)
         .background(Capsule().fill(Color.orange.opacity(0.12)))
     }
-
-    // MARK: - Helpers
 
     private func formatValue(_ v: Double) -> String {
         v.truncatingRemainder(dividingBy: 1) == 0

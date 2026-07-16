@@ -46,7 +46,7 @@ struct PRListView: View {
         }
         .navigationTitle("PRs")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Übung suchen")
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Übung suchen")
         .onAppear { load() }
         .sheet(item: $selectedPR) { selection in
             ExerciseProgressionSheet(exercise: selection.exercise, topSet: selection.topSet)
@@ -55,7 +55,7 @@ struct PRListView: View {
 
     private var prContent: some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 ForEach(sections, id: \.letter) { letter, items in
                     VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                         Text(letter)

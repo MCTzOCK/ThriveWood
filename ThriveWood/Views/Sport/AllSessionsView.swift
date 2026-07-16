@@ -26,7 +26,7 @@ struct AllSessionsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 if grouped.isEmpty {
                     PremiumEmptyState(
                         icon: "calendar.badge.exclamationmark",

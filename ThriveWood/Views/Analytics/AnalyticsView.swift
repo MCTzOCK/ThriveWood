@@ -36,7 +36,7 @@ struct AnalyticsView: View {
     private func content(vm: AnalyticsViewModel) -> some View {
         @Bindable var vm = vm
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 premiumHeader
 
                 PremiumSegmentedPicker(selection: $vm.range, options: AnalyticsRange.allCases) { range in

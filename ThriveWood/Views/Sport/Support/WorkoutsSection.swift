@@ -33,22 +33,7 @@ struct WorkoutsSection: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(Theme.Spacing.xl)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 0.5
-                        )
-                )
-                .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
+                .cardStyle()
             } else {
                 VStack(spacing: Theme.Spacing.s) {
                     ForEach(workouts) { w in

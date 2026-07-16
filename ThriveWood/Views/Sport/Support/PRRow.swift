@@ -6,22 +6,25 @@
 //
 import SwiftUI
 
-
 struct PRRow: View {
     let exercise: Exercise
     let topSet: SetEntry
 
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
-            Image(systemName: exercise.iconSystemName)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.tint)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.accentColor.opacity(0.12)))
+            ZStack {
+                RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                    .fill(Color.orange.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                Image(systemName: "trophy.fill")
+                    .font(Theme.Typography.callout)
+                    .foregroundStyle(.orange)
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(exercise.name)
-                    .font(.subheadline.weight(.semibold))
+                    .font(Theme.Typography.subheadline.weight(.semibold))
+                    .lineLimit(1)
                 HStack(spacing: 4) {
                     Text(exercise.trackingType.label)
                     if let date = topSet.completedAt {
@@ -29,22 +32,17 @@ struct PRRow: View {
                         Text(date, format: .dateTime.day().month(.abbreviated))
                     }
                 }
-                .font(.caption)
+                .font(Theme.Typography.caption)
+                .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 8)
 
-            HStack(spacing: 4) {
-                Image(systemName: "trophy.fill")
-                    .font(.caption2)
-                Text(topSet.summaryText)
-                    .font(.caption2.weight(.bold))
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(Color.orange.opacity(0.15)))
-            .foregroundStyle(.orange)
+            Text(topSet.summaryText)
+                .font(Theme.Typography.mono)
+                .foregroundStyle(.orange)
         }
-        .padding(.vertical, 2)
+        .padding(Theme.Spacing.m)
+        .cardStyle()
     }
 }

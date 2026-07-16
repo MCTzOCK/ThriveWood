@@ -63,7 +63,7 @@ struct SettingsView: View {
         @Bindable var profile = profile
 
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 premiumHeader
 
                 ProfileHeroCard(profile: profile,
@@ -112,17 +112,30 @@ struct SettingsView: View {
                     }
                     .buttonStyle(PressScaleStyle())
 
-                    Picker("Modus", selection: $profile.appearanceRaw) {
-                        ForEach(AppAppearance.allCases) { Text($0.label).tag($0.rawValue) }
+                    Divider().padding(.horizontal, Theme.Spacing.l)
+
+                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                        HStack(spacing: Theme.Spacing.m) {
+                            IconBadge(icon: "circle.lefthalf.filled", color: .gray)
+                            Text("Modus")
+                                .font(Theme.Typography.body)
+                            Spacer()
+                        }
+                        .padding(.horizontal, Theme.Spacing.l)
+                        .padding(.top, Theme.Spacing.m)
+
+                        Picker("Modus", selection: $profile.appearanceRaw) {
+                            ForEach(AppAppearance.allCases) { Text($0.label).tag($0.rawValue) }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal, Theme.Spacing.l)
+                        .padding(.bottom, Theme.Spacing.m)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, Theme.Spacing.l)
-                    .padding(.bottom, Theme.Spacing.s)
                 }
 
                 // MARK: Habits & Ziele
                 SettingsGroup(title: "Habits & Ziele", icon: "target", iconColor: .green) {
-                    VStack(spacing: Theme.Spacing.s) {
+                    VStack(spacing: 0) {
                         StepperRow(icon: "target", iconColor: .green, title: "Tagesziel", value: "\(profile.dailyPointGoal) P") {
                             Stepper(value: $profile.dailyPointGoal, in: 1...50) {
                                 EmptyView()
@@ -132,37 +145,29 @@ struct SettingsView: View {
 
                         Divider().padding(.horizontal, Theme.Spacing.l)
 
-                        Picker(selection: $profile.weekStartsOnRaw) {
-                            ForEach([Weekday.monday, .sunday, .saturday]) {
-                                Text($0.fullLabel).tag($0.rawValue)
-                            }
-                        } label: {
-                            SettingsRow(
-                                icon: "calendar",
-                                iconColor: .orange,
-                                title: "Wochenbeginn",
-                                trailingView: AnyView(chevron)
-                            )
-                        }
-                        .pickerStyle(.menu)
+                        MenuPickerRow(
+                            icon: "calendar",
+                            iconColor: .orange,
+                            title: "Wochenbeginn",
+                            selection: $profile.weekStartsOnRaw,
+                            options: [Weekday.monday, .sunday, .saturday].map { ($0.rawValue, $0.fullLabel) }
+                        )
                     }
                 }
 
                 // MARK: Sport
                 SettingsGroup(title: "Sport", icon: "dumbbell.fill", iconColor: .red) {
-                    VStack(spacing: Theme.Spacing.s) {
-                        Picker(selection: $profile.preferredWeightUnitRaw) {
-                            Text("Kilogramm (kg)").tag(WeightUnit.kilograms.rawValue)
-                            Text("Pounds (lb)").tag(WeightUnit.pounds.rawValue)
-                        } label: {
-                            SettingsRow(
-                                icon: "scalemass.fill",
-                                iconColor: .red,
-                                title: "Gewichtseinheit",
-                                trailingView: AnyView(chevron)
-                            )
-                        }
-                        .pickerStyle(.menu)
+                    VStack(spacing: 0) {
+                        MenuPickerRow(
+                            icon: "scalemass.fill",
+                            iconColor: .red,
+                            title: "Gewichtseinheit",
+                            selection: $profile.preferredWeightUnitRaw,
+                            options: [
+                                (WeightUnit.kilograms.rawValue, "Kilogramm (kg)"),
+                                (WeightUnit.pounds.rawValue, "Pounds (lb)")
+                            ]
+                        )
 
                         Divider().padding(.horizontal, Theme.Spacing.l)
 
@@ -175,19 +180,13 @@ struct SettingsView: View {
 
                         Divider().padding(.horizontal, Theme.Spacing.l)
 
-                        Picker(selection: $activityProfileRaw) {
-                            ForEach(ActivityProfile.allCases) { p in
-                                Label(p.label, systemImage: p.icon).tag(p.rawValue)
-                            }
-                        } label: {
-                            SettingsRow(
-                                icon: "figure.highintensity.interval",
-                                iconColor: .purple,
-                                title: "Aktivitätsprofil",
-                                trailingView: AnyView(chevron)
-                            )
-                        }
-                        .pickerStyle(.menu)
+                        MenuPickerRow(
+                            icon: "figure.run",
+                            iconColor: .purple,
+                            title: "Aktivitätsprofil",
+                            selection: $activityProfileRaw,
+                            options: ActivityProfile.allCases.map { ($0.rawValue, $0.label) }
+                        )
 
                         Divider().padding(.horizontal, Theme.Spacing.l)
 
@@ -252,18 +251,19 @@ struct SettingsView: View {
                 }
 
                 // MARK: Onboarding
-                Button {
-                    showOnboarding = true
-                } label: {
-                    SettingsRow(
-                        icon: "arrow.counterclockwise",
-                        iconColor: .indigo,
-                        title: "Onboarding wiederholen",
-                        trailingView: AnyView(chevron)
-                    )
+                SettingsGroup(title: "Onboarding", icon: "sparkles", iconColor: .indigo) {
+                    Button {
+                        showOnboarding = true
+                    } label: {
+                        SettingsRow(
+                            icon: "arrow.counterclockwise",
+                            iconColor: .indigo,
+                            title: "Onboarding wiederholen",
+                            trailingView: AnyView(chevron)
+                        )
+                    }
+                    .buttonStyle(PressScaleStyle())
                 }
-                .buttonStyle(PressScaleStyle())
-                .padding(.horizontal, Theme.Spacing.l)
 
                 // MARK: Daten
                 SettingsGroup(title: "Daten", icon: "externaldrive.fill", iconColor: .gray) {
@@ -337,10 +337,6 @@ struct SettingsView: View {
                     .background(
                         RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
                             .fill(Color.red.opacity(0.06))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                            .stroke(Color.red.opacity(0.15), lineWidth: 1)
                     )
                 }
                 .buttonStyle(BounceButtonStyle())
@@ -477,14 +473,8 @@ private struct ProfileHeroCard: View {
         VStack(spacing: Theme.Spacing.m) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [profile.accentTheme.color, profile.accentTheme.color.opacity(0.6)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(profile.accentTheme.color)
                     .frame(width: 88, height: 88)
-                    .shadow(color: profile.accentTheme.color.opacity(0.3), radius: 12, y: 4)
                 Text(initials)
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
@@ -509,22 +499,8 @@ private struct ProfileHeroCard: View {
         .padding(Theme.Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            profile.accentTheme.color.opacity(0.08),
-                            Color(.secondarySystemGroupedBackground)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .fill(Color(.secondarySystemGroupedBackground))
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                .stroke(profile.accentTheme.color.opacity(0.15), lineWidth: 1)
-        )
-        .shadow(color: Theme.Shadow.card, radius: 12, x: 0, y: 4)
         .padding(.horizontal, Theme.Spacing.l)
     }
 
@@ -587,20 +563,74 @@ private struct SettingsGroup<Content: View>: View {
                 RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
                     .fill(Color(.secondarySystemGroupedBackground))
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.5
-                    )
-            )
-            .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
         }
         .padding(.horizontal, Theme.Spacing.l)
+    }
+}
+
+// MARK: - Menu Picker Row
+
+private struct MenuPickerRow<T: Hashable>: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    @Binding var selection: T
+    let options: [(value: T, label: String)]
+
+    private var selectedLabel: String {
+        options.first { $0.value == selection }?.label ?? ""
+    }
+
+    var body: some View {
+        Menu {
+            ForEach(options, id: \.value) { option in
+                Button {
+                    Haptics.selection()
+                    selection = option.value
+                } label: {
+                    if option.value == selection {
+                        Label(option.label, systemImage: "checkmark")
+                    } else {
+                        Text(option.label)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: Theme.Spacing.m) {
+                IconBadge(icon: icon, color: iconColor)
+                Text(title)
+                    .font(Theme.Typography.body)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Text(selectedLabel)
+                    .font(Theme.Typography.footnote)
+                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(Theme.Typography.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, Theme.Spacing.l)
+            .padding(.vertical, Theme.Spacing.m)
+            .contentShape(Rectangle())
+        }
+    }
+}
+
+// MARK: - Icon Badge
+
+private struct IconBadge: View {
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous)
+                .fill(color)
+                .frame(width: 32, height: 32)
+            Image(systemName: icon)
+                .font(Theme.Typography.callout.weight(.semibold))
+                .foregroundStyle(.white)
+        }
     }
 }
 
@@ -614,21 +644,7 @@ private struct SettingsRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
-            ZStack {
-                RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [iconColor, iconColor.opacity(0.7)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 32, height: 32)
-                    .shadow(color: iconColor.opacity(0.25), radius: 3, x: 0, y: 1)
-                Image(systemName: icon)
-                    .font(Theme.Typography.callout.weight(.semibold))
-                    .foregroundStyle(.white)
-            }
+            IconBadge(icon: icon, color: iconColor)
             Text(title)
                 .font(Theme.Typography.body)
                 .foregroundStyle(.primary)
@@ -651,21 +667,7 @@ private struct ToggleRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
-            ZStack {
-                RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [iconColor, iconColor.opacity(0.7)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 32, height: 32)
-                    .shadow(color: iconColor.opacity(0.25), radius: 3, x: 0, y: 1)
-                Image(systemName: icon)
-                    .font(Theme.Typography.callout.weight(.semibold))
-                    .foregroundStyle(.white)
-            }
+            IconBadge(icon: icon, color: iconColor)
             Text(title)
                 .font(Theme.Typography.body)
                 .foregroundStyle(.primary)
@@ -690,21 +692,7 @@ private struct StepperRow<Content: View>: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
-            ZStack {
-                RoundedRectangle(cornerRadius: Theme.Radius.xs, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [iconColor, iconColor.opacity(0.7)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 32, height: 32)
-                    .shadow(color: iconColor.opacity(0.25), radius: 3, x: 0, y: 1)
-                Image(systemName: icon)
-                    .font(Theme.Typography.callout.weight(.semibold))
-                    .foregroundStyle(.white)
-            }
+            IconBadge(icon: icon, color: iconColor)
             Text(title)
                 .font(Theme.Typography.body)
             Spacer()
@@ -761,18 +749,6 @@ private struct SubscriptionStatusCard: View {
             RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
-                )
-        )
-        .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
         .padding(.horizontal, Theme.Spacing.l)
         .sheet(isPresented: $showingPaywall) { PaywallView() }
     }
@@ -1047,18 +1023,6 @@ private struct NotificationsCard: View {
             RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
-                )
-        )
-        .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
         .padding(.horizontal, Theme.Spacing.l)
         .task { await onRefresh() }
     }
@@ -1141,18 +1105,6 @@ private struct AboutCard: View {
             RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
-                )
-        )
-        .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
         .padding(.horizontal, Theme.Spacing.l)
     }
 }

@@ -35,7 +35,6 @@ struct ActiveSessionBanner: View {
                         Circle()
                             .fill(Color.green)
                             .frame(width: 6, height: 6)
-                            .shadow(color: .green.opacity(0.5), radius: 3)
                         Text("Läuft jetzt")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(.white.opacity(0.8))
@@ -58,11 +57,6 @@ struct ActiveSessionBanner: View {
                 )
             )
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-            )
-            .shadow(color: Color.blue.opacity(0.3), radius: 12, x: 0, y: 6)
         }
         .buttonStyle(BounceButtonStyle())
         .onReceive(timer) { now = $0 }

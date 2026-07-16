@@ -81,7 +81,7 @@ struct ExerciseLibraryView: View {
                 }
                 .listStyle(.insetGrouped)
             }
-            .searchable(text: $search, placement: asSheet ? .navigationBarDrawer(displayMode: .always) : .toolbar)
+            .searchable(text: $search, placement: asSheet ? .navigationBarDrawer(displayMode: .always) : .navigationBarDrawer(displayMode: .always))
             .navigationTitle("Übungen")
             .navigationBarTitleDisplayMode(asSheet ? .inline : .large)
             .toolbar {

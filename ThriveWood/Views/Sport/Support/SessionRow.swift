@@ -21,18 +21,11 @@ struct SessionRow: View {
         HStack(spacing: Theme.Spacing.m) {
             ZStack {
                 RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Color.accentColor.opacity(0.15))
                     .frame(width: 40, height: 40)
-                    .shadow(color: Color.accentColor.opacity(0.25), radius: 4, x: 0, y: 2)
                 Image(systemName: "calendar")
                     .font(Theme.Typography.callout)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.accentColor)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(session.workout?.name ?? "Freies Training")
@@ -52,21 +45,6 @@ struct SessionRow: View {
             }
         }
         .padding(Theme.Spacing.m)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.5), Color.white.opacity(0)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
-                )
-        )
-        .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
+        .cardStyle()
     }
 }

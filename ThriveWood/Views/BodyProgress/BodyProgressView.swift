@@ -126,6 +126,7 @@ struct BodyProgressView: View {
                     }
                 }
                 .padding(.vertical, Theme.Spacing.l)
+                .padding(.bottom, 100)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Körper")

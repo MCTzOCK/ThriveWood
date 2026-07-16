@@ -31,6 +31,7 @@ struct HomeView: View {
     @State private var showingReorder = false
     @State private var showingDebug: Bool = false
     @State private var showingPaywall = false
+    @AppStorage("ungroupedCollapsed") private var ungroupedCollapsed: Bool = false
     @State private var selectedTab: HomeTab = .habits
     @State private var selectedDate: Date = .now
     @State private var supplementSearch = ""
@@ -43,6 +44,7 @@ struct HomeView: View {
                         premiumHeader(vm: vm)
                         content(vm: vm)
                     }
+                    .background(Color(.systemGroupedBackground))
                 } else {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -155,7 +157,6 @@ struct HomeView: View {
                     .background(
                         Circle()
                             .fill(Color.accentColor)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
                     )
             }
             .buttonStyle(BounceButtonStyle())
@@ -192,7 +193,7 @@ struct HomeView: View {
     private func habitsContent(vm: HomeViewModel) -> some View {
         @Bindable var vm = vm
         ScrollView {
-            VStack(spacing: Theme.Spacing.l) {
+            LazyVStack(spacing: Theme.Spacing.l) {
                 WeekStripView(
                     selectedDate: Binding(
                         get: { vm.selectedDate },
@@ -260,23 +261,8 @@ struct HomeView: View {
             .padding(Theme.Spacing.l)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.accentColor.opacity(0.08),
-                                Color.green.opacity(0.04),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Color.accentColor.opacity(0.06))
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
-                    .stroke(Color.accentColor.opacity(0.15), lineWidth: 1)
-            )
-            .shadow(color: Theme.Shadow.card, radius: 12, x: 0, y: 4)
         }
         .buttonStyle(PressScaleStyle())
         .padding(.horizontal, Theme.Spacing.l)
@@ -318,10 +304,21 @@ struct HomeView: View {
                                 onEdit: { editingGroup = group }
                             )
                         } else {
-                            UngroupedHeaderView(habitCount: section.habits.count)
+                            Button {
+                                withAnimation(Theme.Animation.spring) {
+                                    ungroupedCollapsed.toggle()
+                                }
+                                Haptics.selection()
+                            } label: {
+                                UngroupedHeaderView(
+                                    habitCount: section.habits.count,
+                                    isCollapsed: ungroupedCollapsed
+                                )
+                            }
+                            .buttonStyle(PressScaleStyle())
                         }
 
-                        if section.group?.isCollapsed != true {
+                        if section.group?.isCollapsed != true && (section.group != nil || !ungroupedCollapsed) {
                             ForEach(section.habits) { habit in
                                 HabitRowView(
                                     habit: habit,

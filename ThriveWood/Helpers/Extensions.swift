@@ -9,8 +9,6 @@ import Foundation
 import SwiftUI
 
 extension Calendar {
-    /// App-weiter Kalender. Liest den Wochenbeginn aus dem aktuellen UserProfile.
-    /// Fallback: Montag.
     static var app: Calendar {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = .current
@@ -31,27 +29,22 @@ extension Calendar {
     }
 }
 
-/// Globaler, leichtgewichtiger Config-Container.
-/// Wird von AppEnvironment beim Start und bei Profil-Änderungen aktualisiert.
 final class AppCalendarConfig: @unchecked Sendable {
     static let shared = AppCalendarConfig()
     private init() {}
 
-    private(set) var firstWeekday: Int = 2 // Montag = 2 (Calendar-Standard)
+    private(set) var firstWeekday: Int = 2
 
     func update(weekStartsOn: Weekday) {
         firstWeekday = weekStartsOn.rawValue
     }
 }
 
-
-// MARK: - Safe subscript helper
 extension Array {
     subscript(safe index: Int) -> Element? {
         indices.contains(index) ? self[index] : nil
     }
 }
-
 
 extension View {
     func cardStyle() -> some View {
@@ -60,38 +53,21 @@ extension View {
                 RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
                     .fill(Color(.secondarySystemGroupedBackground))
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.5
-                    )
-            )
-            .shadow(color: Theme.Shadow.card, radius: 8, x: 0, y: 2)
     }
-    
+
     func errorAlert(_ state: ErrorState) -> some View {
         modifier(ErrorAlertModifier(state: state))
     }
 }
 
-import SwiftUI
-
 extension Color {
     init?(hex: String) {
         var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
-        
+
         var rgb: UInt64 = 0
         guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
-        
+
         self.init(
             .sRGB,
             red: Double((rgb & 0xFF0000) >> 16) / 255.0,

@@ -142,6 +142,7 @@ struct WorkoutSessionDetailView: View {
                 }
                 .padding(.vertical, Theme.Spacing.l)
                 .padding(.horizontal, Theme.Spacing.l)
+                .padding(.bottom, 100)
                 
                 if successHUDVisible {
                     SuccessHUD(message: "Gespeichert!")

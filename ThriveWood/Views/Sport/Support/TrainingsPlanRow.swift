@@ -6,46 +6,64 @@
 //
 import SwiftUI
 
-
 struct TrainingsPlanRow: View {
     let plan: TrainingsPlan
     let onTap: () -> Void
-    
+
+    private var planColor: Color {
+        Color(hex: plan.color) ?? .blue
+    }
+
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
-                Circle()
-                    .fill(Color(hex: plan.color) ?? .blue)
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Image(systemName: "calendar")
-                            .foregroundStyle(.white)
-                    )
-                
+            HStack(spacing: Theme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                        .fill(planColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "calendar")
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(planColor)
+                }
+
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack {
+                    HStack(spacing: Theme.Spacing.xs) {
                         Text(plan.name)
-                            .font(.subheadline.weight(.medium))
-                        
+                            .font(Theme.Typography.subheadline.weight(.semibold))
+                            .lineLimit(1)
+
                         if plan.isActive {
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.caption)
+                                .font(Theme.Typography.caption)
                                 .foregroundStyle(.green)
                         }
                     }
-                    
-                    Text("\(plan.trainingDaysPerWeek)x/Woche • \(plan.totalExercises) Übungen")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: Theme.Spacing.m) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "calendar")
+                                .font(Theme.Typography.caption2)
+                            Text("\(plan.trainingDaysPerWeek)x/Woche")
+                        }
+                        HStack(spacing: 4) {
+                            Image(systemName: "dumbbell.fill")
+                                .font(Theme.Typography.caption2)
+                            Text("\(plan.totalExercises)")
+                        }
+                    }
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
-                    .font(.caption)
+                    .font(Theme.Typography.caption.weight(.bold))
                     .foregroundStyle(.tertiary)
             }
+            .padding(Theme.Spacing.m)
+            .cardStyle()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleStyle())
     }
 }
