@@ -63,5 +63,11 @@ enum ThriveWoodMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
         [ThriveWoodSchemaV1.self, ThriveWoodSchemaV2.self, ThriveWoodSchemaV3.self, ThriveWoodSchemaV4.self]
     }
-    static var stages: [MigrationStage] { [] }
+    static var stages: [MigrationStage] {
+        [
+            .lightweight(fromVersion: ThriveWoodSchemaV1.self, toVersion: ThriveWoodSchemaV2.self),
+            .lightweight(fromVersion: ThriveWoodSchemaV2.self, toVersion: ThriveWoodSchemaV3.self),
+            .lightweight(fromVersion: ThriveWoodSchemaV3.self, toVersion: ThriveWoodSchemaV4.self)
+        ]
+    }
 }

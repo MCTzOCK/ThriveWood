@@ -62,8 +62,21 @@ enum SharedModelContainer {
                 configurations: [modelConfiguration]
             )
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            print("ModelContainer migration failed, attempting fresh store: \(error)")
+            let storeURL = modelConfiguration.url
+            let walURL = storeURL.deletingPathExtension().appendingPathExtension("store-wal")
+            let shmURL = storeURL.deletingPathExtension().appendingPathExtension("store-shm")
+            for url in [storeURL, walURL, shmURL] {
+                try? FileManager.default.removeItem(at: url)
+            }
+            do {
+                return try ModelContainer(
+                    for: schema,
+                    configurations: [modelConfiguration]
+                )
+            } catch {
+                fatalError("Could not create ModelContainer even after deleting store: \(error)")
+            }
         }
-
     }()
 }
