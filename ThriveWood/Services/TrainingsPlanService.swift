@@ -86,6 +86,45 @@ final class TrainingsPlanService {
     func nextWorkout() throws -> (weekday: TPWeekday, workout: Workout)? {
         try repo.nextWorkout()
     }
+
+    // MARK: - Rotation Management
+
+    func createRotationPlan(
+        name: String,
+        details: String = "",
+        color: String = "#4CAF50",
+        workoutCount: Int = 3
+    ) throws -> TrainingsPlan {
+        guard !name.isEmpty else {
+            throw ServiceError.validationFailed("Name darf nicht leer sein")
+        }
+        let plan = try repo.create(name: name, details: details, color: color)
+        plan.planType = .rotation
+        try repo.update(plan)
+
+        for i in 0..<max(2, workoutCount) {
+            let label = String(Character(UnicodeScalar(65 + i)!))
+            try repo.addRotationEntry(workout: nil, label: label, to: plan)
+        }
+        return plan
+    }
+
+    func advanceRotation(_ plan: TrainingsPlan) throws {
+        try repo.advanceRotation(plan)
+    }
+
+    func resetRotation(_ plan: TrainingsPlan) throws {
+        try repo.resetRotation(plan)
+    }
+
+    func addRotationWorkout(_ workout: Workout?, label: String, to plan: TrainingsPlan) throws {
+        try repo.addRotationEntry(workout: workout, label: label, to: plan)
+    }
+
+    func handleSessionFinished() {
+        guard let plan = try? repo.fetchActive(), plan.isRotationPlan else { return }
+        try? repo.advanceRotation(plan)
+    }
     
     // MARK: - Templates
     

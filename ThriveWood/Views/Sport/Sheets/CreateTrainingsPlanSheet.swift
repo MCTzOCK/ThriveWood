@@ -18,6 +18,8 @@ struct CreateTrainingsPlanSheet: View {
     @State private var name = ""
     @State private var details = ""
     @State private var selectedColor = "#4CAF50"
+    @State private var planType: TrainingsPlanType = .weekday
+    @State private var workoutCount = 3
     
     private let colors = [
         "#4CAF50", "#2196F3", "#9C27B0", "#FF9800",
@@ -31,6 +33,22 @@ struct CreateTrainingsPlanSheet: View {
                     TextField("Name", text: $name)
                     TextField("Beschreibung (optional)", text: $details, axis: .vertical)
                         .lineLimit(2...4)
+                }
+
+                Section("Plantyp") {
+                    Picker("Typ", selection: $planType) {
+                        ForEach(TrainingsPlanType.allCases) { type in
+                            Label(type.label, systemImage: type.icon).tag(type)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if planType == .rotation {
+                        Stepper("\(workoutCount) Workouts", value: $workoutCount, in: 2...6)
+                        Text("Die Workouts rotieren fortlaufend (A, B, C, A, B, C...), unabhaengig von Wochentagen.")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 
                 Section {
@@ -69,11 +87,20 @@ struct CreateTrainingsPlanSheet: View {
     
     private func create() {
         do {
-            _ = try env.trainingsPlanService.createPlan(
-                name: name,
-                details: details,
-                color: selectedColor
-            )
+            if planType == .rotation {
+                _ = try env.trainingsPlanService.createRotationPlan(
+                    name: name,
+                    details: details,
+                    color: selectedColor,
+                    workoutCount: workoutCount
+                )
+            } else {
+                _ = try env.trainingsPlanService.createPlan(
+                    name: name,
+                    details: details,
+                    color: selectedColor
+                )
+            }
             Haptics.success()
             dismiss()
             onCreate()

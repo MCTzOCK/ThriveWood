@@ -55,7 +55,7 @@ enum ThriveWoodSchemaV4: VersionedSchema {
     static var versionIdentifier = Schema.Version(4, 0, 0)
 
     static var models: [any PersistentModel.Type] {
-        ThriveWoodSchemaV3.models + [RotationTrainingsPlan.self, RotationPlanEntry.self]
+        ThriveWoodSchemaV3.models
     }
 }
 

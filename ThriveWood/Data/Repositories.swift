@@ -866,6 +866,9 @@ final class TrainingsPlanRepository {
     /// Workout für heute (aus aktivem Plan)
     func todaysWorkout() throws -> Workout? {
         guard let activePlan = try fetchActive() else { return nil }
+        if activePlan.isRotationPlan {
+            return activePlan.nextRotationWorkout
+        }
         return activePlan.workout(for: .today)
     }
     
@@ -891,6 +894,37 @@ final class TrainingsPlanRepository {
         }
         
         return nil
+    }
+
+    // MARK: - Rotation
+
+    func advanceRotation(_ plan: TrainingsPlan) throws {
+        guard plan.isRotationPlan, plan.rotationCount > 0 else { return }
+        plan.currentRotationIndex += 1
+        if plan.currentRotationIndex % plan.rotationCount == 0 {
+            plan.completedRotations += 1
+        }
+        try modelContext.save()
+    }
+
+    func resetRotation(_ plan: TrainingsPlan) throws {
+        plan.currentRotationIndex = 0
+        plan.completedRotations = 0
+        try modelContext.save()
+    }
+
+    func addRotationEntry(workout: Workout?, label: String, to plan: TrainingsPlan) throws {
+        let order = plan.days.count
+        let day = TrainingsPlanDay(
+            weekday: .monday,
+            rotationOrder: order,
+            label: label,
+            plan: plan,
+            workout: workout
+        )
+        plan.days.append(day)
+        modelContext.insert(day)
+        try modelContext.save()
     }
 }
 

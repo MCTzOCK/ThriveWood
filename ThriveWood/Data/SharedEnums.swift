@@ -406,6 +406,24 @@ enum AppAppearance: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum TrainingsPlanType: String, Codable, CaseIterable, Identifiable {
+    case weekday
+    case rotation
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .weekday: "Wochentage"
+        case .rotation: "Rotation (A/B/C)"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .weekday: "calendar"
+        case .rotation: "arrow.triangle.2.circlepath"
+        }
+    }
+}
+
 enum AccentTheme: String, Codable, CaseIterable, Identifiable {
     case forest, ocean, sunset, lavender, rose
     static var availableInFree: [AccentTheme] = [.forest]

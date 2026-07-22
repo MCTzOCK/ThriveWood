@@ -360,16 +360,21 @@ extension Double {
 @Model
 final class TrainingsPlan {
     @Attribute(.unique) var id: UUID
-    
+
     var name: String
     var details: String
     var createdAt: Date
     var isActive: Bool  // Nur ein Plan kann aktiv sein
     var color: String   // Hex-String für UI-Farbe
-    
+
+    // MARK: - Rotation Properties (additive, default = weekday plan)
+    var planTypeRaw: String
+    var currentRotationIndex: Int
+    var completedRotations: Int
+
     @Relationship(deleteRule: .cascade, inverse: \TrainingsPlanDay.plan)
     var days: [TrainingsPlanDay]
-    
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -377,6 +382,9 @@ final class TrainingsPlan {
         createdAt: Date = .now,
         isActive: Bool = false,
         color: String = "#4CAF50",
+        planType: TrainingsPlanType = .weekday,
+        currentRotationIndex: Int = 0,
+        completedRotations: Int = 0,
         days: [TrainingsPlanDay] = []
     ) {
         self.id = id
@@ -385,24 +393,59 @@ final class TrainingsPlan {
         self.createdAt = createdAt
         self.isActive = isActive
         self.color = color
+        self.planTypeRaw = planType.rawValue
+        self.currentRotationIndex = currentRotationIndex
+        self.completedRotations = completedRotations
         self.days = days
     }
-    
-    /// Sortierte Tage (Montag bis Sonntag)
+
+    var planType: TrainingsPlanType {
+        get { TrainingsPlanType(rawValue: planTypeRaw) ?? .weekday }
+        set { planTypeRaw = newValue.rawValue }
+    }
+
+    var isRotationPlan: Bool { planType == .rotation }
+
+    /// Sortierte Tage (Montag bis Sonntag) – für Wochentags-Pläne
     var sortedDays: [TrainingsPlanDay] {
         days.sorted { $0.weekday.rawValue < $1.weekday.rawValue }
     }
-    
+
+    /// Sortierte Sequenz für Rotations-Pläne (nach rotationOrder)
+    var rotationSequence: [TrainingsPlanDay] {
+        days.sorted { $0.rotationOrder < $1.rotationOrder }
+    }
+
     /// Workout für einen bestimmten Wochentag
     func workout(for weekday: TPWeekday) -> Workout? {
         days.first { $0.weekday == weekday }?.workout
     }
-    
+
+    /// Nächstes Workout bei Rotations-Plänen
+    var nextRotationWorkout: Workout? {
+        guard isRotationPlan, !rotationSequence.isEmpty else { return nil }
+        let idx = currentRotationIndex % rotationSequence.count
+        return rotationSequence[idx].workout
+    }
+
+    /// Label für das nächste Workout (z.B. "A", "B", "C")
+    var nextRotationLabel: String {
+        guard isRotationPlan, !rotationSequence.isEmpty else { return "–" }
+        let idx = currentRotationIndex % rotationSequence.count
+        let entry = rotationSequence[idx]
+        return entry.label.isEmpty
+            ? String(Character(UnicodeScalar(65 + idx)!))
+            : entry.label
+    }
+
+    /// Anzahl der Workouts in der Rotation
+    var rotationCount: Int { rotationSequence.count }
+
     /// Anzahl der Trainingstage pro Woche
     var trainingDaysPerWeek: Int {
         days.filter { $0.workout != nil }.count
     }
-    
+
     /// Gesamtanzahl Übungen im Plan
     var totalExercises: Int {
         days.compactMap(\.workout).reduce(0) { $0 + $1.exercises.count }
@@ -414,19 +457,25 @@ final class TrainingsPlan {
 @Model
 final class TrainingsPlanDay {
     @Attribute(.unique) var id: UUID
-    
+
     var weekday: TPWeekday
     var isRestDay: Bool
     var notes: String
-    
+
+    // MARK: - Rotation Properties (additive)
+    var rotationOrder: Int
+    var label: String
+
     var plan: TrainingsPlan?
     var workout: Workout?
-    
+
     init(
         id: UUID = UUID(),
         weekday: TPWeekday,
         isRestDay: Bool = false,
         notes: String = "",
+        rotationOrder: Int = 0,
+        label: String = "",
         plan: TrainingsPlan? = nil,
         workout: Workout? = nil
     ) {
@@ -434,6 +483,8 @@ final class TrainingsPlanDay {
         self.weekday = weekday
         self.isRestDay = isRestDay
         self.notes = notes
+        self.rotationOrder = rotationOrder
+        self.label = label
         self.plan = plan
         self.workout = workout
     }

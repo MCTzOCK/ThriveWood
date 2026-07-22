@@ -29,7 +29,6 @@ final class AppEnvironment {
     let supplementEntryRepo: SupplementEntryRepository
     let templateRepo: MealTemplateRepository
     let trainingsPlanRepo: TrainingsPlanRepository
-    let rotationPlanRepo: RotationPlanRepository
     let gymRepo: any GymRepository
     let groupRepo: any HabitGroupRepository
     
@@ -51,7 +50,6 @@ final class AppEnvironment {
     let aiService: AIService
     private(set) var setRecommendationService: SetRecommendationService!
     let trainingsPlanService: TrainingsPlanService
-    let rotationPlanService: RotationPlanService
     let gymService: GymService
     let achievementService: AchievementService
     var entitlements: EntitlementService
@@ -76,7 +74,6 @@ final class AppEnvironment {
         let sessionRepo    = SwiftDataWorkoutSessionRepository(context: context)
         let profileRepo    = SwiftDataUserProfileRepository(context: context)
         self.trainingsPlanRepo = TrainingsPlanRepository(modelContext: context)
-        self.rotationPlanRepo = RotationPlanRepository(modelContext: context)
         self.bodyProgressRepo = SwiftDataBodyProgressRepository(context: context)
         self.gymRepo = SwiftDataGymRepository(context: context)
         self.groupRepo = SwiftDataHabitGroupRepository(context: context)
@@ -123,7 +120,6 @@ final class AppEnvironment {
         self.muscleRecoveryService = MuscleRecoveryService(sessionRepo: sessionRepo)
         self.aiService = AIService()
         self.trainingsPlanService = TrainingsPlanService(repo: trainingsPlanRepo)
-        self.rotationPlanService = RotationPlanService(repo: rotationPlanRepo)
         self.gymService = GymService(gymRepo: gymRepo, exerciseRepo: exerciseRepo)
         self.achievementRepo = SwiftDataAchievementRepository(context: context)
         self.achievementService = AchievementService(

@@ -21,7 +21,7 @@ struct TrainingsPlanRow: View {
                     RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
                         .fill(planColor.opacity(0.15))
                         .frame(width: 44, height: 44)
-                    Image(systemName: "calendar")
+                    Image(systemName: plan.isRotationPlan ? "arrow.triangle.2.circlepath" : "calendar")
                         .font(Theme.Typography.body)
                         .foregroundStyle(planColor)
                 }
@@ -40,10 +40,18 @@ struct TrainingsPlanRow: View {
                     }
 
                     HStack(spacing: Theme.Spacing.m) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "calendar")
-                                .font(Theme.Typography.caption2)
-                            Text("\(plan.trainingDaysPerWeek)x/Woche")
+                        if plan.isRotationPlan {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(Theme.Typography.caption2)
+                                Text("Nächstes: \(plan.nextRotationLabel)")
+                            }
+                        } else {
+                            HStack(spacing: 4) {
+                                Image(systemName: "calendar")
+                                    .font(Theme.Typography.caption2)
+                                Text("\(plan.trainingDaysPerWeek)x/Woche")
+                            }
                         }
                         HStack(spacing: 4) {
                             Image(systemName: "dumbbell.fill")

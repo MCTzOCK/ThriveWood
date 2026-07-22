@@ -141,7 +141,7 @@ final class WorkoutService {
             elapsedSeconds: elapsed
         )
 
-        env.rotationPlanService.handleSessionFinished(session: savedSession)
+        env.trainingsPlanService.handleSessionFinished()
     }
     
     func cancelSession() throws {
