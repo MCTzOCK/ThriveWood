@@ -12,6 +12,7 @@ struct TrainingsPlanListView: View {
 
     @State private var plans: [TrainingsPlan] = []
     @State private var showCreateSheet = false
+    @State private var showAIGenerator = false
     @State private var selectedPlan: TrainingsPlan?
     @State private var searchText: String = ""
 
@@ -95,10 +96,20 @@ struct TrainingsPlanListView: View {
         .navigationTitle("Trainingspläne")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showCreateSheet = true
-                } label: {
-                    Image(systemName: "plus")
+                HStack(spacing: 4) {
+                    /*if env.aiService.isAvailable() {
+                        Button {
+                            showAIGenerator = true
+                        } label: {
+                            Image(systemName: "sparkles")
+                                .foregroundStyle(.purple)
+                        }
+                    }*/
+                    Button {
+                        showCreateSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }
@@ -106,6 +117,11 @@ struct TrainingsPlanListView: View {
             CreateTrainingsPlanSheet(onCreate: {
                 Task { await load() }
             })
+        }
+        .sheet(isPresented: $showAIGenerator) {
+            NavigationStack {
+                AIPlanGeneratorView()
+            }
         }
         .sheet(item: $selectedPlan) { plan in
             NavigationStack {

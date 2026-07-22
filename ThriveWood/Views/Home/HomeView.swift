@@ -130,6 +130,20 @@ struct HomeView: View {
     private var actionButtons: some View {
         HStack(spacing: Theme.Spacing.s) {
             NavigationLink {
+                WellnessView()
+            } label: {
+                Image(systemName: "heart.fill")
+                    .font(Theme.Typography.body)
+                    .frame(width: 38, height: 38)
+                    .foregroundStyle(Color.pink)
+                    .background(
+                        Circle()
+                            .fill(Color.pink.opacity(0.12))
+                    )
+            }
+            .buttonStyle(PressScaleStyle())
+
+            NavigationLink {
                 AchievementsView()
             } label: {
                 Image(systemName: "trophy.fill")

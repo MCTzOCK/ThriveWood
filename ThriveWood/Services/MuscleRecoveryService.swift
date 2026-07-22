@@ -85,6 +85,89 @@ final class MuscleRecoveryService {
             }
     }
 
+    struct RecoveryDashboard {
+        let readinessScore: Double
+        let recommendedFocus: String
+        let recommendedFocusIcon: String
+        let acwr: Double
+        let recoveredMuscles: [MuscleGroup]
+        let needsRestMuscles: [MuscleGroup]
+        let totalWeeklyVolume: Double
+        let avgWeeklyVolume: Double
+        let sessionCount7d: Int
+        let sessionCount28d: Int
+    }
+
+    func recoveryDashboard() throws -> RecoveryDashboard {
+        let recovery = try calculateRecovery()
+        let sessions = try sessionRepo.fetchAll()
+        let calendar = Calendar.current
+        let now = Date()
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+        let twentyEightDaysAgo = calendar.date(byAdding: .day, value: -28, to: now) ?? now
+
+        let sessions7d = sessions.filter { $0.startedAt >= sevenDaysAgo }
+        let sessions28d = sessions.filter { $0.startedAt >= twentyEightDaysAgo }
+
+        let volume7d = sessions7d.flatMap(\.sets).filter(\.isCompleted).reduce(0.0) { $0 + normalizedVolume(for: $1) }
+        let volume28d = sessions28d.flatMap(\.sets).filter(\.isCompleted).reduce(0.0) { $0 + normalizedVolume(for: $1) }
+
+        let chronic = volume28d / 4.0
+        let acwr = chronic > 0 ? (volume7d / chronic) : 0
+
+        let recovered = recovery.filter { $0.state == .recovered && $0.weeklyVolume > 0 }.map(\.muscleGroup)
+        let recoveredNoVolume = recovery.filter { $0.weeklyVolume == 0 }.map(\.muscleGroup)
+        let needsRest = recovery.filter { $0.state == .needsRest }.map(\.muscleGroup)
+
+        let allRecovered = recovered + recoveredNoVolume
+        let totalMuscles = recovery.count
+        let recoveredRatio = totalMuscles > 0 ? Double(allRecovered.count) / Double(totalMuscles) : 0
+        let penalty = Double(needsRest.count) / Double(max(totalMuscles, 1)) * 30
+        let readinessScore = max(0, min(100, recoveredRatio * 100 - penalty))
+
+        let recommendedFocus: String
+        let recommendedFocusIcon: String
+
+        if needsRest.count > totalMuscles / 2 {
+            recommendedFocus = "Ruhetag oder leichte Aktivität"
+            recommendedFocusIcon = "bed.double.fill"
+        } else if recovered.contains(.chest) && (recovered.contains(.triceps) || recovered.contains(.shoulders)) {
+            recommendedFocus = "Push (Brust, Schultern, Trizeps)"
+            recommendedFocusIcon = "arrow.up.forward"
+        } else if recovered.contains(.lats) || recovered.contains(.biceps) {
+            recommendedFocus = "Pull (Rücken, Bizeps)"
+            recommendedFocusIcon = "arrow.down.backward"
+        } else if recovered.contains(.quads) || recovered.contains(.hamstrings) || recovered.contains(.glutes) {
+            recommendedFocus = "Beine (Quads, Hamstrings, Glutes)"
+            recommendedFocusIcon = "figure.strengthtraining.traditional"
+        } else if recovered.contains(.core) {
+            recommendedFocus = "Core & Bauch"
+            recommendedFocusIcon = "figure.core.training"
+        } else if !allRecovered.isEmpty {
+            recommendedFocus = "Ganzkörper oder schwächste Muskeln"
+            recommendedFocusIcon = "figure.mixed.cardio"
+        } else {
+            recommendedFocus = "Ruhetag"
+            recommendedFocusIcon = "moon.fill"
+        }
+
+        let totalWeeklyVolume = recovery.map(\.weeklyVolume).reduce(0, +)
+        let avgWeeklyVolume = recovery.isEmpty ? 0 : totalWeeklyVolume / Double(recovery.count)
+
+        return RecoveryDashboard(
+            readinessScore: readinessScore,
+            recommendedFocus: recommendedFocus,
+            recommendedFocusIcon: recommendedFocusIcon,
+            acwr: acwr,
+            recoveredMuscles: allRecovered,
+            needsRestMuscles: needsRest,
+            totalWeeklyVolume: totalWeeklyVolume,
+            avgWeeklyVolume: avgWeeklyVolume,
+            sessionCount7d: sessions7d.count,
+            sessionCount28d: sessions28d.count
+        )
+    }
+
     private struct RecoveryAnalysis {
         let state: MuscleRecoveryState
         let reason: MuscleRestReason
@@ -173,7 +256,10 @@ final class MuscleRecoveryService {
         guard let type = set.exercise?.trackingType else { return 0 }
         switch type {
         case .repsWeight:
-            return (set.weight ?? 0) * Double(set.reps ?? 0)
+            let totalReps = Double(set.reps ?? 0)
+            let assisted = Double(min(set.assistedReps ?? 0, set.reps ?? 0))
+            let cleanReps = totalReps - assisted
+            return (set.weight ?? 0) * (cleanReps + assisted * 0.6)
         case .reps:
             return Double(set.reps ?? 0) * 60.0
         case .duration:

@@ -894,3 +894,43 @@ final class TrainingsPlanRepository {
     }
 }
 
+// MARK: - Wellness
+
+protocol WellnessRepository {
+    func fetchAll() throws -> [WellnessEntry]
+    func fetchForDay(_ day: Date) throws -> WellnessEntry?
+    func add(_ entry: WellnessEntry) throws
+    func update(_ entry: WellnessEntry) throws
+    func delete(_ entry: WellnessEntry) throws
+}
+
+@MainActor
+final class SwiftDataWellnessRepository: SwiftDataRepository, WellnessRepository {
+    func fetchAll() throws -> [WellnessEntry] {
+        try context.fetch(FetchDescriptor<WellnessEntry>(sortBy: [SortDescriptor(\.date, order: .reverse)]))
+    }
+
+    func fetchForDay(_ day: Date) throws -> WellnessEntry? {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: day)
+        let end = calendar.date(byAdding: .day, value: 1, to: start) ?? start
+        var d = FetchDescriptor<WellnessEntry>(
+            predicate: #Predicate { $0.date >= start && $0.date < end }
+        )
+        d.fetchLimit = 1
+        return try context.fetch(d).first
+    }
+
+    func add(_ entry: WellnessEntry) throws {
+        context.insert(entry)
+        try save()
+    }
+
+    func update(_ entry: WellnessEntry) throws { try save() }
+
+    func delete(_ entry: WellnessEntry) throws {
+        context.delete(entry)
+        try save()
+    }
+}
+

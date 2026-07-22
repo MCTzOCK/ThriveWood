@@ -39,7 +39,8 @@ enum SharedModelContainer {
         GymEquipment.self,
         EquipmentExercise.self,
         FloorPlan.self,
-        FloorZone.self
+        FloorZone.self,
+        WellnessEntry.self
     ])
 
     static let shared: ModelContainer = {

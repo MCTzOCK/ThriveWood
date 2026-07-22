@@ -46,7 +46,9 @@ struct WorkoutEditorView: View {
                         Text("Noch keine Übungen").foregroundStyle(.secondary)
                     } else {
                         ForEach(slots.sorted(by: { $0.order < $1.order })) { slot in
-                            SlotRow(slot: slot)
+                            SlotRow(slot: slot) {
+                                toggleSuperset(for: slot)
+                            }
                         }
                         .onDelete(perform: deleteSlots)
                         .onMove(perform: moveSlots)
@@ -132,6 +134,15 @@ struct WorkoutEditorView: View {
         sorted.move(fromOffsets: source, toOffset: destination)
         for (i, s) in sorted.enumerated() { s.order = i }
         slots = sorted
+    }
+
+    private func toggleSuperset(for slot: WorkoutExercise) {
+        if slot.supersetGroup == nil {
+            let maxGroup = slots.compactMap(\.supersetGroup).max() ?? 0
+            slot.supersetGroup = maxGroup + 1
+        } else {
+            slot.supersetGroup = nil
+        }
     }
 
     private func save() {

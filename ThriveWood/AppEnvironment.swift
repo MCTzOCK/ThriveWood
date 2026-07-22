@@ -54,6 +54,8 @@ final class AppEnvironment {
     let achievementService: AchievementService
     var entitlements: EntitlementService
     let bodyProgressService: BodyProgressService
+    let wellnessRepo: WellnessRepository
+    let wellnessService: WellnessService
     
     let workoutLiveActivity = WorkoutLiveActivityManager()
     
@@ -129,6 +131,8 @@ final class AppEnvironment {
             muscleRankingService: muscleRankingService
         )
         self.bodyProgressService = BodyProgressService(repo: bodyProgressRepo)
+        self.wellnessRepo = SwiftDataWellnessRepository(context: context)
+        self.wellnessService = WellnessService(repo: wellnessRepo, completionRepo: completionRepo, sessionRepo: sessionRepo)
         
         
         // Seed & Bootstrap

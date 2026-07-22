@@ -12,6 +12,7 @@ struct MuscleRankingScreen: View {
     
     @State private var rankings: [MuscleRankingData] = []
     @State private var recoveryData: [MuscleRecoveryData] = []
+    @State private var dashboard: MuscleRecoveryService.RecoveryDashboard?
     @State private var showFront = true
     @State private var selectedMuscle: MuscleGroup?
     @State private var overallRank: MuscleRank = .untrained
@@ -52,6 +53,9 @@ struct MuscleRankingScreen: View {
                     overallRankHeader
                 } else {
                     recoveryOverviewHeader
+                    if let dashboard {
+                        recoveryDashboardCard(dashboard)
+                    }
                 }
                 diagramSection
                 
@@ -346,6 +350,122 @@ struct MuscleRankingScreen: View {
         }
     }
 
+    // MARK: - Recovery Dashboard Card
+
+    private func recoveryDashboardCard(_ dash: MuscleRecoveryService.RecoveryDashboard) -> some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                VStack(spacing: 4) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            .frame(width: 80, height: 80)
+                        Circle()
+                            .trim(from: 0, to: progressAnimated ? dash.readinessScore / 100 : 0)
+                            .stroke(
+                                readinessColor(dash.readinessScore),
+                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                            )
+                            .frame(width: 80, height: 80)
+                            .rotationEffect(.degrees(-90))
+                        VStack(spacing: 0) {
+                            Text("\(Int(dash.readinessScore))")
+                                .font(.title.bold().monospacedDigit())
+                            Text("%")
+                                .font(.caption2.weight(.medium))
+                        }
+                        .foregroundStyle(readinessColor(dash.readinessScore))
+                    }
+                    Text("Bereitschaft")
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 6) {
+                        Image(systemName: dash.recommendedFocusIcon)
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.tint)
+                        Text("Heute trainieren?")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(dash.recommendedFocus)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                    Text("\(dash.recoveredMuscles.count) Muskeln erholt · \(dash.needsRestMuscles.count) brauchen Pause")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            Divider()
+
+            HStack(spacing: 0) {
+                dashboardStat(
+                    value: String(format: "%.2f", dash.acwr),
+                    label: "ACWR",
+                    detail: acwrLabel(dash.acwr),
+                    color: acwrColor(dash.acwr)
+                )
+                Divider().frame(height: 36).padding(.horizontal, 2)
+                dashboardStat(
+                    value: "\(dash.sessionCount7d)",
+                    label: "Sessions 7T",
+                    detail: "\(dash.sessionCount28d) in 28T",
+                    color: .blue
+                )
+                Divider().frame(height: 36).padding(.horizontal, 2)
+                dashboardStat(
+                    value: formatVolume(dash.totalWeeklyVolume),
+                    label: "Volumen 7T",
+                    detail: "Ø \(formatVolume(dash.avgWeeklyVolume))/Muskel",
+                    color: .purple
+                )
+            }
+        }
+        .padding(20)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .padding(.horizontal)
+    }
+
+    private func dashboardStat(value: String, label: String, detail: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.headline.bold().monospacedDigit())
+                .foregroundStyle(color)
+            Text(label)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary)
+            Text(detail)
+                .font(.system(size: 9))
+                .foregroundStyle(.tertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func readinessColor(_ score: Double) -> Color {
+        if score >= 70 { return .green }
+        if score >= 40 { return .orange }
+        return .red
+    }
+
+    private func acwrColor(_ ratio: Double) -> Color {
+        if ratio < 0.8 { return .blue }
+        if ratio <= 1.3 { return .green }
+        if ratio <= 1.5 { return .orange }
+        return .red
+    }
+
+    private func acwrLabel(_ ratio: Double) -> String {
+        if ratio < 0.8 { return "Unterlast" }
+        if ratio <= 1.3 { return "Optimal" }
+        if ratio <= 1.5 { return "Grenzwert" }
+        return "Überlast"
+    }
+
     // MARK: - Recovery Overview Header
 
     private var recoveryOverviewHeader: some View {
@@ -439,8 +559,9 @@ struct MuscleRankingScreen: View {
         do {
             rankings = try env.muscleRankingService.calculateRankings()
             recoveryData = try env.muscleRecoveryService.calculateRecovery()
-            let relevantRankings = includeUntrainedMuscles 
-                ? rankings 
+            dashboard = try env.muscleRecoveryService.recoveryDashboard()
+            let relevantRankings = includeUntrainedMuscles
+                ? rankings
                 : rankings.filter { $0.totalVolume > 0 }
             overallRank = try env.muscleRankingService.overallRank(
                 includeUntrained: includeUntrainedMuscles

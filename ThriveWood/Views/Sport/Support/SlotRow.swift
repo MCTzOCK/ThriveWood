@@ -9,11 +9,12 @@ import SwiftUI
 
 struct SlotRow: View {
     @Bindable var slot: WorkoutExercise
-    
+    var onToggleSuperset: (() -> Void)? = nil
+
     private var type: ExerciseTrackingType {
         slot.exercise?.trackingType ?? .repsWeight
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack {
@@ -29,10 +30,10 @@ struct SlotRow: View {
                     .foregroundStyle(.tint)
             }
             Spacer()
-            
+
             Stepper("Sätze: \(slot.targetSets)", value: $slot.targetSets, in: 1...20)
                 .font(.caption)
-            
+
             HStack(spacing: Theme.Spacing.m) {
                 if type.showsReps {
                     field(label: "Reps", value: Binding(
@@ -59,11 +60,27 @@ struct SlotRow: View {
                           decimal: false, width: 70)
                 }
             }
-            
+
             HStack {
                 Text("Pause").font(.caption).foregroundStyle(.secondary)
                 Text("\(slot.restSeconds)s").font(.caption.monospacedDigit())
                 Stepper("", value: $slot.restSeconds, in: 0...600, step: 15).labelsHidden()
+            }
+
+            if let onToggleSuperset {
+                Button {
+                    Haptics.selection()
+                    onToggleSuperset()
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: slot.supersetGroup != nil ? "link.badge.plus" : "link")
+                            .font(.caption2.weight(.bold))
+                        Text(slot.supersetGroup != nil ? "Superset-Gruppe \(slot.supersetGroup!) aktiv — Übungen werden abwechselnd ausgeführt" : "Als Superset markieren")
+                            .font(.caption2.weight(.medium))
+                    }
+                    .foregroundStyle(slot.supersetGroup != nil ? .orange : .secondary)
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(.vertical, 4)

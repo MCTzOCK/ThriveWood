@@ -130,23 +130,18 @@ final class MuscleRankingService {
 
         switch type {
         case .repsWeight:
-            // Standard: Gewicht × Reps (kg)
-            return (set.weight ?? 0) * Double(set.reps ?? 0)
+            let totalReps = Double(set.reps ?? 0)
+            let assisted = Double(min(set.assistedReps ?? 0, set.reps ?? 0))
+            let cleanReps = totalReps - assisted
+            return (set.weight ?? 0) * (cleanReps + assisted * 0.6)
 
         case .reps:
-            // Bodyweight: Reps × Äquivalent-Gewicht (~60kg durchschnittliches Körpergewicht)
-            // 1 Rep = 60 kg Volumen
             return Double(set.reps ?? 0) * 60.0
 
         case .duration:
-            // Zeitbasiert: Sekunden → Volumen
-            // 1 Sekunde = 0.5 Volumen-Einheiten (z.B. 60s Plank = 30 Volumen)
             return Double(set.durationSeconds ?? 0) * 0.5
 
         case .distanceDuration:
-            // Distanz-basiert: Meter → Volumen
-            // 1 Meter = 0.05 Volumen-Einheiten (z.B. 10km Laufen = 500 Volumen)
-            // Cardio trägt bei, aber nicht so stark wie Krafttraining
             return (set.distanceMeters ?? 0) * 0.05
         }
     }

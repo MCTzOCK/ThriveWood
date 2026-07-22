@@ -153,6 +153,7 @@ final class WorkoutExercise {
     var targetDistanceMeters: Double?
     var restSeconds: Int
     var notes: String
+    var supersetGroup: Int?
 
     var workout: Workout?
     var exercise: Exercise?
@@ -168,7 +169,8 @@ final class WorkoutExercise {
         targetDurationSeconds: Int? = nil,
         targetDistanceMeters: Double? = nil,
         restSeconds: Int = 90,
-        notes: String = ""
+        notes: String = "",
+        supersetGroup: Int? = nil
     ) {
         self.id = id
         self.order = order
@@ -177,6 +179,7 @@ final class WorkoutExercise {
         self.targetSets = targetSets
         self.restSeconds = restSeconds
         self.notes = notes
+        self.supersetGroup = supersetGroup
 
         // Sinnvolle Defaults je nach Tracking-Typ
         switch exercise.trackingType {
@@ -258,6 +261,7 @@ final class SetEntry {
     var isWarmup: Bool
     var isCompleted: Bool
     var completedAt: Date?
+    var assistedReps: Int?
 
     var session: WorkoutSession?
     var exercise: Exercise?
@@ -273,7 +277,8 @@ final class SetEntry {
         distanceMeters: Double? = nil,
         isWarmup: Bool = false,
         isCompleted: Bool = false,
-        completedAt: Date? = nil
+        completedAt: Date? = nil,
+        assistedReps: Int? = nil
     ) {
         self.id = id
         self.order = order
@@ -286,10 +291,12 @@ final class SetEntry {
         self.isWarmup = isWarmup
         self.isCompleted = isCompleted
         self.completedAt = completedAt
+        self.assistedReps = assistedReps
     }
 
     /// Volumen-Berechnung je nach Tracking-Typ.
-    /// - Strength: kg × reps
+    /// Assisted Reps zählen 60% des Volumens.
+    /// - Strength: kg × reps (assisted reps × 0.6)
     /// - Reps: reps (als Pseudo-Volumen)
     /// - Duration: Sekunden
     /// - Distance/Duration: Meter
@@ -297,7 +304,10 @@ final class SetEntry {
         guard let type = exercise?.trackingType else { return 0 }
         switch type {
         case .repsWeight:
-            return (weight ?? 0) * Double(reps ?? 0)
+            let totalReps = Double(reps ?? 0)
+            let assisted = Double(min(assistedReps ?? 0, reps ?? 0))
+            let cleanReps = totalReps - assisted
+            return (weight ?? 0) * (cleanReps + assisted * 0.6)
         case .reps:
             return Double(reps ?? 0)
         case .duration:
@@ -314,7 +324,11 @@ final class SetEntry {
         case .repsWeight:
             let r = reps ?? 0
             let w = weight ?? 0
-            return w > 0 ? "\(r) × \(w.clean) kg" : "\(r) Reps"
+            let base = w > 0 ? "\(r) × \(w.clean) kg" : "\(r) Reps"
+            if let ar = assistedReps, ar > 0, ar < r {
+                return "\(base) (\(ar) assisted)"
+            }
+            return base
         case .reps:
             return "\(reps ?? 0) Reps"
         case .duration:

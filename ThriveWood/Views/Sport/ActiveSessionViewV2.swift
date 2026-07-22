@@ -47,8 +47,33 @@ struct ActiveSessionViewV2: View {
                         .padding(.top, 12)
 
                     ForEach(Array(groups.enumerated()), id: \.element.exercise.id) { index, group in
-                        exerciseCard(index: index, group: group)
-                            .padding(.horizontal, 16)
+                        let supersetColor = supersetColorFor(exerciseId: group.exercise.id)
+                        let recommendation = group.exercise.trackingType == .repsWeight
+                            ? env.setRecommendationService.recommend(for: group.exercise, currentSets: group.sets, weightUnit: session.weightUnit)
+                            : nil
+                        ExerciseCardV2(
+                            exercise: group.exercise,
+                            sets: group.sets,
+                            unit: session.weightUnit,
+                            topSet: topSets[group.exercise.id],
+                            accentColor: workoutColor,
+                            supersetColor: supersetColor,
+                            recommendation: recommendation,
+                            aiService: env.aiService,
+                            onAddSet: { addSet(for: group.exercise) },
+                            onDuplicate: { duplicateLastSet(for: group.exercise) },
+                            onComplete: { toggleComplete($0, for: group.exercise) },
+                            onDelete: { deleteSet($0) },
+                            onShowDetails: { currentExercise = group.exercise },
+                            onStartTracker: { set in startTracker(for: set, exercise: group.exercise) },
+                            onMoveUp: index > 0 ? { moveExercise(from: index, to: index - 1) } : nil,
+                            onMoveDown: index < groups.count - 1 ? { moveExercise(from: index, to: index + 1) } : nil,
+                            onRemove: { group.sets.forEach { deleteSet($0) } },
+                            onApplyRecommendation: {
+                                applyRecommendation(for: group.exercise, recommendation: recommendation)
+                            }
+                        )
+                        .padding(.horizontal, 16)
                     }
 
                     addExerciseButton
@@ -285,8 +310,13 @@ struct ActiveSessionViewV2: View {
     // MARK: - Sheets
 
     private var finishSheet: some View {
-        FinishSessionSheet(rpe: $rpe, notes: $notes) { finish() }
-            .presentationDetents([.medium])
+        FinishSessionSheet(
+            rpe: $rpe,
+            notes: $notes,
+            overloadSuggestions: computeOverloadSuggestions(),
+            onConfirm: { finish() }
+        )
+        .presentationDetents([.medium, .large])
     }
 
     private var addSheet: some View {
@@ -304,6 +334,59 @@ struct ActiveSessionViewV2: View {
     private func formatVolume(_ v: Double) -> String {
         if v >= 1000 { return String(format: "%.1f t", v / 1000).replacingOccurrences(of: ".", with: ",") }
         return "\(Int(v))"
+    }
+
+    private func supersetColorFor(exerciseId: UUID) -> Color? {
+        guard let workout = session.workout else { return nil }
+        let slot = workout.exercises.first(where: { $0.exercise?.id == exerciseId })
+        guard let group = slot?.supersetGroup else { return nil }
+        let colors: [Color] = [.orange, .purple, .teal, .pink, .indigo, .brown]
+        return colors[(group - 1) % colors.count]
+    }
+
+    private func applyRecommendation(for exercise: Exercise, recommendation: SetRecommendation?) {
+        guard let rec = recommendation else { return }
+        let existing = session.sets.filter { $0.exercise?.id == exercise.id }
+        guard let nextSet = existing.first(where: { !$0.isCompleted }) ?? existing.max(by: { $0.order < $1.order }) else { return }
+        nextSet.weight = rec.recommendedWeight
+        nextSet.reps = rec.recommendedReps
+        try? env.sessionRepo.update(session)
+        recache()
+        Haptics.success()
+    }
+
+    private func computeOverloadSuggestions() -> [FinishSessionSheet.OverloadSuggestion] {
+        var suggestions: [FinishSessionSheet.OverloadSuggestion] = []
+        for group in groups {
+            guard group.exercise.trackingType == .repsWeight else { continue }
+            let completedSets = group.sets.filter { $0.isCompleted && !$0.isWarmup }
+            guard let bestSet = completedSets.max(by: { ($0.weight ?? 0) < ($1.weight ?? 0) }) else { continue }
+            guard let bestWeight = bestSet.weight, let bestReps = bestSet.reps, bestWeight > 0 else { continue }
+
+            let stats = env.workoutService.getRecentWorkingStats(for: group.exercise)
+            let avgWeight = stats?.avgWeight ?? bestWeight
+            let avgReps = stats?.avgReps ?? bestReps
+
+            let shouldIncrease = bestWeight >= avgWeight
+            guard shouldIncrease else { continue }
+
+            let bump: Double = bestWeight < 20 ? 1.25 : (bestWeight < 60 ? 2.5 : 5.0)
+            let suggestedWeight = bestWeight + bump
+            let suggestedReps = avgReps
+
+            let increasePercent = ((suggestedWeight - avgWeight) / avgWeight) * 100
+
+            suggestions.append(FinishSessionSheet.OverloadSuggestion(
+                exerciseName: group.exercise.name,
+                exerciseIcon: group.exercise.iconSystemName,
+                lastWeight: bestWeight,
+                lastReps: bestReps,
+                suggestedWeight: suggestedWeight,
+                suggestedReps: suggestedReps,
+                increasePercent: increasePercent
+            ))
+        }
+        return Array(suggestions.prefix(5))
     }
 
     private var completedSignature: Int { session.sets.filter(\.isCompleted).count }
@@ -365,7 +448,8 @@ struct ActiveSessionViewV2: View {
         let set = SetEntry(order: newOrder, exercise: exercise, session: session,
                             reps: last.reps, weight: last.weight,
                             durationSeconds: last.durationSeconds,
-                            distanceMeters: last.distanceMeters)
+                            distanceMeters: last.distanceMeters,
+                            assistedReps: last.assistedReps)
         session.sets.append(set)
         try? env.sessionRepo.update(session)
         Haptics.selection()
@@ -488,6 +572,9 @@ private struct ExerciseCardV2: View {
     let unit: WeightUnit
     let topSet: SetEntry?
     let accentColor: Color
+    var supersetColor: Color? = nil
+    var recommendation: SetRecommendation? = nil
+    var aiService: AIService? = nil
     let onAddSet: () -> Void
     let onDuplicate: () -> Void
     let onComplete: (SetEntry) -> Void
@@ -497,6 +584,7 @@ private struct ExerciseCardV2: View {
     let onMoveUp: (() -> Void)?
     let onMoveDown: (() -> Void)?
     let onRemove: () -> Void
+    var onApplyRecommendation: (() -> Void)? = nil
 
     private var completed: Int { sets.filter(\.isCompleted).count }
     private var allDone: Bool { completed == sets.count && !sets.isEmpty }
@@ -505,6 +593,17 @@ private struct ExerciseCardV2: View {
     var body: some View {
         VStack(spacing: 0) {
             cardHeader
+            if let recommendation, let aiService, let onApplyRecommendation {
+                SetRecommendationBadge(
+                    recommendation: recommendation,
+                    unit: unit,
+                    exerciseName: exercise.name,
+                    aiService: aiService,
+                    onApply: onApplyRecommendation
+                )
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            }
             if !sets.isEmpty {
                 VStack(spacing: 0) {
                     ForEach(Array(sets.enumerated()), id: \.element.id) { idx, set in
@@ -531,6 +630,14 @@ private struct ExerciseCardV2: View {
                 .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.05), radius: 10, y: 3)
         )
+        .overlay(alignment: .leading) {
+            if let sc = supersetColor {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(sc)
+                    .frame(width: 4)
+                    .padding(.vertical, 8)
+            }
+        }
     }
 
     private var cardHeader: some View {
@@ -542,9 +649,16 @@ private struct ExerciseCardV2: View {
                     .foregroundStyle(accentColor)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(exercise.name)
-                    .font(.headline)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(exercise.name)
+                        .font(.headline)
+                        .lineLimit(1)
+                    if let sc = supersetColor {
+                        Image(systemName: "link")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(sc)
+                    }
+                }
                 if let topSet, topSet.volumeValue > 0 {
                     HStack(spacing: 3) {
                         Image(systemName: "trophy.fill")
@@ -639,22 +753,31 @@ struct SetRowV2: View {
     @State private var weightText: String = ""
     @State private var repsText: String = ""
     @State private var distanceText: String = ""
+    @State private var assistedText: String = ""
     @State private var hasSynced: Bool = false
+    @State private var showAssisted: Bool = false
 
     private var type: ExerciseTrackingType { set_.exercise?.trackingType ?? .repsWeight }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             checkmarkButton
-            inputs
-            Spacer(minLength: 4)
+            VStack(alignment: .leading, spacing: 4) {
+                inputsRow
+                if showAssisted {
+                    assistedRow
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            Spacer(minLength: 0)
             trackerButton
             deleteButton
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .background(set_.isCompleted ? Color.green.opacity(0.06) : Color.clear)
         .animation(.snappy(duration: 0.25), value: set_.isCompleted)
+        .animation(.snappy(duration: 0.25), value: showAssisted)
         .onAppear { syncFromModel() }
         .onChange(of: set_.weight) { _, _ in if !hasSynced { syncFromModel() } }
         .onChange(of: set_.reps) { _, _ in if !hasSynced { syncFromModel() } }
@@ -664,6 +787,8 @@ struct SetRowV2: View {
         weightText = set_.weight.map { $0.clean } ?? ""
         repsText = set_.reps.map { String($0) } ?? ""
         distanceText = set_.distanceMeters.map { String(format: "%.2f", $0 / 1000).replacingOccurrences(of: ".", with: ",") } ?? ""
+        assistedText = set_.assistedReps.map { String($0) } ?? ""
+        showAssisted = (set_.assistedReps ?? 0) > 0
     }
 
     private var checkmarkButton: some View {
@@ -688,44 +813,100 @@ struct SetRowV2: View {
     }
 
     @ViewBuilder
-    private var inputs: some View {
-        switch type {
-        case .repsWeight:
-            stringField(text: $weightText, placeholder: "0", suffix: unit.rawValue, keyboard: .decimalPad)
-                .onChange(of: weightText) { _, newValue in
-                    hasSynced = true
-                    if newValue.isEmpty { set_.weight = nil }
-                    else if let parsed = Double(newValue.replacingOccurrences(of: ",", with: ".")) { set_.weight = parsed }
-                    hasSynced = false
+    private var inputsRow: some View {
+        HStack(spacing: 8) {
+            switch type {
+            case .repsWeight:
+                labeledField(text: $weightText, label: "Gewicht", suffix: unit.rawValue, keyboard: .decimalPad, width: 60)
+                    .onChange(of: weightText) { _, newValue in
+                        hasSynced = true
+                        if newValue.isEmpty { set_.weight = nil }
+                        else if let parsed = Double(newValue.replacingOccurrences(of: ",", with: ".")) { set_.weight = parsed }
+                        hasSynced = false
+                    }
+                labeledField(text: $repsText, label: "Reps", suffix: "Wdh", keyboard: .numberPad, width: 60)
+                    .onChange(of: repsText) { _, newValue in
+                        hasSynced = true
+                        set_.reps = newValue.isEmpty ? nil : Int(newValue)
+                        hasSynced = false
+                    }
+            case .reps:
+                labeledField(text: $repsText, label: "Reps", suffix: "Wdh", keyboard: .numberPad, width: 60)
+                    .onChange(of: repsText) { _, newValue in
+                        hasSynced = true
+                        set_.reps = newValue.isEmpty ? nil : Int(newValue)
+                        hasSynced = false
+                    }
+            case .duration:
+                durationField(seconds: Binding(get: { set_.durationSeconds ?? 0 }, set: { set_.durationSeconds = $0 == 0 ? nil : $0 }))
+            case .distanceDuration:
+                labeledField(text: $distanceText, label: "Distanz", suffix: "km", keyboard: .decimalPad, width: 60)
+                    .onChange(of: distanceText) { _, newValue in
+                        hasSynced = true
+                        if newValue.isEmpty { set_.distanceMeters = nil }
+                        else { set_.distanceMeters = (Double(newValue.replacingOccurrences(of: ",", with: ".")) ?? 0) * 1000 }
+                        hasSynced = false
+                    }
+                durationField(seconds: Binding(get: { set_.durationSeconds ?? 0 }, set: { set_.durationSeconds = $0 == 0 ? nil : $0 }))
+            }
+
+            if type == .repsWeight {
+                Button {
+                    withAnimation(.snappy) { showAssisted.toggle() }
+                    if !showAssisted { set_.assistedReps = nil; assistedText = "" }
+                    Haptics.selection()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: showAssisted ? "person.2.fill" : "person.2")
+                            .font(.caption2.weight(.bold))
+                        if !showAssisted {
+                            Text("Assist")
+                                .font(.caption2.weight(.medium))
+                        }
+                    }
+                    .foregroundStyle(showAssisted ? .orange : .secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(showAssisted ? Color.orange.opacity(0.12) : Color(.tertiarySystemFill))
+                    )
                 }
-            Text("×")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-            stringField(text: $repsText, placeholder: "0", suffix: "Reps", keyboard: .numberPad)
-                .onChange(of: repsText) { _, newValue in
-                    hasSynced = true
-                    set_.reps = newValue.isEmpty ? nil : Int(newValue)
-                    hasSynced = false
-                }
-        case .reps:
-            stringField(text: $repsText, placeholder: "0", suffix: "Reps", keyboard: .numberPad)
-                .onChange(of: repsText) { _, newValue in
-                    hasSynced = true
-                    set_.reps = newValue.isEmpty ? nil : Int(newValue)
-                    hasSynced = false
-                }
-        case .duration:
-            durationField(seconds: Binding(get: { set_.durationSeconds ?? 0 }, set: { set_.durationSeconds = $0 == 0 ? nil : $0 }))
-        case .distanceDuration:
-            stringField(text: $distanceText, placeholder: "0,00", suffix: "km", keyboard: .decimalPad)
-                .onChange(of: distanceText) { _, newValue in
-                    hasSynced = true
-                    if newValue.isEmpty { set_.distanceMeters = nil }
-                    else { set_.distanceMeters = (Double(newValue.replacingOccurrences(of: ",", with: ".")) ?? 0) * 1000 }
-                    hasSynced = false
-                }
-            durationField(seconds: Binding(get: { set_.durationSeconds ?? 0 }, set: { set_.durationSeconds = $0 == 0 ? nil : $0 }))
+                .buttonStyle(BounceButtonStyle())
+            }
         }
+    }
+
+    @ViewBuilder
+    private var assistedRow: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "person.2.fill")
+                .font(.caption2)
+                .foregroundStyle(.orange)
+            Text("Assisted Reps")
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.orange)
+            Spacer(minLength: 0)
+            TextField("0", text: $assistedText)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 50)
+                .font(.caption.weight(.semibold).monospacedDigit())
+                .onChange(of: assistedText) { _, newValue in
+                    hasSynced = true
+                    set_.assistedReps = newValue.isEmpty ? nil : Int(newValue)
+                    hasSynced = false
+                }
+            Text("Wdh")
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.orange.opacity(0.08))
+        )
     }
 
     @ViewBuilder
@@ -751,18 +932,25 @@ struct SetRowV2: View {
     }
 
     @ViewBuilder
-    private func stringField(text: Binding<String>, placeholder: String, suffix: String, keyboard: UIKeyboardType) -> some View {
-        HStack(spacing: 4) {
-            TextField(placeholder, text: text)
+    private func labeledField(text: Binding<String>, label: String, suffix: String, keyboard: UIKeyboardType, width: CGFloat = 60) -> some View {
+        VStack(spacing: 2) {
+            TextField("0", text: text)
                 .keyboardType(keyboard)
                 .multilineTextAlignment(.center)
-                .frame(width: 56)
-            Text(suffix)
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(.secondary)
+                .frame(width: width)
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+            HStack(spacing: 2) {
+                Text(label)
+                    .font(.system(size: 9, weight: .medium))
+                if !suffix.isEmpty {
+                    Text("· \(suffix)")
+                        .font(.system(size: 9))
+                }
+            }
+            .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(Color(.tertiarySystemFill))
@@ -770,26 +958,32 @@ struct SetRowV2: View {
     }
 
     private func durationField(seconds: Binding<Int>) -> some View {
-        HStack(spacing: 3) {
-            TextField("0", value: Binding(
-                get: { seconds.wrappedValue / 60 },
-                set: { seconds.wrappedValue = $0 * 60 + (seconds.wrappedValue % 60) }
-            ), format: .number)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.center)
-                .frame(width: 32)
-            Text(":").font(.caption.weight(.bold)).foregroundStyle(.secondary)
-            TextField("00", value: Binding(
-                get: { seconds.wrappedValue % 60 },
-                set: { seconds.wrappedValue = (seconds.wrappedValue / 60) * 60 + min(59, max(0, $0)) }
-            ), format: .number)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.center)
-                .frame(width: 32)
-            Text("min").font(.caption2.weight(.medium)).foregroundStyle(.secondary)
+        VStack(spacing: 2) {
+            HStack(spacing: 3) {
+                TextField("0", value: Binding(
+                    get: { seconds.wrappedValue / 60 },
+                    set: { seconds.wrappedValue = $0 * 60 + (seconds.wrappedValue % 60) }
+                ), format: .number)
+                    .keyboardType(.numberPad)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 32)
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                Text(":").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                TextField("00", value: Binding(
+                    get: { seconds.wrappedValue % 60 },
+                    set: { seconds.wrappedValue = (seconds.wrappedValue / 60) * 60 + min(59, max(0, $0)) }
+                ), format: .number)
+                    .keyboardType(.numberPad)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 32)
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+            }
+            Text("Dauer · min")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(Color(.tertiarySystemFill))
@@ -1518,6 +1712,9 @@ private struct PlaySetInputs: View {
     @Bindable var setEntry: SetEntry
     let unit: WeightUnit
 
+    @State private var assistedText: String = ""
+    @State private var showAssisted: Bool = false
+
     private var type: ExerciseTrackingType { setEntry.exercise?.trackingType ?? .repsWeight }
 
     var body: some View {
@@ -1531,26 +1728,65 @@ private struct PlaySetInputs: View {
 
     @ViewBuilder
     private var repsWeightInputs: some View {
-        HStack(spacing: 20) {
-            bigInput(
-                text: Binding(
-                    get: { setEntry.weight.map { $0.clean } ?? "" },
-                    set: { setEntry.weight = $0.isEmpty ? nil : Double($0.replacingOccurrences(of: ",", with: ".")) }
-                ),
-                label: "Gewicht",
-                suffix: unit.rawValue,
-                keyboard: .decimalPad
-            )
-            Text("×").font(.title.weight(.bold)).foregroundStyle(.white.opacity(0.3))
-            bigInput(
-                text: Binding(
-                    get: { setEntry.reps.map { String($0) } ?? "" },
-                    set: { setEntry.reps = $0.isEmpty ? nil : Int($0) }
-                ),
-                label: "Reps",
-                suffix: "Wdh",
-                keyboard: .numberPad
-            )
+        VStack(spacing: 20) {
+            HStack(spacing: 20) {
+                bigInput(
+                    text: Binding(
+                        get: { setEntry.weight.map { $0.clean } ?? "" },
+                        set: { setEntry.weight = $0.isEmpty ? nil : Double($0.replacingOccurrences(of: ",", with: ".")) }
+                    ),
+                    label: "Gewicht",
+                    suffix: unit.rawValue,
+                    keyboard: .decimalPad
+                )
+                Text("×").font(.title.weight(.bold)).foregroundStyle(.white.opacity(0.3))
+                bigInput(
+                    text: Binding(
+                        get: { setEntry.reps.map { String($0) } ?? "" },
+                        set: { setEntry.reps = $0.isEmpty ? nil : Int($0) }
+                    ),
+                    label: "Reps",
+                    suffix: "Wdh",
+                    keyboard: .numberPad
+                )
+            }
+            if showAssisted {
+                bigInput(
+                    text: Binding(
+                        get: { assistedText },
+                        set: {
+                            assistedText = $0
+                            setEntry.assistedReps = $0.isEmpty ? nil : Int($0)
+                        }
+                    ),
+                    label: "Assisted Reps",
+                    suffix: "Wdh",
+                    keyboard: .numberPad
+                )
+                .frame(maxWidth: 240)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            Button {
+                withAnimation(.snappy) {
+                    showAssisted.toggle()
+                    if !showAssisted { setEntry.assistedReps = nil; assistedText = "" }
+                }
+                Haptics.selection()
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: showAssisted ? "person.2.fill" : "person.2")
+                    Text(showAssisted ? "Assisted aktiv" : "Assisted Reps")
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(showAssisted ? .orange : .white.opacity(0.5))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(showAssisted ? Color.orange.opacity(0.2) : Color.white.opacity(0.08)))
+            }
+        }
+        .onAppear {
+            assistedText = setEntry.assistedReps.map { String($0) } ?? ""
+            showAssisted = (setEntry.assistedReps ?? 0) > 0
         }
     }
 
