@@ -51,9 +51,17 @@ enum ThriveWoodSchemaV3: VersionedSchema {
     }
 }
 
+enum ThriveWoodSchemaV4: VersionedSchema {
+    static var versionIdentifier = Schema.Version(4, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        ThriveWoodSchemaV3.models + [RotationTrainingsPlan.self, RotationPlanEntry.self]
+    }
+}
+
 enum ThriveWoodMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [ThriveWoodSchemaV1.self, ThriveWoodSchemaV2.self, ThriveWoodSchemaV3.self]
+        [ThriveWoodSchemaV1.self, ThriveWoodSchemaV2.self, ThriveWoodSchemaV3.self, ThriveWoodSchemaV4.self]
     }
     static var stages: [MigrationStage] { [] }
 }

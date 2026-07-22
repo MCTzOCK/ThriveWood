@@ -17,6 +17,8 @@ final class SportViewV2Model {
     var recentSessions: [WorkoutSession] = []
     var activeSession: WorkoutSession? { env.workoutService.activeSession }
     var activePlan: TrainingsPlan?
+    var activeRotationPlan: RotationTrainingsPlan?
+    var rotationNextWorkout: Workout?
     var todaysPlannedWorkout: Workout?
     var nextPlannedWorkout: (weekday: TPWeekday, workout: Workout)?
     var recoveryDashboard: MuscleRecoveryService.RecoveryDashboard?
@@ -38,6 +40,8 @@ final class SportViewV2Model {
             activePlan = try? env.trainingsPlanService.fetchActive()
             todaysPlannedWorkout = try? env.trainingsPlanService.todaysWorkout()
             nextPlannedWorkout = try? env.trainingsPlanService.nextWorkout()
+            activeRotationPlan = try? env.rotationPlanService.fetchActive()
+            rotationNextWorkout = activeRotationPlan?.nextWorkout
             recoveryDashboard = try? env.muscleRecoveryService.recoveryDashboard()
             todaysWellness = try? env.wellnessService.entryForDay(.now)
 

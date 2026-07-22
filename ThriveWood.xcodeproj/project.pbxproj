@@ -78,6 +78,7 @@
 				Data/Models/HabitDomain.swift,
 				Data/Models/HabitGroupDomain.swift,
 				Data/Models/MealDomain.swift,
+				Data/Models/RotationPlanDomain.swift,
 				Data/Models/SportDomain.swift,
 				Data/Models/UserProfile.swift,
 				Data/SharedEnums.swift,

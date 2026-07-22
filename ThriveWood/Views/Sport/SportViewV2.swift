@@ -134,7 +134,7 @@ struct SportViewV2: View {
             if vm.todayIsRestDay {
                 RestDayCardV2()
                     .padding(.horizontal, Theme.Spacing.l)
-            } else if let workout = vm.todaysPlannedWorkout {
+            } else if let workout = vm.rotationNextWorkout ?? vm.todaysPlannedWorkout {
                 TodayWorkoutCardV2(
                     workout: workout,
                     estimatedDuration: Int(env.workoutService.getAverageDuration(workout: workout)) > 0
@@ -254,6 +254,11 @@ struct SportViewV2: View {
 
                 NavigationLink(destination: { TrainingsPlanListView() }) {
                     SportNavigationCardV2(title: "Trainingspläne", subtitle: "Pläne", icon: "list.bullet.rectangle.portrait", iconColor: .blue)
+                }
+                .buttonStyle(BounceButtonStyle())
+
+                NavigationLink(destination: { RotationPlanListView() }) {
+                    SportNavigationCardV2(title: "Rotation", subtitle: "A/B/C", icon: "arrow.triangle.2.circlepath", iconColor: .indigo)
                 }
                 .buttonStyle(BounceButtonStyle())
 
