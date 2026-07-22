@@ -64,7 +64,7 @@ struct RootTabView: View {
                 .tabItem { Label(AppTab.analytics.label, systemImage: AppTab.analytics.icon) }
                 .tag(AppTab.analytics)
 
-            SportView()
+            SportViewV2()
                 .tabItem { Label(AppTab.sport.label, systemImage: AppTab.sport.icon) }
                 .tag(AppTab.sport)
 

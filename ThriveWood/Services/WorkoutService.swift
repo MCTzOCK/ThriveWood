@@ -325,6 +325,22 @@ final class WorkoutService {
             recentSessionCount: recentSessions.count
         )
     }
+
+    // return in minutes
+    func getAverageDuration(workout: Workout) -> TimeInterval {
+        do {
+            let sessions = try? self.sessions.fetchAll()
+                .filter { $0.workout?.id == workout.id && $0.endedAt != nil }
+                .compactMap(\.durationSeconds)
+            guard let sessions, !sessions.isEmpty else { return 0 }
+            
+            let totalDuration = sessions.reduce(0, +)
+            return TimeInterval(totalDuration) / Double(sessions.count) / 60.0
+        } catch {
+            return TimeInterval(workout.estimatedDurationMinutes)
+        }
+    }
+    
 }
 
 private extension ServiceError {

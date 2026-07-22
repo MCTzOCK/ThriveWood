@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct WorkoutCard: View {
+    
+    @Environment(AppEnvironment.self) private var env
+    
     let workout: Workout
     let onStart: () -> Void
     let onEdit: () -> Void
@@ -35,7 +38,8 @@ struct WorkoutCard: View {
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
                             .font(Theme.Typography.caption2)
-                        Text("\(workout.estimatedDurationMinutes) min")
+                        //Text("\(workout.estimatedDurationMinutes) min")
+                        Text("\(env.workoutService.getAverageDuration(workout: workout).clean) min")
                     }
                 }
                 .font(Theme.Typography.caption)
