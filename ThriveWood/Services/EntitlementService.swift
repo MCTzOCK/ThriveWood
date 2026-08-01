@@ -26,8 +26,14 @@ final class EntitlementService {
         self.gymRepo = gymRepo
     }
 
+    #if !DEBUG
     var isPro: Bool { store.isProUser }
-
+    #endif
+    
+    #if DEBUG
+    var isPro: Bool = true
+    #endif
+    
     // MARK: - Limits
 
     static let freeHabitLimit = 3

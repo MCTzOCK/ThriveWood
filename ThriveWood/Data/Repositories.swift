@@ -926,6 +926,13 @@ final class TrainingsPlanRepository {
         modelContext.insert(day)
         try modelContext.save()
     }
+
+    /// Entfernt einen einzelnen Tag/Slot physisch aus dem Store.
+    func removeDay(_ day: TrainingsPlanDay, from plan: TrainingsPlan) throws {
+        plan.days.removeAll { $0.id == day.id }
+        modelContext.delete(day)
+        try modelContext.save()
+    }
 }
 
 // MARK: - Wellness

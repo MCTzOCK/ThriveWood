@@ -46,7 +46,7 @@ final class BackupService {
 
             trees: trees.map { mapTree($0) },
 
-            exercises: exercises.filter { !$0.isBuiltIn }.map { mapExercise($0) },
+            exercises: exercises.map { mapExercise($0) },
 
             workouts: workouts.map { mapWorkout($0) },
 

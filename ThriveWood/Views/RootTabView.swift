@@ -54,7 +54,7 @@ struct RootTabView: View {
         profile?.accentTheme.color ?? .green
     }
 
-    var body: some View {
+    var oldBody: some View {
         TabView(selection: $selection) {
             HomeView()
                 .tabItem { Label(AppTab.home.label, systemImage: AppTab.home.icon) }
@@ -88,5 +88,35 @@ struct RootTabView: View {
             }
         }
         .achievementHUD()
+    }
+    
+    var body: some View {
+        BentoTabScaffold(selection: $selection, items: [
+            BentoTabItem(id: AppTab.home, title: Text("Habits"), systemImage: "checklist"),
+            BentoTabItem(id: AppTab.analytics, title: Text("Annalyse"), systemImage: "chart.bar.xaxis"),
+            BentoTabItem(id: AppTab.sport, title: Text("Sport"), systemImage: "dumbbell.fill"),
+            BentoTabItem(id: AppTab.settings, title: Text("Profil"), systemImage: "person.crop.circle")
+        ]) {
+            switch selection {
+            case .home: HomeView()
+            case .analytics: AnalyticsView()
+            case .sport: SportViewV2()
+            case .settings: SettingsView()
+            }
+        }
+        .preferredColorScheme(.light)
+        .onChange(of: selection) { _, _ in Haptics.selection() }
+        .task {
+            _ = try? env.profileRepo.currentProfile()
+            env.achievementService.checkAll(silent: true)
+        }
+        .onAppear {
+            if needsOnboarding { showOnboarding = true }
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView(isRerun: false) {
+                showOnboarding = false
+            }
+        }
     }
 }

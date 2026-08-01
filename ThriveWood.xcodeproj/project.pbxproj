@@ -10,6 +10,41 @@
 		B518D8752FC71041007C257B /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = B518D8742FC71041007C257B /* README.md */; };
 		B518D8762FC71041007C257B /* HANDOFF.md in Resources */ = {isa = PBXBuildFile; fileRef = B518D8732FC71041007C257B /* HANDOFF.md */; };
 		B51DFC422FAF178900D8C101 /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = B51DFC412FAF178900D8C101 /* Textual */; };
+		B575A088301E2C1500580A43 /* BentoCommandPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A070301E2C1500580A43 /* BentoCommandPalette.swift */; };
+		B575A089301E2C1500580A43 /* BentoAdvancedControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A06A301E2C1500580A43 /* BentoAdvancedControls.swift */; };
+		B575A08A301E2C1500580A43 /* BentoNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A07C301E2C1500580A43 /* BentoNavigation.swift */; };
+		B575A08B301E2C1500580A43 /* BentoInputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A07A301E2C1500580A43 /* BentoInputs.swift */; };
+		B575A08C301E2C1500580A43 /* BentoSentenceForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A07D301E2C1500580A43 /* BentoSentenceForm.swift */; };
+		B575A08D301E2C1500580A43 /* BentoAdvancedInputs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A06D301E2C1500580A43 /* BentoAdvancedInputs.swift */; };
+		B575A08E301E2C1500580A43 /* BentoCreativeDataDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A074301E2C1500580A43 /* BentoCreativeDataDisplay.swift */; };
+		B575A08F301E2C1500580A43 /* BentoDataDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A076301E2C1500580A43 /* BentoDataDisplay.swift */; };
+		B575A090301E2C1500580A43 /* BentoCreativeControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A073301E2C1500580A43 /* BentoCreativeControls.swift */; };
+		B575A091301E2C1500580A43 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A086301E2C1500580A43 /* Package.swift */; };
+		B575A092301E2C1500580A43 /* BentoControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A071301E2C1500580A43 /* BentoControls.swift */; };
+		B575A093301E2C1500580A43 /* BentoTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A080301E2C1500580A43 /* BentoTemplates.swift */; };
+		B575A094301E2C1500580A43 /* BentoAdvancedDataDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A06B301E2C1500580A43 /* BentoAdvancedDataDisplay.swift */; };
+		B575A095301E2C1500580A43 /* BentoAdvancedExtensionDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A06C301E2C1500580A43 /* BentoAdvancedExtensionDemo.swift */; };
+		B575A096301E2C1500580A43 /* BentoFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A078301E2C1500580A43 /* BentoFeedback.swift */; };
+		B575A097301E2C1500580A43 /* BentoFoundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A079301E2C1500580A43 /* BentoFoundation.swift */; };
+		B575A098301E2C1500580A43 /* BentoAdvancedLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A06E301E2C1500580A43 /* BentoAdvancedLayout.swift */; };
+		B575A099301E2C1500580A43 /* BentoDesignSystemDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A077301E2C1500580A43 /* BentoDesignSystemDemo.swift */; };
+		B575A09A301E2C1500580A43 /* BentoCreativeSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A075301E2C1500580A43 /* BentoCreativeSelection.swift */; };
+		B575A09B301E2C1500580A43 /* BentoLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A07B301E2C1500580A43 /* BentoLayout.swift */; };
+		B575A09C301E2C1500580A43 /* BentoSentenceFormDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A07E301E2C1500580A43 /* BentoSentenceFormDemo.swift */; };
+		B575A09D301E2C1500580A43 /* BentoSentenceSelectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A07F301E2C1500580A43 /* BentoSentenceSelectionSheet.swift */; };
+		B575A09E301E2C1500580A43 /* BentoAdvancedOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A06F301E2C1500580A43 /* BentoAdvancedOverlays.swift */; };
+		B575A09F301E2C1500580A43 /* BentoUnifiedShowcase.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A081301E2C1500580A43 /* BentoUnifiedShowcase.swift */; };
+		B575A0A0301E2C1500580A43 /* BentoCreativeComponentsDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B575A072301E2C1500580A43 /* BentoCreativeComponentsDemo.swift */; };
+		B575A0A1301E2C1500580A43 /* doc.md in Resources */ = {isa = PBXBuildFile; fileRef = B575A085301E2C1500580A43 /* doc.md */; };
+		B575A0A2301E2C1500580A43 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = B575A084301E2C1500580A43 /* .gitignore */; };
+		B575A0A8301E2CC700580A43 /* FEATURES.md in Resources */ = {isa = PBXBuildFile; fileRef = B575A0A6301E2CC700580A43 /* FEATURES.md */; };
+		B575A0A9301E2CC700580A43 /* GPT-5.6-SOL-ANALYSIS.MD in Resources */ = {isa = PBXBuildFile; fileRef = B575A0A7301E2CC700580A43 /* GPT-5.6-SOL-ANALYSIS.MD */; };
+		B575A0AA301E2CC700580A43 /* CURRENT.md in Resources */ = {isa = PBXBuildFile; fileRef = B575A0A5301E2CC700580A43 /* CURRENT.md */; };
+		B575A0AB301E2CC700580A43 /* BODY_PROGRESS_PLAN.md in Resources */ = {isa = PBXBuildFile; fileRef = B575A0A4301E2CC700580A43 /* BODY_PROGRESS_PLAN.md */; };
+		B575A0B0301E2CDB00580A43 /* SOCIAL.MD in Resources */ = {isa = PBXBuildFile; fileRef = B575A0AE301E2CDB00580A43 /* SOCIAL.MD */; };
+		B575A0B1301E2CDB00580A43 /* HOW_TO_MODIFY_SWIFT_DATA.md in Resources */ = {isa = PBXBuildFile; fileRef = B575A0AC301E2CDB00580A43 /* HOW_TO_MODIFY_SWIFT_DATA.md */; };
+		B575A0B2301E2CDB00580A43 /* STYLE_GUIDE.md in Resources */ = {isa = PBXBuildFile; fileRef = B575A0AF301E2CDB00580A43 /* STYLE_GUIDE.md */; };
+		B575A0B3301E2CDB00580A43 /* ROADMAP.md in Resources */ = {isa = PBXBuildFile; fileRef = B575A0AD301E2CDB00580A43 /* ROADMAP.md */; };
 		B579DB3D2FA47EC90053BC85 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */; };
 		B579DB3F2FA47EC90053BC85 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */; };
 		B579DB4C2FA47ECA0053BC85 /* ThriveWoodWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -44,6 +79,41 @@
 		B518D8732FC71041007C257B /* HANDOFF.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = HANDOFF.md; sourceTree = "<group>"; };
 		B518D8742FC71041007C257B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		B536FCB92F98EBE1009E5384 /* ThriveWood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThriveWood.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B575A06A301E2C1500580A43 /* BentoAdvancedControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoAdvancedControls.swift; sourceTree = "<group>"; };
+		B575A06B301E2C1500580A43 /* BentoAdvancedDataDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoAdvancedDataDisplay.swift; sourceTree = "<group>"; };
+		B575A06C301E2C1500580A43 /* BentoAdvancedExtensionDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoAdvancedExtensionDemo.swift; sourceTree = "<group>"; };
+		B575A06D301E2C1500580A43 /* BentoAdvancedInputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoAdvancedInputs.swift; sourceTree = "<group>"; };
+		B575A06E301E2C1500580A43 /* BentoAdvancedLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoAdvancedLayout.swift; sourceTree = "<group>"; };
+		B575A06F301E2C1500580A43 /* BentoAdvancedOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoAdvancedOverlays.swift; sourceTree = "<group>"; };
+		B575A070301E2C1500580A43 /* BentoCommandPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoCommandPalette.swift; sourceTree = "<group>"; };
+		B575A071301E2C1500580A43 /* BentoControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoControls.swift; sourceTree = "<group>"; };
+		B575A072301E2C1500580A43 /* BentoCreativeComponentsDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoCreativeComponentsDemo.swift; sourceTree = "<group>"; };
+		B575A073301E2C1500580A43 /* BentoCreativeControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoCreativeControls.swift; sourceTree = "<group>"; };
+		B575A074301E2C1500580A43 /* BentoCreativeDataDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoCreativeDataDisplay.swift; sourceTree = "<group>"; };
+		B575A075301E2C1500580A43 /* BentoCreativeSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoCreativeSelection.swift; sourceTree = "<group>"; };
+		B575A076301E2C1500580A43 /* BentoDataDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDataDisplay.swift; sourceTree = "<group>"; };
+		B575A077301E2C1500580A43 /* BentoDesignSystemDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDesignSystemDemo.swift; sourceTree = "<group>"; };
+		B575A078301E2C1500580A43 /* BentoFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoFeedback.swift; sourceTree = "<group>"; };
+		B575A079301E2C1500580A43 /* BentoFoundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoFoundation.swift; sourceTree = "<group>"; };
+		B575A07A301E2C1500580A43 /* BentoInputs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoInputs.swift; sourceTree = "<group>"; };
+		B575A07B301E2C1500580A43 /* BentoLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoLayout.swift; sourceTree = "<group>"; };
+		B575A07C301E2C1500580A43 /* BentoNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoNavigation.swift; sourceTree = "<group>"; };
+		B575A07D301E2C1500580A43 /* BentoSentenceForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoSentenceForm.swift; sourceTree = "<group>"; };
+		B575A07E301E2C1500580A43 /* BentoSentenceFormDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoSentenceFormDemo.swift; sourceTree = "<group>"; };
+		B575A07F301E2C1500580A43 /* BentoSentenceSelectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoSentenceSelectionSheet.swift; sourceTree = "<group>"; };
+		B575A080301E2C1500580A43 /* BentoTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoTemplates.swift; sourceTree = "<group>"; };
+		B575A081301E2C1500580A43 /* BentoUnifiedShowcase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoUnifiedShowcase.swift; sourceTree = "<group>"; };
+		B575A084301E2C1500580A43 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		B575A085301E2C1500580A43 /* doc.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = doc.md; sourceTree = "<group>"; };
+		B575A086301E2C1500580A43 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		B575A0A4301E2CC700580A43 /* BODY_PROGRESS_PLAN.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BODY_PROGRESS_PLAN.md; sourceTree = "<group>"; };
+		B575A0A5301E2CC700580A43 /* CURRENT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CURRENT.md; sourceTree = "<group>"; };
+		B575A0A6301E2CC700580A43 /* FEATURES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURES.md; sourceTree = "<group>"; };
+		B575A0A7301E2CC700580A43 /* GPT-5.6-SOL-ANALYSIS.MD */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "GPT-5.6-SOL-ANALYSIS.MD"; sourceTree = "<group>"; };
+		B575A0AC301E2CDB00580A43 /* HOW_TO_MODIFY_SWIFT_DATA.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = HOW_TO_MODIFY_SWIFT_DATA.md; sourceTree = "<group>"; };
+		B575A0AD301E2CDB00580A43 /* ROADMAP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ROADMAP.md; sourceTree = "<group>"; };
+		B575A0AE301E2CDB00580A43 /* SOCIAL.MD */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SOCIAL.MD; sourceTree = "<group>"; };
+		B575A0AF301E2CDB00580A43 /* STYLE_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = STYLE_GUIDE.md; sourceTree = "<group>"; };
 		B579DB3A2FA47EC90053BC85 /* ThriveWoodWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ThriveWoodWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B579DB3C2FA47EC90053BC85 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		B579DB3E2FA47EC90053BC85 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -51,13 +121,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		AA00000200000000AA000002 /* Exceptions for "GymPlanBuilderMac" folder in "GymPlanBuilder" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = AA00000700000000AA000007 /* GymPlanBuilder */;
-		};
 		B579DB502FA47ECA0053BC85 /* Exceptions for "ThriveWoodWidgets" folder in "ThriveWoodWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -81,7 +144,6 @@
 				Data/Models/SportDomain.swift,
 				Data/Models/UserProfile.swift,
 				Data/SharedEnums.swift,
-				Data/ThriveWoodSchemaV1.swift,
 				Helpers/DesignSystem.swift,
 				Helpers/Extensions.swift,
 				Helpers/StylizedBodyShape.swift,
@@ -100,14 +162,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AA00000300000000AA000003 /* GymPlanBuilderMac */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				AA00000200000000AA000002 /* Exceptions for "GymPlanBuilderMac" folder in "GymPlanBuilder" target */,
-			);
-			path = GymPlanBuilderMac;
-			sourceTree = "<group>";
-		};
 		B536FCBB2F98EBE1009E5384 /* ThriveWood */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -158,14 +212,13 @@
 		B536FCB02F98EBE1009E5384 = {
 			isa = PBXGroup;
 			children = (
+				B575A0A3301E2CB100580A43 /* Docs */,
 				B579DB522FA47EF20053BC85 /* ThriveWoodWidgetsExtension.entitlements */,
+				B575A087301E2C1500580A43 /* BentoUI */,
 				B536FCBB2F98EBE1009E5384 /* ThriveWood */,
 				B579DB402FA47EC90053BC85 /* ThriveWoodWidgets */,
-				AA00000300000000AA000003 /* GymPlanBuilderMac */,
 				B579DB3B2FA47EC90053BC85 /* Frameworks */,
 				B536FCBA2F98EBE1009E5384 /* Products */,
-				B518D8732FC71041007C257B /* HANDOFF.md */,
-				B518D8742FC71041007C257B /* README.md */,
 			);
 			sourceTree = "<group>";
 			usesTabs = 0;
@@ -178,6 +231,73 @@
 				AA00000100000000AA000001 /* GymPlanBuilder.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B575A082301E2C1500580A43 /* BentoUI */ = {
+			isa = PBXGroup;
+			children = (
+				B575A06A301E2C1500580A43 /* BentoAdvancedControls.swift */,
+				B575A06B301E2C1500580A43 /* BentoAdvancedDataDisplay.swift */,
+				B575A06C301E2C1500580A43 /* BentoAdvancedExtensionDemo.swift */,
+				B575A06D301E2C1500580A43 /* BentoAdvancedInputs.swift */,
+				B575A06E301E2C1500580A43 /* BentoAdvancedLayout.swift */,
+				B575A06F301E2C1500580A43 /* BentoAdvancedOverlays.swift */,
+				B575A070301E2C1500580A43 /* BentoCommandPalette.swift */,
+				B575A071301E2C1500580A43 /* BentoControls.swift */,
+				B575A072301E2C1500580A43 /* BentoCreativeComponentsDemo.swift */,
+				B575A073301E2C1500580A43 /* BentoCreativeControls.swift */,
+				B575A074301E2C1500580A43 /* BentoCreativeDataDisplay.swift */,
+				B575A075301E2C1500580A43 /* BentoCreativeSelection.swift */,
+				B575A076301E2C1500580A43 /* BentoDataDisplay.swift */,
+				B575A077301E2C1500580A43 /* BentoDesignSystemDemo.swift */,
+				B575A078301E2C1500580A43 /* BentoFeedback.swift */,
+				B575A079301E2C1500580A43 /* BentoFoundation.swift */,
+				B575A07A301E2C1500580A43 /* BentoInputs.swift */,
+				B575A07B301E2C1500580A43 /* BentoLayout.swift */,
+				B575A07C301E2C1500580A43 /* BentoNavigation.swift */,
+				B575A07D301E2C1500580A43 /* BentoSentenceForm.swift */,
+				B575A07E301E2C1500580A43 /* BentoSentenceFormDemo.swift */,
+				B575A07F301E2C1500580A43 /* BentoSentenceSelectionSheet.swift */,
+				B575A080301E2C1500580A43 /* BentoTemplates.swift */,
+				B575A081301E2C1500580A43 /* BentoUnifiedShowcase.swift */,
+			);
+			path = BentoUI;
+			sourceTree = "<group>";
+		};
+		B575A083301E2C1500580A43 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				B575A082301E2C1500580A43 /* BentoUI */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		B575A087301E2C1500580A43 /* BentoUI */ = {
+			isa = PBXGroup;
+			children = (
+				B575A083301E2C1500580A43 /* Sources */,
+				B575A084301E2C1500580A43 /* .gitignore */,
+				B575A085301E2C1500580A43 /* doc.md */,
+				B575A086301E2C1500580A43 /* Package.swift */,
+			);
+			path = BentoUI;
+			sourceTree = "<group>";
+		};
+		B575A0A3301E2CB100580A43 /* Docs */ = {
+			isa = PBXGroup;
+			children = (
+				B518D8732FC71041007C257B /* HANDOFF.md */,
+				B518D8742FC71041007C257B /* README.md */,
+				B575A0A4301E2CC700580A43 /* BODY_PROGRESS_PLAN.md */,
+				B575A0A5301E2CC700580A43 /* CURRENT.md */,
+				B575A0A6301E2CC700580A43 /* FEATURES.md */,
+				B575A0A7301E2CC700580A43 /* GPT-5.6-SOL-ANALYSIS.MD */,
+				B575A0AC301E2CDB00580A43 /* HOW_TO_MODIFY_SWIFT_DATA.md */,
+				B575A0AD301E2CDB00580A43 /* ROADMAP.md */,
+				B575A0AE301E2CDB00580A43 /* SOCIAL.MD */,
+				B575A0AF301E2CDB00580A43 /* STYLE_GUIDE.md */,
+			);
+			path = Docs;
 			sourceTree = "<group>";
 		};
 		B579DB3B2FA47EC90053BC85 /* Frameworks */ = {
@@ -203,9 +323,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				AA00000300000000AA000003 /* GymPlanBuilderMac */,
 			);
 			name = GymPlanBuilder;
 			packageProductDependencies = (
@@ -318,7 +435,17 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B575A0A8301E2CC700580A43 /* FEATURES.md in Resources */,
+				B575A0A9301E2CC700580A43 /* GPT-5.6-SOL-ANALYSIS.MD in Resources */,
+				B575A0AA301E2CC700580A43 /* CURRENT.md in Resources */,
+				B575A0AB301E2CC700580A43 /* BODY_PROGRESS_PLAN.md in Resources */,
 				B518D8752FC71041007C257B /* README.md in Resources */,
+				B575A0B0301E2CDB00580A43 /* SOCIAL.MD in Resources */,
+				B575A0B1301E2CDB00580A43 /* HOW_TO_MODIFY_SWIFT_DATA.md in Resources */,
+				B575A0B2301E2CDB00580A43 /* STYLE_GUIDE.md in Resources */,
+				B575A0B3301E2CDB00580A43 /* ROADMAP.md in Resources */,
+				B575A0A1301E2C1500580A43 /* doc.md in Resources */,
+				B575A0A2301E2C1500580A43 /* .gitignore in Resources */,
 				B518D8762FC71041007C257B /* HANDOFF.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -344,6 +471,31 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B575A088301E2C1500580A43 /* BentoCommandPalette.swift in Sources */,
+				B575A089301E2C1500580A43 /* BentoAdvancedControls.swift in Sources */,
+				B575A08A301E2C1500580A43 /* BentoNavigation.swift in Sources */,
+				B575A08B301E2C1500580A43 /* BentoInputs.swift in Sources */,
+				B575A08C301E2C1500580A43 /* BentoSentenceForm.swift in Sources */,
+				B575A08D301E2C1500580A43 /* BentoAdvancedInputs.swift in Sources */,
+				B575A08E301E2C1500580A43 /* BentoCreativeDataDisplay.swift in Sources */,
+				B575A08F301E2C1500580A43 /* BentoDataDisplay.swift in Sources */,
+				B575A090301E2C1500580A43 /* BentoCreativeControls.swift in Sources */,
+				B575A091301E2C1500580A43 /* Package.swift in Sources */,
+				B575A092301E2C1500580A43 /* BentoControls.swift in Sources */,
+				B575A093301E2C1500580A43 /* BentoTemplates.swift in Sources */,
+				B575A094301E2C1500580A43 /* BentoAdvancedDataDisplay.swift in Sources */,
+				B575A095301E2C1500580A43 /* BentoAdvancedExtensionDemo.swift in Sources */,
+				B575A096301E2C1500580A43 /* BentoFeedback.swift in Sources */,
+				B575A097301E2C1500580A43 /* BentoFoundation.swift in Sources */,
+				B575A098301E2C1500580A43 /* BentoAdvancedLayout.swift in Sources */,
+				B575A099301E2C1500580A43 /* BentoDesignSystemDemo.swift in Sources */,
+				B575A09A301E2C1500580A43 /* BentoCreativeSelection.swift in Sources */,
+				B575A09B301E2C1500580A43 /* BentoLayout.swift in Sources */,
+				B575A09C301E2C1500580A43 /* BentoSentenceFormDemo.swift in Sources */,
+				B575A09D301E2C1500580A43 /* BentoSentenceSelectionSheet.swift in Sources */,
+				B575A09E301E2C1500580A43 /* BentoAdvancedOverlays.swift in Sources */,
+				B575A09F301E2C1500580A43 /* BentoUnifiedShowcase.swift in Sources */,
+				B575A0A0301E2C1500580A43 /* BentoCreativeComponentsDemo.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -371,7 +523,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 152;
+				CURRENT_PROJECT_VERSION = 219;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -400,7 +552,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 152;
+				CURRENT_PROJECT_VERSION = 219;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -552,7 +704,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 152;
+				CURRENT_PROJECT_VERSION = 219;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -601,7 +753,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = ThriveWood/ThriveWood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 152;
+				CURRENT_PROJECT_VERSION = 219;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -649,7 +801,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 152;
+				CURRENT_PROJECT_VERSION = 219;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;
@@ -685,7 +837,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ThriveWoodWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 152;
+				CURRENT_PROJECT_VERSION = 219;
 				DEVELOPMENT_TEAM = U5XU7Z3LFF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ThriveWoodWidgets/Info.plist;

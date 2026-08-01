@@ -121,6 +121,25 @@ final class TrainingsPlanService {
         try repo.addRotationEntry(workout: workout, label: label, to: plan)
     }
 
+    /// Aktualisiert Label und Workout eines Rotations-Slots.
+    func updateRotationSlot(
+        _ day: TrainingsPlanDay,
+        in plan: TrainingsPlan,
+        label: String,
+        workout: Workout?
+    ) throws {
+        day.label = label
+        day.workout = workout
+        try repo.update(plan)
+    }
+
+    /// Entfernt einen Rotations-Slot und sortiert die restlichen neu.
+    func removeRotationSlot(_ day: TrainingsPlanDay, from plan: TrainingsPlan) throws {
+        plan.days.removeAll { $0.id == day.id }
+        for (i, d) in plan.rotationSequence.enumerated() { d.rotationOrder = i }
+        try repo.removeDay(day, from: plan)
+    }
+
     func handleSessionFinished() {
         guard let plan = try? repo.fetchActive(), plan.isRotationPlan else { return }
         try? repo.advanceRotation(plan)

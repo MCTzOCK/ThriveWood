@@ -73,15 +73,79 @@ struct TrainingsPlanDetailView: View {
                 .padding(.vertical, 8)
             }
             
-            // Wochenplan
+            // Plan-Typ abhängige Ansicht
             Section {
-                ForEach(plan.sortedDays) { day in
-                    WeekdayRow(day: day) {
-                        selectedDay = day
+                if plan.isRotationPlan {
+                    ForEach(plan.rotationSequence) { day in
+                        RotationSlotRow(day: day, plan: plan) {
+                            selectedDay = day
+                        }
+                    }
+                    Button {
+                        addRotationSlot()
+                    } label: {
+                        Label("Slot hinzufügen", systemImage: "plus.circle")
+                    }
+                } else {
+                    ForEach(plan.sortedDays) { day in
+                        WeekdayRow(day: day) {
+                            selectedDay = day
+                        }
                     }
                 }
             } header: {
-                Text("Wochenplan")
+                Text(plan.isRotationPlan ? "Rotations-Slots" : "Wochenplan")
+            }
+
+            // Rotations-Steuerung
+            if plan.isRotationPlan {
+                Section {
+                    HStack(spacing: Theme.Spacing.l) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Aktueller Slot")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(.secondary)
+                            Text(plan.nextRotationLabel)
+                                .font(Theme.Typography.headline)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("Runde")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(plan.completedRotations + 1)")
+                                .font(Theme.Typography.headline)
+                        }
+                    }
+
+                    HStack(spacing: Theme.Spacing.s) {
+                        Button {
+                            advance()
+                        } label: {
+                            Label("Weiter", systemImage: "arrow.forward.circle.fill")
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, Theme.Spacing.s)
+                                .background(Color.accentColor.opacity(0.12))
+                                .foregroundStyle(Color.accentColor)
+                                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous))
+                        }
+                        .buttonStyle(BounceButtonStyle())
+
+                        Button {
+                            resetRotation()
+                        } label: {
+                            Label("Reset", systemImage: "arrow.uturn.left")
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, Theme.Spacing.s)
+                                .background(Color(.tertiarySystemFill))
+                                .foregroundStyle(.secondary)
+                                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous))
+                        }
+                        .buttonStyle(BounceButtonStyle())
+                    }
+                } header: {
+                    Text("Rotation")
+                }
             }
         }
         .navigationTitle("Trainingsplan")
@@ -104,8 +168,42 @@ struct TrainingsPlanDetailView: View {
         }
         .sheet(item: $selectedDay) { day in
             NavigationStack {
-                EditDaySheet(day: day, plan: plan)
+                if plan.isRotationPlan {
+                    EditRotationSlotSheet(day: day, plan: plan)
+                } else {
+                    EditDaySheet(day: day, plan: plan)
+                }
             }
+        }
+    }
+
+    // MARK: - Rotation Actions
+
+    private func addRotationSlot() {
+        let label = String(Character(UnicodeScalar(65 + plan.rotationCount)!))
+        do {
+            try env.trainingsPlanService.addRotationWorkout(nil, label: label, to: plan)
+            Haptics.success()
+        } catch {
+            print("Add slot error: \(error)")
+        }
+    }
+
+    private func advance() {
+        do {
+            try env.trainingsPlanService.advanceRotation(plan)
+            Haptics.success()
+        } catch {
+            print("Advance error: \(error)")
+        }
+    }
+
+    private func resetRotation() {
+        do {
+            try env.trainingsPlanService.resetRotation(plan)
+            Haptics.success()
+        } catch {
+            print("Reset error: \(error)")
         }
     }
 }

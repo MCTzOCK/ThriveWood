@@ -368,9 +368,9 @@ final class TrainingsPlan {
     var color: String   // Hex-String für UI-Farbe
 
     // MARK: - Rotation Properties (additive, default = weekday plan)
-    var planTypeRaw: String
-    var currentRotationIndex: Int
-    var completedRotations: Int
+    var planTypeRaw: String = TrainingsPlanType.weekday.rawValue
+    var currentRotationIndex: Int = 0
+    var completedRotations: Int = 0
 
     @Relationship(deleteRule: .cascade, inverse: \TrainingsPlanDay.plan)
     var days: [TrainingsPlanDay]
@@ -463,8 +463,8 @@ final class TrainingsPlanDay {
     var notes: String
 
     // MARK: - Rotation Properties (additive)
-    var rotationOrder: Int
-    var label: String
+    var rotationOrder: Int = 0
+    var label: String = ""
 
     var plan: TrainingsPlan?
     var workout: Workout?

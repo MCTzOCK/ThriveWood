@@ -48,18 +48,18 @@ enum HabitColor: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var color: Color {
         switch self {
-        case .green:  .green
-        case .mint:   .mint
-        case .teal:   .teal
-        case .blue:   .blue
-        case .indigo: .indigo
-        case .purple: .purple
-        case .pink:   .pink
-        case .red:    .red
-        case .orange: .orange
-        case .yellow: .yellow
-        case .brown:  .brown
-        case .gray:   .gray
+        case .green:  Color(red: 0.616, green: 0.867, blue: 0.329)
+        case .mint:   Color(red: 0.722, green: 0.902, blue: 0.816)
+        case .teal:   Color(red: 0.651, green: 0.878, blue: 0.847)
+        case .blue:   Color(red: 0.659, green: 0.863, blue: 0.969)
+        case .indigo: Color(red: 0.753, green: 0.773, blue: 0.961)
+        case .purple: Color(red: 0.820, green: 0.761, blue: 0.933)
+        case .pink:   Color(red: 0.949, green: 0.776, blue: 0.855)
+        case .red:    Color(red: 1.0, green: 0.667, blue: 0.651)
+        case .orange: Color(red: 1.0, green: 0.812, blue: 0.627)
+        case .yellow: Color(red: 0.961, green: 0.780, blue: 0.357)
+        case .brown:  Color(red: 0.831, green: 0.722, blue: 0.588)
+        case .gray:   Color(red: 0.788, green: 0.788, blue: 0.749)
         }
     }
 

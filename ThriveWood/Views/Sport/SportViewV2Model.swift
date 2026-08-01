@@ -98,6 +98,18 @@ final class SportViewV2Model {
         weekSessions.contains { calendar.isDate($0.startedAt, inSameDayAs: date) }
     }
 
+    /// Wurde das übergebene Workout heute bereits absolviert?
+    func didCompleteToday(_ workout: Workout?) -> Bool {
+        guard let workout else { return false }
+        return recentSessions.contains {
+            calendar.isDate($0.startedAt, inSameDayAs: .now)
+                && $0.workout?.id == workout.id
+        }
+    }
+
+    /// Heutiges geplantes Workout bereits erledigt?
+    var todayWorkoutCompleted: Bool { didCompleteToday(todaysPlannedWorkout) }
+
     func isToday(_ date: Date) -> Bool {
         calendar.isDate(date, inSameDayAs: .now)
     }

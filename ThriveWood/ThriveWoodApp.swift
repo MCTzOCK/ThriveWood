@@ -15,32 +15,34 @@ struct ThriveWoodApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
-                //if let env {
+            BentoThemeHost(family: .paper, mode: .light, contrastMode: .system) {
+                Group {
+                    //if let env {
                     RootTabView()
                         .environment(env)
                         .environment(NotificationRouter.shared)
-                //} else {
-                //    ProgressView()
-                //}
-            }
-            .task {
-                //if env == nil {
+                    //} else {
+                    //    ProgressView()
+                    //}
+                }
+                .task {
+                    //if env == nil {
                     //let e = AppEnvironment(context: sharedModelContainer.mainContext)
                     NotificationRouter.shared.env = env
                     env.notificationService.bootstrap()
                     //env = e
                     await env.storeService.refreshPurchaseState()
-                
-                // check if userdefault "includeUntrainedMuscles" (bool) is present, otherwise set it to true
+                    
+                    // check if userdefault "includeUntrainedMuscles" (bool) is present, otherwise set it to true
                     if UserDefaults.standard.object(forKey: "includeUntrainedMuscles") == nil {
                         UserDefaults.standard.set(true, forKey: "includeUntrainedMuscles")
                     }
                     if UserDefaults.standard.object(forKey: "activityProfile") == nil {
                         UserDefaults.standard.set(ActivityProfile.moderat.rawValue, forKey: "activityProfile")
                     }
-                
-                //}
+                    
+                    //}
+                }
             }
         }
         .modelContainer(sharedModelContainer)

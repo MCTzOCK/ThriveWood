@@ -100,6 +100,17 @@ struct SportViewV2: View {
             }
             Spacer(minLength: 0)
 
+            if vm != nil, let vm {
+                HStack(spacing: Theme.Spacing.s) {
+                    Label("\(vm.weeklySessionCount)", systemImage: "flame.fill")
+                        .font(Theme.Typography.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, Theme.Spacing.s + 2)
+                        .padding(.vertical, Theme.Spacing.xs + 2)
+                        .background(Capsule().fill(Color(.tertiarySystemFill)))
+                }
+            }
+
             Button {
                 if env.entitlements.canCreateWorkout {
                     showingNewWorkout = true
@@ -137,10 +148,9 @@ struct SportViewV2: View {
             } else if let workout = vm.todaysPlannedWorkout {
                 TodayWorkoutCardV2(
                     workout: workout,
-                    estimatedDuration: Int(env.workoutService.getAverageDuration(workout: workout)) > 0
-                        ? Int(env.workoutService.getAverageDuration(workout: workout))
-                        : workout.estimatedDurationMinutes,
+                    estimatedDuration: avgDuration(for: workout, fallback: workout.estimatedDurationMinutes),
                     exerciseCount: workout.exercises.count,
+                    isCompleted: vm.todayWorkoutCompleted,
                     onStart: {
                         if let s = vm.startSession(for: workout) { presentedSession = s }
                     }
@@ -149,10 +159,9 @@ struct SportViewV2: View {
             } else if let last = vm.lastSession, let lastWorkout = last.workout {
                 TodayWorkoutCardV2(
                     workout: lastWorkout,
-                    estimatedDuration: Int(env.workoutService.getAverageDuration(workout: lastWorkout)) > 0
-                        ? Int(env.workoutService.getAverageDuration(workout: lastWorkout))
-                        : lastWorkout.estimatedDurationMinutes,
+                    estimatedDuration: avgDuration(for: lastWorkout, fallback: lastWorkout.estimatedDurationMinutes),
                     exerciseCount: lastWorkout.exercises.count,
+                    isCompleted: vm.didCompleteToday(lastWorkout),
                     onStart: {
                         if let s = vm.startSession(for: lastWorkout) { presentedSession = s }
                     }
@@ -163,6 +172,7 @@ struct SportViewV2: View {
                     workout: nil,
                     estimatedDuration: 0,
                     exerciseCount: 0,
+                    isCompleted: false,
                     onStart: {
                         if let s = vm.startSession(for: nil) { presentedSession = s }
                     }
@@ -182,7 +192,8 @@ struct SportViewV2: View {
 
     @ViewBuilder
     private func trainingSection(vm: SportViewV2Model) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+
             QuickStartGridV2(
                 onFreeTraining: {
                     if let s = vm.startSession(for: nil) { presentedSession = s }
@@ -197,6 +208,8 @@ struct SportViewV2: View {
                 onWorkoutSelect: { w in
                     if let s = vm.startSession(for: w) { presentedSession = s }
                 },
+                onEdit: { editingWorkout = $0 },
+                onDelete: { vm.delete($0) },
                 workouts: vm.workouts.filter {
                     searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased())
                 }
@@ -220,6 +233,12 @@ struct SportViewV2: View {
     }
 
     // MARK: - Navigation Grid
+
+    /// Ø-Dauer [Minuten] aus vergangenen Sessions, sonst Fallback.
+    private func avgDuration(for workout: Workout, fallback: Int) -> Int {
+        let avg = env.workoutService.getAverageDuration(workout: workout)
+        return avg > 0 ? Int(avg) : fallback
+    }
 
     @ViewBuilder
     private func navigationGrid(vm: SportViewV2Model) -> some View {

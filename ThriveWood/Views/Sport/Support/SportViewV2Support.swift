@@ -13,18 +13,33 @@ struct TodayWorkoutCardV2: View {
     let workout: Workout?
     let estimatedDuration: Int
     let exerciseCount: Int
+    var isCompleted: Bool = false
     let onStart: () -> Void
+
+    private var bgGradient: LinearGradient {
+        LinearGradient(
+            colors: isCompleted
+                ? [Color.green, Color.green.opacity(0.75)]
+                : [Color.accentColor, Color.accentColor.opacity(0.7)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
 
     var body: some View {
         Button(action: onStart) {
             VStack(alignment: .leading, spacing: Theme.Spacing.m) {
                 HStack(spacing: Theme.Spacing.s) {
-                    Image(systemName: "calendar.circle.fill")
+                    Image(systemName: isCompleted ? "checkmark.seal.fill" : "calendar.circle.fill")
                         .font(.title2)
                     Text("Heutiges Training")
                         .font(Theme.Typography.caption.weight(.semibold))
                     Spacer()
-                    PillBadge(text: "Geplant", icon: "clock", color: .white)
+                    PillBadge(
+                        text: isCompleted ? "Erledigt" : "Geplant",
+                        icon: isCompleted ? "checkmark" : "clock",
+                        color: .white
+                    )
                 }
                 .foregroundStyle(.white.opacity(0.9))
 
@@ -44,7 +59,7 @@ struct TodayWorkoutCardV2: View {
                     Text("Freies Training")
                         .font(Theme.Typography.title2)
                         .foregroundStyle(.white)
-                    Text("Kein Workout geplant – starte frei")
+                    Text(isCompleted ? "Heute schon aktiv gewesen" : "Kein Workout geplant – starte frei")
                         .font(Theme.Typography.subheadline)
                         .foregroundStyle(.white.opacity(0.8))
                 }
@@ -52,9 +67,9 @@ struct TodayWorkoutCardV2: View {
                 HStack {
                     Spacer()
                     HStack(spacing: Theme.Spacing.xs) {
-                        Text("Starten")
+                        Text(isCompleted ? "Wiederholen" : "Starten")
                             .font(Theme.Typography.headline)
-                        Image(systemName: "play.fill")
+                        Image(systemName: isCompleted ? "arrow.clockwise" : "play.fill")
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, Theme.Spacing.l)
@@ -66,13 +81,7 @@ struct TodayWorkoutCardV2: View {
             }
             .padding(Theme.Spacing.l)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                LinearGradient(
-                    colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+            .background(bgGradient)
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
         }
         .buttonStyle(BounceButtonStyle())
@@ -278,12 +287,22 @@ struct QuickStartGridV2: View {
     let onFreeTraining: () -> Void
     let onRepeatLast: () -> Void
     let onWorkoutSelect: (Workout) -> Void
+    var onEdit: ((Workout) -> Void)? = nil
+    var onDelete: ((Workout) -> Void)? = nil
     let workouts: [Workout]
+
+    @Environment(AppEnvironment.self) private var env
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Schnellstart")
-                .font(Theme.Typography.headline)
+            HStack {
+                Text("Schnellstart")
+                    .font(Theme.Typography.headline)
+                Spacer()
+                Text("\(workouts.count) Workouts")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             HStack(spacing: Theme.Spacing.m) {
                 quickStartItem(
@@ -302,33 +321,77 @@ struct QuickStartGridV2: View {
                 )
             }
 
-            if !workouts.isEmpty {
+            if workouts.isEmpty {
+                Text("Noch keine Workouts erstellt.")
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Theme.Spacing.xl)
+                    .cardStyle()
+            } else {
                 VStack(spacing: Theme.Spacing.s) {
                     ForEach(workouts) { w in
-                        Button { onWorkoutSelect(w) } label: {
-                            HStack(spacing: Theme.Spacing.m) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                                        .fill(w.color.color.opacity(0.15))
-                                        .frame(width: 42, height: 42)
-                                    Image(systemName: "dumbbell.fill")
-                                        .font(Theme.Typography.callout)
-                                        .foregroundStyle(w.color.color)
-                                }
-                                Text(w.name)
-                                    .font(Theme.Typography.subheadline.weight(.semibold))
-                                    .lineLimit(1)
-                                Spacer()
-                                Image(systemName: "play.fill")
-                                    .font(Theme.Typography.caption.weight(.bold))
-                                    .foregroundStyle(w.color.color)
-                            }
-                            .padding(Theme.Spacing.m)
-                            .cardStyle()
-                        }
-                        .buttonStyle(PressScaleStyle())
+                        workoutRow(w)
                     }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func workoutRow(_ w: Workout) -> some View {
+        let avg = env.workoutService.getAverageDuration(workout: w)
+        Button { onWorkoutSelect(w) } label: {
+            HStack(spacing: Theme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                        .fill(w.color.color.opacity(0.15))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: "dumbbell.fill")
+                        .font(Theme.Typography.callout)
+                        .foregroundStyle(w.color.color)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(w.name)
+                        .font(Theme.Typography.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    HStack(spacing: Theme.Spacing.m) {
+                        Label("\(w.exercises.count)", systemImage: "list.bullet")
+                            .font(Theme.Typography.caption2)
+                        Label("\(avg > 0 ? "\(avg.clean) min" : "\(w.estimatedDurationMinutes) min")", systemImage: "clock")
+                            .font(Theme.Typography.caption2)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if let onEdit {
+                    Button {
+                        Haptics.impact()
+                        onEdit(w)
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(Theme.Typography.callout.weight(.bold))
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(Color(.tertiarySystemFill)))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(BounceButtonStyle())
+                }
+                Image(systemName: "play.fill")
+                    .font(Theme.Typography.caption.weight(.bold))
+                    .foregroundStyle(w.color.color)
+                    .padding(.horizontal, Theme.Spacing.s)
+            }
+            .padding(Theme.Spacing.m)
+            .cardStyle()
+        }
+        .buttonStyle(PressScaleStyle())
+        .contextMenu {
+            if let onEdit {
+                Button("Bearbeiten", systemImage: "pencil") { onEdit(w) }
+            }
+            if let onDelete {
+                Button("Archivieren", systemImage: "archivebox", role: .destructive) { onDelete(w) }
             }
         }
     }
