@@ -27,61 +27,90 @@ struct CreateTrainingsPlanSheet: View {
     ]
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $name)
-                    TextField("Beschreibung (optional)", text: $details, axis: .vertical)
-                        .lineLimit(2...4)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoCard(style: .elevated, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Allgemein"))
+
+                        BentoTextField(
+                            label: Text("Name"),
+                            text: $name,
+                            prompt: Text("z. B. Push / Pull / Legs"),
+                            leadingSystemImage: "textformat",
+                            required: true,
+                            maximumLength: 60
+                        )
+
+                        BentoTextArea(
+                            label: Text("Beschreibung (optional)"),
+                            text: $details,
+                            prompt: Text("Worum geht es in diesem Plan?"),
+                            maximumLength: 280,
+                            minimumHeight: 90
+                        )
+                    }
                 }
 
-                Section("Plantyp") {
-                    Picker("Typ", selection: $planType) {
-                        ForEach(TrainingsPlanType.allCases) { type in
-                            Label(type.label, systemImage: type.icon).tag(type)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+                BentoCard(style: .elevated, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Plantyp"))
 
-                    if planType == .rotation {
-                        Stepper("\(workoutCount) Workouts", value: $workoutCount, in: 2...6)
-                        Text("Die Workouts rotieren fortlaufend (A, B, C, A, B, C...), unabhaengig von Wochentagen.")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Section {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
-                        ForEach(colors, id: \.self) { color in
-                            Circle()
-                                .fill(Color(hex: color) ?? .gray)
-                                .frame(width: 32, height: 32)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(.white, lineWidth: selectedColor == color ? 3 : 0)
-                                )
-                                .onTapGesture {
-                                    selectedColor = color
-                                    Haptics.selection()
-                                }
+                        BentoSegmentedPicker(options: TrainingsPlanType.allCases, selection: $planType) { type in
+                            Label(type.label, systemImage: type.icon)
+                                .labelStyle(.iconOnly)
+                            Text(verbatim: type.label)
+                        }
+
+                        if planType == .rotation {
+                            BentoStepper(
+                                Text("Workouts"),
+                                value: $workoutCount,
+                                in: 2...6
+                            )
+                            BentoText(
+                                "Die Workouts rotieren fortlaufend (A, B, C, A, B, C …), unabhängig von Wochentagen.",
+                                style: .caption,
+                                color: .secondary
+                            )
                         }
                     }
-                } header: {
-                    Text("Farbe")
                 }
+
+                BentoCard(style: .elevated, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Farbe"))
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
+                            ForEach(colors, id: \.self) { color in
+                                Circle()
+                                    .fill(Color(hex: color) ?? .gray)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(.white, lineWidth: selectedColor == color ? 3 : 0)
+                                    )
+                                    .onTapGesture {
+                                        selectedColor = color
+                                        Haptics.selection()
+                                    }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(minLength: 40)
             }
-            .navigationTitle("Neuer Trainingsplan")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Erstellen") { create() }
-                        .disabled(name.isEmpty)
-                }
+        }
+        .bentoActionBar {
+            BentoButton(
+                Text("Plan erstellen"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                create()
             }
+            .disabled(name.isEmpty)
         }
     }
     

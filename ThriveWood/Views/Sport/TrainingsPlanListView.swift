@@ -9,7 +9,6 @@ import SwiftUI
 
 struct TrainingsPlanListView: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(\.dismiss) private var dismiss
 
     @State private var plans: [TrainingsPlan] = []
     @State private var showCreateSheet = false
@@ -30,14 +29,6 @@ struct TrainingsPlanListView: View {
                     title: Text("Trainingspläne"),
                     subtitle: Text(filteredPlans.count > 0 ? "\(filteredPlans.count) Pläne" : "Erstelle deinen ersten Plan")
                 ) {
-                    BentoIconButton(
-                        systemImage: "chevron.left",
-                        accessibilityLabel: Text("Zurück"),
-                        variant: .secondary,
-                        size: .medium
-                    ) {
-                        dismiss()
-                    }
                     BentoIconButton(
                         systemImage: "plus",
                         accessibilityLabel: Text("Plan erstellen"),
@@ -111,7 +102,6 @@ struct TrainingsPlanListView: View {
         }
         .navigationTitle("Trainingspläne")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack(spacing: 4) {

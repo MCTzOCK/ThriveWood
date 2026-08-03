@@ -10,7 +10,6 @@ import SwiftUI
 
 struct PRListView: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(\.dismiss) private var dismiss
     @State private var entries: [(exercise: Exercise, topSet: SetEntry)] = []
     @State private var searchText = ""
     @State private var selectedPR: PRSelection?
@@ -47,7 +46,6 @@ struct PRListView: View {
         }
         .navigationTitle("PRs")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Übung suchen")
         .onAppear { load() }
         .bentoSheet(
@@ -71,16 +69,7 @@ struct PRListView: View {
                     eyebrow: Text("REKORDE"),
                     title: Text("Persönliche PRs"),
                     subtitle: Text("\(entries.count) Übungen mit PR")
-                ) {
-                    BentoIconButton(
-                        systemImage: "chevron.left",
-                        accessibilityLabel: Text("Zurück"),
-                        variant: .secondary,
-                        size: .medium
-                    ) {
-                        dismiss()
-                    }
-                }
+                )
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.top, Theme.Spacing.m)
 

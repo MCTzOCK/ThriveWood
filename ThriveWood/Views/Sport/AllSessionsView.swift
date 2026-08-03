@@ -9,7 +9,6 @@ import SwiftUI
 
 struct AllSessionsView: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(\.dismiss) private var dismiss
     @State private var refreshID = UUID()
 
     private var sessions: [WorkoutSession] {
@@ -40,16 +39,7 @@ struct AllSessionsView: View {
                         eyebrow: Text("VERLAUF"),
                         title: Text("Trainings-Historie"),
                         subtitle: Text("\(sessions.count) Sessions insgesamt")
-                    ) {
-                        BentoIconButton(
-                            systemImage: "chevron.left",
-                            accessibilityLabel: Text("Zurück"),
-                            variant: .secondary,
-                            size: .medium
-                        ) {
-                            dismiss()
-                        }
-                    }
+                    )
                     .padding(.horizontal, Theme.Spacing.l)
                     .padding(.top, Theme.Spacing.m)
 
@@ -78,6 +68,5 @@ struct AllSessionsView: View {
         .refreshable { refreshID = UUID() }
         .navigationTitle("Trainings-Historie")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
     }
 }

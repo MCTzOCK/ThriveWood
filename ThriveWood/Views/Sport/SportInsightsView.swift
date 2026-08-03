@@ -10,7 +10,6 @@ import Charts
 
 struct SportInsightsView: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(\.dismiss) private var dismiss
     @State private var showingAll1RM = false
     @State private var showingAllOverload = false
     @State private var showingAllTopExercises = false
@@ -42,16 +41,7 @@ struct SportInsightsView: View {
                         eyebrow: Text("ANALYSEN"),
                         title: Text("Sport Insights"),
                         subtitle: Text("\(completedSessions.count) Sessions analysiert")
-                    ) {
-                        BentoIconButton(
-                            systemImage: "chevron.left",
-                            accessibilityLabel: Text("Zurück"),
-                            variant: .secondary,
-                            size: .medium
-                        ) {
-                            dismiss()
-                        }
-                    }
+                    )
                     .padding(.horizontal, Theme.Spacing.l)
                     .padding(.top, Theme.Spacing.m)
 
@@ -75,7 +65,6 @@ struct SportInsightsView: View {
         }
         .navigationTitle("Sport Insights")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
         .bentoSheet(isPresented: $showingAll1RM, title: Text("Geschätztes 1RM"), detents: [.large]) {
             NavigationStack {
                 AllExercisesList(title: "Geschätztes 1RM — Alle Übungen") {

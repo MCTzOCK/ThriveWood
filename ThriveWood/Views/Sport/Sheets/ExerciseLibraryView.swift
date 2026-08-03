@@ -50,16 +50,6 @@ struct ExerciseLibraryView: View {
                     title: Text("Übungen"),
                     subtitle: Text("\(filtered.count) Übungen gefunden")
                 ) {
-                    if !asSheet {
-                        BentoIconButton(
-                            systemImage: "chevron.left",
-                            accessibilityLabel: Text("Zurück"),
-                            variant: .secondary,
-                            size: .medium
-                        ) {
-                            dismiss()
-                        }
-                    }
                     BentoIconButton(
                         systemImage: "plus",
                         accessibilityLabel: Text("Neue Übung"),
@@ -70,6 +60,13 @@ struct ExerciseLibraryView: View {
                 }
                 .padding(.horizontal, Theme.Spacing.l)
                 .padding(.top, Theme.Spacing.m)
+
+                // Suchfeld ganz oben, direkt unter dem Header
+                BentoSearchField(text: $search, prompt: Text("Übung suchen")) {
+                    Haptics.selection()
+                }
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.vertical, Theme.Spacing.s)
 
                 categoryChips
 
@@ -124,7 +121,7 @@ struct ExerciseLibraryView: View {
         }
         .navigationTitle("Übungen")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(asSheet ? .visible : .hidden, for: .navigationBar)
+        .toolbar(asSheet ? .visible : .visible, for: .navigationBar)
         .toolbar {
             if asSheet {
                 ToolbarItem(placement: .cancellationAction) {

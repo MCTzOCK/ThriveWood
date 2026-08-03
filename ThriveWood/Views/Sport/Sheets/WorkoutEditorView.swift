@@ -26,59 +26,49 @@ struct WorkoutEditorView: View {
     private var isValid: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
 
     var body: some View {
-        NavigationStack {
-            BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
-                VStack(spacing: Theme.Spacing.l) {
-                    BentoPageHeader(
-                        eyebrow: Text(isEditing ? "BEARBEITEN" : "NEU"),
-                        title: Text(isEditing ? "Workout bearbeiten" : "Neues Workout"),
-                        subtitle: Text(isValid ? name : "Gib einen Namen ein")
-                    )
-                    .padding(.horizontal, Theme.Spacing.l)
-                    .padding(.top, Theme.Spacing.m)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                detailsCard
+                exercisesCard
 
-                    detailsCard
-                    exercisesCard
-
-                    if isEditing {
-                        BentoButton(
-                            Text("Workout archivieren"),
-                            systemImage: "archivebox",
-                            variant: .destructive,
-                            expands: true
-                        ) {
-                            guard let workout else { return }
-                            do { try env.workoutRepo.archive(workout); dismiss() }
-                            catch { errors.show(error) }
-                        }
-                        .padding(.horizontal, Theme.Spacing.l)
+                if isEditing {
+                    BentoButton(
+                        Text("Workout archivieren"),
+                        systemImage: "archivebox",
+                        variant: .destructive,
+                        expands: true
+                    ) {
+                        guard let workout else { return }
+                        do { try env.workoutRepo.archive(workout); dismiss() }
+                        catch { errors.show(error) }
                     }
+                }
 
-                    Spacer(minLength: 40)
-                }
-                .padding(.bottom, 120)
+                Spacer(minLength: 40)
             }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Speichern", action: save)
-                        .disabled(!isValid).fontWeight(.semibold)
-                }
-            }
-            .bentoSheet(
-                isPresented: $showingLibrary,
-                title: Text("Übungen"),
-                detents: [.large]
-            ) {
-                ExerciseLibraryView(onSelect: { exercise in
-                    addExercise(exercise)
-                }, asSheet: false, onlyFor: nil)
-            }
-            .errorAlert(errors)
-            .onAppear(perform: hydrate)
         }
+        .bentoActionBar {
+            BentoButton(
+                Text(isEditing ? "Speichern" : "Erstellen"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
+            }
+            .disabled(!isValid)
+        }
+        .bentoSheet(
+            isPresented: $showingLibrary,
+            title: Text("Übungen"),
+            detents: [.large]
+        ) {
+            ExerciseLibraryView(onSelect: { exercise in
+                addExercise(exercise)
+            }, asSheet: false, onlyFor: nil)
+        }
+        .errorAlert(errors)
+        .onAppear(perform: hydrate)
     }
 
     // MARK: - Details Card
@@ -86,30 +76,40 @@ struct WorkoutEditorView: View {
     private var detailsCard: some View {
         BentoCard(style: .elevated, padding: .lg) {
             VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                BentoSectionHeader(title: Text("Details")) { EmptyView() }
+                BentoSectionHeader(
+                    title: Text("Details"),
+                    subtitle: Text(isEditing ? "Workout bearbeiten" : "Neues Workout")
+                )
 
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    BentoText(verbatim: "Name", style: .caption, color: .secondary)
-                    TextField("Workout-Name", text: $name)
-                        .textFieldStyle(.roundedBorder)
-                }
+                BentoTextField(
+                    label: Text("Name"),
+                    text: $name,
+                    prompt: Text("Workout-Name"),
+                    leadingSystemImage: "textformat",
+                    required: true,
+                    maximumLength: 60
+                )
 
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    BentoText(verbatim: "Notiz (optional)", style: .caption, color: .secondary)
-                    TextField("Notiz", text: $details, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
-                        .lineLimit(1...3)
-                }
+                BentoTextArea(
+                    label: Text("Notiz (optional)"),
+                    text: $details,
+                    prompt: Text("Notiz"),
+                    maximumLength: 280,
+                    minimumHeight: 90
+                )
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     BentoText(verbatim: "Farbe", style: .caption, color: .secondary)
                     ColorGrid(selection: $color)
                 }
 
-                HStack {
-                    BentoText(verbatim: "Dauer", style: .caption, color: .secondary)
-                    Spacer()
-                    Stepper("\(duration) min", value: $duration, in: 5...240, step: 5)
+                BentoStepper(
+                    Text("Dauer"),
+                    value: $duration,
+                    in: 5...240,
+                    step: 5
+                ) {
+                    Text(verbatim: "\($0) min")
                 }
 
                 if let w = workout {
@@ -130,7 +130,6 @@ struct WorkoutEditorView: View {
                 }
             }
         }
-        .padding(.horizontal, Theme.Spacing.l)
     }
 
     // MARK: - Exercises Card
@@ -138,20 +137,18 @@ struct WorkoutEditorView: View {
     private var exercisesCard: some View {
         BentoCard(style: .elevated, padding: .lg) {
             VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                BentoSectionHeader(title: Text("Übungen (\(slots.count))")) {
-                    if !slots.isEmpty {
-                        EditButton().font(.caption)
-                    }
-                }
+                BentoSectionHeader(
+                    title: Text("Übungen"),
+                    subtitle: Text("\(slots.count) hinzugefügt")
+                )
 
                 if slots.isEmpty {
-                    BentoText(
-                        verbatim: "Noch keine Übungen hinzugefügt",
-                        style: .callout,
-                        color: .secondary
+                    BentoEmptyState(
+                        systemImage: "figure.strengthtraining.traditional",
+                        title: Text("Noch keine Übungen"),
+                        message: Text("Füge Übungen aus der Bibliothek hinzu.")
                     )
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Theme.Spacing.m)
+                    .padding(.vertical, Theme.Spacing.s)
                 } else {
                     VStack(spacing: Theme.Spacing.s) {
                         ForEach(slots.sorted(by: { $0.order < $1.order })) { slot in
@@ -174,7 +171,6 @@ struct WorkoutEditorView: View {
                 }
             }
         }
-        .padding(.horizontal, Theme.Spacing.l)
     }
 
     // MARK: - Actions
