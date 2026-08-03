@@ -74,55 +74,47 @@ struct BodyProgressEntryEditor: View {
     private var mUnit: String { "cm" }
 
     var body: some View {
-        NavigationStack {
-            Form {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
                 dateSection
                 weightSection
                 bodyFatSection
                 measurementsSection
                 photosSection
                 extrasSection
+
+                Spacer(minLength: 40)
             }
-            .navigationTitle(isEditing ? "Eintrag bearbeiten" : "Neuer Eintrag")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Speichern") { save() }
-                        .fontWeight(.semibold)
-                }
+        }
+        .bentoActionBar {
+            BentoButton(
+                Text(isEditing ? "Speichern" : "Erstellen"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
             }
-            .onChange(of: selectedPhotos) { _, _ in loadSelectedPhotos() }
-            .onAppear { hydrate() }
-            .sheet(isPresented: Binding(
+        }
+        .onChange(of: selectedPhotos) { _, _ in loadSelectedPhotos() }
+        .onAppear { hydrate() }
+        .bentoSheet(
+            isPresented: Binding(
                 get: { guideFor != nil },
                 set: { if !$0 { guideFor = nil } }
-            )) {
-                if let key = guideFor, let guide = measurementGuides[key] {
-                    NavigationStack {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-                                Text(guide.instructions)
-                                    .font(.body)
-                                    .padding(.horizontal, Theme.Spacing.l)
-                            }
-                            .padding(.vertical, Theme.Spacing.l)
-                        }
-                        .navigationTitle(guide.title)
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("OK") { guideFor = nil }
-                            }
-                        }
+            ),
+            title: guideFor.flatMap { measurementGuides[$0]?.title }.map { Text($0) },
+            detents: [.medium]
+        ) {
+            if let key = guideFor, let guide = measurementGuides[key] {
+                BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+                    BentoCard(style: .elevated, padding: .lg) {
+                        BentoText(verbatim: guide.instructions, style: .body)
                     }
-                    .presentationDetents([.medium])
                 }
             }
-            .errorAlert(errors)
         }
+        .errorAlert(errors)
     }
 
     // MARK: - Measurement Guides
@@ -194,180 +186,202 @@ struct BodyProgressEntryEditor: View {
     // MARK: - Date
 
     private var dateSection: some View {
-        Section("Datum") {
-            DatePicker("", selection: $date, displayedComponents: .date)
-                .labelsHidden()
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Datum"))
+
+                DatePicker("", selection: $date, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+            }
         }
     }
 
     // MARK: - Weight
 
     private var weightSection: some View {
-        Section {
-            HStack {
-                Text("Gewicht")
-                    .font(.subheadline)
-                Spacer()
-                TextField("0", value: $weightKg, format: .number.precision(.fractionLength(1...1)))
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .frame(width: 80)
-                Text(weightUnit.rawValue)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Button { guideFor = "weight" } label: {
-                    Image(systemName: "info.circle")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-        } header: {
-            Text("Gewicht")
-        }
-    }
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Gewicht"))
 
-    // MARK: - Body Fat
-
-    private var bodyFatSection: some View {
-        Section {
-            Toggle("KFA automatisch berechnen", isOn: $autoCalculateBF)
-            Button { guideFor = "bodyFat" } label: {
-                Label("So wird der KFA berechnet", systemImage: "info.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-
-            if autoCalculateBF {
-                Picker("Geschlecht", selection: $isMale) {
-                    Text("Männlich").tag(true)
-                    Text("Weiblich").tag(false)
-                }
-                .pickerStyle(.segmented)
-
-                if hasHeight && hasWaist && hasNeck && (isMale || hasHip) {
-                    let calculated = calculateBodyFat()
-                    if calculated > 0 {
-                        HStack {
-                            Text("Berechneter KFA")
-                                .font(.subheadline)
-                            Spacer()
-                            Text(String(format: "%.1f%%", calculated))
-                                .font(.title3.bold().monospacedDigit())
-                                .foregroundStyle(.orange)
-                        }
-                    }
-                } else {
-                    let missing: [String] = {
-                        var m: [String] = []
-                        if !hasHeight { m.append("Körpergröße") }
-                        if !hasWaist { m.append("Taille") }
-                        if !hasNeck { m.append("Nacken") }
-                        if !isMale && !hasHip { m.append("Hüfte") }
-                        return m
-                    }()
-                    Text("Erforderlich: \(missing.joined(separator: ", "))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Toggle("Körperfett manuell eingeben", isOn: $hasBodyFat)
-                if hasBodyFat {
-                    HStack {
-                        TextField("0", value: $bodyFatPercentage, format: .number.precision(.fractionLength(1...1)))
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                        Text("%")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Button { guideFor = "bodyFat" } label: {
-                            Image(systemName: "info.circle")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-
-            Toggle("Muskelmasse", isOn: $hasMuscleMass)
-            if hasMuscleMass {
                 HStack {
-                    TextField("0", value: $muscleMassKg, format: .number.precision(.fractionLength(1...1)))
+                    Text("Gewicht")
+                        .font(.subheadline)
+                    Spacer()
+                    TextField("0", value: $weightKg, format: .number.precision(.fractionLength(1...1)))
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 80)
                     Text(weightUnit.rawValue)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Button { guideFor = "muscleMass" } label: {
-                        Image(systemName: "info.circle")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    BentoIconButton(
+                        systemImage: "info.circle",
+                        accessibilityLabel: Text("Anleitung"),
+                        variant: .ghost,
+                        size: .small
+                    ) {
+                        guideFor = "weight"
                     }
-                    .buttonStyle(.plain)
                 }
             }
+        }
+    }
 
-            Toggle("Wasseranteil", isOn: $hasWater)
-            if hasWater {
-                HStack {
-                    TextField("0", value: $waterPercentage, format: .number.precision(.fractionLength(1...1)))
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 80)
-                    Text("%")
-                        .font(.subheadline)
+    // MARK: - Body Fat
+
+    private var bodyFatSection: some View {
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Körperzusammensetzung"))
+
+                BentoToggleRow(Text("KFA automatisch berechnen"), isOn: $autoCalculateBF)
+
+                Button { guideFor = "bodyFat" } label: {
+                    Label("So wird der KFA berechnet", systemImage: "info.circle")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-                    Button { guideFor = "water" } label: {
-                        Image(systemName: "info.circle")
+                }
+                .buttonStyle(.plain)
+
+                if autoCalculateBF {
+                    BentoSegmentedPicker(options: [true, false], selection: $isMale) { isMaleValue in
+                        Text(verbatim: isMaleValue ? "Männlich" : "Weiblich")
+                    }
+
+                    if hasHeight && hasWaist && hasNeck && (isMale || hasHip) {
+                        let calculated = calculateBodyFat()
+                        if calculated > 0 {
+                            HStack {
+                                Text("Berechneter KFA")
+                                    .font(.subheadline)
+                                Spacer()
+                                Text(String(format: "%.1f%%", calculated))
+                                    .font(.title3.bold().monospacedDigit())
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    } else {
+                        let missing: [String] = {
+                            var m: [String] = []
+                            if !hasHeight { m.append("Körpergröße") }
+                            if !hasWaist { m.append("Taille") }
+                            if !hasNeck { m.append("Nacken") }
+                            if !isMale && !hasHip { m.append("Hüfte") }
+                            return m
+                        }()
+                        Text("Erforderlich: \(missing.joined(separator: ", "))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain)
+                } else {
+                    BentoToggleRow(Text("Körperfett manuell eingeben"), isOn: $hasBodyFat)
+                    if hasBodyFat {
+                        HStack {
+                            TextField("0", value: $bodyFatPercentage, format: .number.precision(.fractionLength(1...1)))
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                            Text("%")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            BentoIconButton(
+                                systemImage: "info.circle",
+                                accessibilityLabel: Text("Anleitung"),
+                                variant: .ghost,
+                                size: .small
+                            ) {
+                                guideFor = "bodyFat"
+                            }
+                        }
+                    }
+                }
+
+                BentoToggleRow(Text("Muskelmasse"), isOn: $hasMuscleMass)
+                if hasMuscleMass {
+                    HStack {
+                        TextField("0", value: $muscleMassKg, format: .number.precision(.fractionLength(1...1)))
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                        Text(weightUnit.rawValue)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        BentoIconButton(
+                            systemImage: "info.circle",
+                            accessibilityLabel: Text("Anleitung"),
+                            variant: .ghost,
+                            size: .small
+                        ) {
+                            guideFor = "muscleMass"
+                        }
+                    }
+                }
+
+                BentoToggleRow(Text("Wasseranteil"), isOn: $hasWater)
+                if hasWater {
+                    HStack {
+                        TextField("0", value: $waterPercentage, format: .number.precision(.fractionLength(1...1)))
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                        Text("%")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        BentoIconButton(
+                            systemImage: "info.circle",
+                            accessibilityLabel: Text("Anleitung"),
+                            variant: .ghost,
+                            size: .small
+                        ) {
+                            guideFor = "water"
+                        }
+                    }
                 }
             }
-        } header: {
-            Text("Körperzusammensetzung")
         }
     }
 
     // MARK: - Measurements
 
     private var measurementsSection: some View {
-        Section {
-            measurementToggle("Körpergröße", isOn: $hasHeight, value: $heightCm, guideKey: "height")
-            measurementToggle("Taille", isOn: $hasWaist, value: $waistCm, guideKey: "waist")
-            measurementToggle("Brust", isOn: $hasChest, value: $chestCm, guideKey: "chest")
-            measurementToggle("Hüfte", isOn: $hasHip, value: $hipCm, guideKey: "hip")
-            measurementToggle("Schultern", isOn: $hasShoulder, value: $shoulderCm, guideKey: "shoulder")
-            measurementToggle("Nacken", isOn: $hasNeck, value: $neckCm, guideKey: "neck")
-            measurementToggle("Oberarm L", isOn: $hasLeftBicep, value: $leftBicepCm, guideKey: "bicep")
-            measurementToggle("Oberarm R", isOn: $hasRightBicep, value: $rightBicepCm, guideKey: "bicep")
-            measurementToggle("Unterarm L", isOn: $hasLeftForearm, value: $leftForearmCm, guideKey: "forearm")
-            measurementToggle("Unterarm R", isOn: $hasRightForearm, value: $rightForearmCm, guideKey: "forearm")
-            measurementToggle("Oberschenkel L", isOn: $hasLeftThigh, value: $leftThighCm, guideKey: "thigh")
-            measurementToggle("Oberschenkel R", isOn: $hasRightThigh, value: $rightThighCm, guideKey: "thigh")
-            measurementToggle("Wade L", isOn: $hasLeftCalf, value: $leftCalfCm, guideKey: "calf")
-            measurementToggle("Wade R", isOn: $hasRightCalf, value: $rightCalfCm, guideKey: "calf")
-        } header: {
-            Text("Körpermaße (\(mUnit))")
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Körpermaße (\(mUnit))"))
+
+                VStack(spacing: Theme.Spacing.s) {
+                    measurementToggle("Körpergröße", isOn: $hasHeight, value: $heightCm, guideKey: "height")
+                    measurementToggle("Taille", isOn: $hasWaist, value: $waistCm, guideKey: "waist")
+                    measurementToggle("Brust", isOn: $hasChest, value: $chestCm, guideKey: "chest")
+                    measurementToggle("Hüfte", isOn: $hasHip, value: $hipCm, guideKey: "hip")
+                    measurementToggle("Schultern", isOn: $hasShoulder, value: $shoulderCm, guideKey: "shoulder")
+                    measurementToggle("Nacken", isOn: $hasNeck, value: $neckCm, guideKey: "neck")
+                    measurementToggle("Oberarm L", isOn: $hasLeftBicep, value: $leftBicepCm, guideKey: "bicep")
+                    measurementToggle("Oberarm R", isOn: $hasRightBicep, value: $rightBicepCm, guideKey: "bicep")
+                    measurementToggle("Unterarm L", isOn: $hasLeftForearm, value: $leftForearmCm, guideKey: "forearm")
+                    measurementToggle("Unterarm R", isOn: $hasRightForearm, value: $rightForearmCm, guideKey: "forearm")
+                    measurementToggle("Oberschenkel L", isOn: $hasLeftThigh, value: $leftThighCm, guideKey: "thigh")
+                    measurementToggle("Oberschenkel R", isOn: $hasRightThigh, value: $rightThighCm, guideKey: "thigh")
+                    measurementToggle("Wade L", isOn: $hasLeftCalf, value: $leftCalfCm, guideKey: "calf")
+                    measurementToggle("Wade R", isOn: $hasRightCalf, value: $rightCalfCm, guideKey: "calf")
+                }
+            }
         }
     }
 
     private func measurementToggle(_ label: String, isOn: Binding<Bool>, value: Binding<Double>, guideKey: String? = nil) -> some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             HStack(spacing: 4) {
                 Toggle(label, isOn: isOn)
                 if let key = guideKey, measurementGuides[key] != nil {
-                    Button { guideFor = key } label: {
-                        Image(systemName: "info.circle")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    BentoIconButton(
+                        systemImage: "info.circle",
+                        accessibilityLabel: Text("Anleitung"),
+                        variant: .ghost,
+                        size: .small
+                    ) {
+                        guideFor = key
                     }
-                    .buttonStyle(.plain)
                 }
             }
             if isOn.wrappedValue {
@@ -387,16 +401,27 @@ struct BodyProgressEntryEditor: View {
     // MARK: - Photos
 
     private var photosSection: some View {
-        Section {
-            PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 20, matching: .images) {
-                Label("Fotos hinzufügen", systemImage: "photo.on.rectangle.angled")
-            }
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Fotos"))
 
-            if !savedPhotoPaths.isEmpty || !loadedNewImages.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Theme.Spacing.s) {
-                        ForEach(savedPhotoPaths, id: \.self) { path in
-                            if let image = loadImage(path) {
+                PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 20, matching: .images) {
+                    Label("Fotos hinzufügen", systemImage: "photo.on.rectangle.angled")
+                }
+
+                if !savedPhotoPaths.isEmpty || !loadedNewImages.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: Theme.Spacing.s) {
+                            ForEach(savedPhotoPaths, id: \.self) { path in
+                                if let image = loadImage(path) {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 80, height: 100)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                }
+                            }
+                            ForEach(loadedNewImages, id: \.self) { image in
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
@@ -404,39 +429,36 @@ struct BodyProgressEntryEditor: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
-                        ForEach(loadedNewImages, id: \.self) { image in
-                            Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 80, height: 100)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
                     }
                 }
             }
-        } header: {
-            Text("Fotos")
         }
     }
 
     // MARK: - Extras
 
     private var extrasSection: some View {
-        Section("Extras") {
-            HStack {
-                Text("Energie-Level")
-                Spacer()
-                Picker("", selection: $energyLevel) {
-                    ForEach(1...5, id: \.self) { level in
-                        Text("\(level)").tag(level)
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Extras"))
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text("Energie-Level")
+                        .font(.subheadline)
+                    BentoSegmentedPicker(options: Array(1...5), selection: $energyLevel) { level in
+                        Text(verbatim: "\(level)")
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 220)
+
+                BentoToggleRow(Text("Pump"), isOn: $onPump)
+
+                BentoTextArea(
+                    label: Text("Notizen"),
+                    text: $notes,
+                    prompt: Text("Notizen..."),
+                    minimumHeight: 90
+                )
             }
-            Toggle("Pump", isOn: $onPump)
-            TextField("Notizen...", text: $notes, axis: .vertical)
-                .lineLimit(3...6)
         }
     }
 

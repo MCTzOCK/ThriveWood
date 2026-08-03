@@ -9,6 +9,7 @@ import SwiftUI
 
 struct BodyProgressDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.bentoTheme) private var theme
     let entry: BodyProgressEntry
     let env: AppEnvironment
     let onRefresh: () -> Void
@@ -21,43 +22,54 @@ struct BodyProgressDetailView: View {
     private var unit: String { entry.measurementUnitRaw == "in" ? "in" : "cm" }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.l) {
-                    photoSection
-                    bodyCompositionSection
-                    measurementsSection
-                    notesSection
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            BentoPageHeader(
+                eyebrow: Text("EINTRAG"),
+                title: Text(entry.date.formatted(.dateTime.day().month(.wide).year()))
+            ) {
+                BentoIconButton(
+                    systemImage: "xmark",
+                    accessibilityLabel: Text("Schließen"),
+                    variant: .secondary
+                ) {
+                    dismiss()
                 }
-                .padding(.vertical, Theme.Spacing.l)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(entry.date.formatted(.dateTime.day().month(.wide).year()))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Fertig") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button { onEdit() } label: {
-                            Label("Bearbeiten", systemImage: "pencil")
-                        }
-                        Button(role: .destructive) { showDeleteConfirmation = true } label: {
-                            Label("Löschen", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+
+                Menu {
+                    Button { onEdit() } label: {
+                        Label("Bearbeiten", systemImage: "pencil")
                     }
+                    Button(role: .destructive) { showDeleteConfirmation = true } label: {
+                        Label("Löschen", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.body)
+                        .frame(width: 48, height: 48)
+                        .foregroundStyle(theme.colors.onSurface)
+                        .background(theme.colors.surfaceSecondary, in: Circle())
+                        .overlay(Circle().stroke(theme.colors.outlineSubtle, lineWidth: 1))
                 }
+                .accessibilityLabel("Menü")
             }
-            .confirmationDialog("Eintrag wirklich löschen?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-                Button("Löschen", role: .destructive) { onDelete() }
-                Button("Abbrechen", role: .cancel) {}
-            } message: {
-                Text("Dieser Eintrag wird unwiderruflich gelöscht, inklusive aller Fotos.")
-            }
+
+            photoSection
+            bodyCompositionSection
+            measurementsSection
+            notesSection
+
+            Spacer(minLength: theme.spacing.xxl)
         }
+        .bentoDialog(
+            isPresented: $showDeleteConfirmation,
+            systemImage: "trash.fill",
+            title: Text("Eintrag wirklich löschen?"),
+            message: Text("Dieser Eintrag wird unwiderruflich gelöscht, inklusive aller Fotos."),
+            actions: [
+                BentoDialogAction(title: Text("Löschen"), variant: .destructive, role: .destructive) { onDelete() },
+                BentoDialogAction(title: Text("Abbrechen"), role: .cancel) {}
+            ]
+        )
     }
 
     // MARK: - Photos
@@ -74,84 +86,81 @@ struct BodyProgressDetailView: View {
                                 .tag(index)
                         } else {
                             RoundedRectangle(cornerRadius: Theme.Radius.m)
-                                .fill(Color(.tertiarySystemFill))
-                                .overlay { Image(systemName: "photo").font(.title).foregroundStyle(.secondary) }
+                                .fill(theme.colors.surfaceSecondary)
+                                .overlay {
+                                    Image(systemName: "photo").font(.title).foregroundStyle(theme.colors.onSurfaceMuted)
+                                }
                                 .tag(index)
                         }
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
+                .indexViewStyle(.page(backgroundDisplayMode: .always))
                 .frame(height: 400)
-                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m))
-                .padding(.horizontal, Theme.Spacing.l)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
             } else {
-                VStack(spacing: Theme.Spacing.m) {
-                    Image(systemName: "photo.on.rectangle.angled")
-                        .font(.system(size: 36))
-                        .foregroundStyle(.tertiary)
-                    Text("Keine Fotos")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                BentoCard(style: .outlined, padding: .xl, radius: .large) {
+                    VStack(spacing: theme.spacing.md) {
+                        Image(systemName: "photo.on.rectangle.angled")
+                            .font(.system(size: 36))
+                            .foregroundStyle(theme.colors.onSurfaceMuted)
+                        BentoText("Keine Fotos", style: .callout, color: theme.colors.onSurfaceMuted)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Theme.Spacing.xxl)
-                .cardStyle()
-                .padding(.horizontal, Theme.Spacing.l)
             }
         }
     }
 
     // MARK: - Body Composition
 
+    @ViewBuilder
     private var bodyCompositionSection: some View {
         let hasData = entry.weightKg != nil || entry.bodyFatPercentage != nil || entry.muscleMassKg != nil || entry.waterPercentage != nil
 
-        return Group {
-            if hasData {
-                VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                    Text("Körperzusammensetzung")
-                        .font(.headline)
-
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.m) {
-                        if let w = entry.weightKg {
-                            detailTile(icon: "scalemass.fill", tint: .blue, label: "Gewicht", value: String(format: "%.1f %@", w, entry.weightUnitRaw == "kg" ? "kg" : "lbs"))
-                        }
-                        if let bf = entry.bodyFatPercentage {
-                            detailTile(icon: "chart.pie.fill", tint: .orange, label: "Körperfett", value: String(format: "%.1f%%", bf))
-                        }
-                        if let mm = entry.muscleMassKg {
-                            detailTile(icon: "figure.arm", tint: .green, label: "Muskelmasse", value: String(format: "%.1f kg", mm))
-                        }
-                        if let wa = entry.waterPercentage {
-                            detailTile(icon: "drop.fill", tint: .cyan, label: "Wasser", value: String(format: "%.1f%%", wa))
-                        }
+        if hasData {
+            BentoSection(title: Text("Körperzusammensetzung")) {
+                BentoAdaptiveGrid(minimumItemWidth: 150) {
+                    if let w = entry.weightKg {
+                        BentoMetricTile(
+                            title: Text("Gewicht"),
+                            value: Text(verbatim: String(format: "%.1f %@", w, entry.weightUnitRaw == "kg" ? "kg" : "lbs")),
+                            systemImage: "scalemass.fill",
+                            tone: .blue
+                        )
+                    }
+                    if let bf = entry.bodyFatPercentage {
+                        BentoMetricTile(
+                            title: Text("Körperfett"),
+                            value: Text(verbatim: String(format: "%.1f%%", bf)),
+                            systemImage: "chart.pie.fill",
+                            tone: .warning
+                        )
+                    }
+                    if let mm = entry.muscleMassKg {
+                        BentoMetricTile(
+                            title: Text("Muskelmasse"),
+                            value: Text(verbatim: String(format: "%.1f kg", mm)),
+                            systemImage: "figure.arm",
+                            tone: .green
+                        )
+                    }
+                    if let wa = entry.waterPercentage {
+                        BentoMetricTile(
+                            title: Text("Wasser"),
+                            value: Text(verbatim: String(format: "%.1f%%", wa)),
+                            systemImage: "drop.fill",
+                            tone: .info
+                        )
                     }
                 }
-                .padding(Theme.Spacing.l)
-                .cardStyle()
-                .padding(.horizontal, Theme.Spacing.l)
             }
         }
-    }
-
-    private func detailTile(icon: String, tint: Color, label: String, value: String) -> some View {
-        HStack(spacing: Theme.Spacing.s) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(tint)
-                .frame(width: 28)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(value).font(.subheadline.bold().monospacedDigit())
-                Text(label).font(.caption2).foregroundStyle(.secondary)
-            }
-        }
-        .padding(Theme.Spacing.s)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: Theme.Radius.s).fill(tint.opacity(0.08)))
     }
 
     // MARK: - Measurements
 
+    @ViewBuilder
     private var measurementsSection: some View {
         let measurements: [(String, String, Double?)] = [
             ("Körpergröße", "ruler", entry.heightCm),
@@ -171,66 +180,66 @@ struct BodyProgressDetailView: View {
         ]
         let filled = measurements.filter { $0.2 != nil }
 
-        return Group {
-            if !filled.isEmpty {
-                VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                    Text("Körpermaße")
-                        .font(.headline)
+        if !filled.isEmpty {
+            BentoSection(title: Text("Körpermaße"), subtitle: Text("in \(unit)")) {
+                BentoCard(style: .outlined, padding: .md, radius: .large) {
+                    VStack(spacing: 0) {
+                        ForEach(Array(filled.enumerated()), id: \.element.0) { idx, item in
+                            HStack(spacing: theme.spacing.md) {
+                                ZStack {
+                                    Circle()
+                                        .fill(theme.colors.accent.opacity(0.1))
+                                        .frame(width: 32, height: 32)
+                                    Image(systemName: item.1)
+                                        .font(.caption)
+                                        .foregroundStyle(theme.colors.accent)
+                                }
+                                BentoText(verbatim: item.0, style: .body)
+                                Spacer()
+                                Text(verbatim: String(format: "%.1f %@", item.2!, unit))
+                                    .font(Theme.Typography.subheadline.weight(.semibold).monospacedDigit())
+                            }
+                            .padding(.vertical, theme.spacing.xs)
 
-                    ForEach(filled, id: \.0) { label, icon, value in
-                        HStack {
-                            Image(systemName: icon).font(.callout).foregroundStyle(.secondary).frame(width: 24)
-                            Text(label).font(.subheadline)
-                            Spacer()
-                            Text(String(format: "%.1f %@", value!, unit))
-                                .font(.subheadline.bold().monospacedDigit())
+                            if idx < filled.count - 1 {
+                                BentoDivider()
+                            }
                         }
-                        .padding(.vertical, Theme.Spacing.xs)
                     }
                 }
-                .padding(Theme.Spacing.l)
-                .cardStyle()
-                .padding(.horizontal, Theme.Spacing.l)
             }
         }
     }
 
     // MARK: - Notes
 
+    @ViewBuilder
     private var notesSection: some View {
-        Group {
-            if !entry.notes.isEmpty || entry.onPump || entry.energyLevel != nil {
-                VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                    Text("Notizen")
-                        .font(.headline)
-
-                    HStack(spacing: Theme.Spacing.m) {
-                        if entry.onPump {
-                            Label("Pump", systemImage: "flame.fill")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.red)
-                                .padding(.horizontal, Theme.Spacing.s)
-                                .padding(.vertical, Theme.Spacing.xs)
-                                .background(RoundedRectangle(cornerRadius: 6).fill(.red.opacity(0.1)))
+        if !entry.notes.isEmpty || entry.onPump || entry.energyLevel != nil {
+            BentoSection(title: Text("Notizen")) {
+                BentoCard(style: .outlined, padding: .lg, radius: .large) {
+                    VStack(alignment: .leading, spacing: theme.spacing.md) {
+                        if entry.onPump || entry.energyLevel != nil {
+                            BentoFlowLayout(spacing: theme.spacing.xs) {
+                                if entry.onPump {
+                                    BentoBadge(Text("Pump"), tone: .danger, systemImage: "flame.fill")
+                                }
+                                if let e = entry.energyLevel {
+                                    BentoBadge(
+                                        Text(verbatim: String(repeating: "⚡️", count: e)),
+                                        tone: .warning,
+                                        systemImage: "bolt.fill"
+                                    )
+                                }
+                            }
                         }
-                        if let e = entry.energyLevel {
-                            Label(String(repeating: "⚡️", count: e), systemImage: "bolt.fill")
-                                .font(.subheadline)
-                                .padding(.horizontal, Theme.Spacing.s)
-                                .padding(.vertical, Theme.Spacing.xs)
-                                .background(RoundedRectangle(cornerRadius: 6).fill(.yellow.opacity(0.1)))
+
+                        if !entry.notes.isEmpty {
+                            BentoText(verbatim: entry.notes, style: .body, color: theme.colors.onSurfaceMuted)
                         }
                     }
-
-                    if !entry.notes.isEmpty {
-                        Text(entry.notes)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(Theme.Spacing.l)
-                .cardStyle()
-                .padding(.horizontal, Theme.Spacing.l)
             }
         }
     }

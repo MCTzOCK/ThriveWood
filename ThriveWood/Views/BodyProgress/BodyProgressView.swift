@@ -38,19 +38,19 @@ enum ChartMetric: String, CaseIterable {
         }
     }
 
-    var tint: Color {
+    var tone: BentoTone {
         switch self {
         case .weight: return .blue
-        case .bodyFat: return .orange
-        case .neck: return .mint
-        case .shoulders: return .indigo
+        case .bodyFat: return .warning
+        case .neck: return .info
+        case .shoulders: return .accent
         case .chest: return .green
-        case .biceps: return .orange
-        case .forearms: return .teal
-        case .waist: return .purple
+        case .biceps: return .warning
+        case .forearms: return .info
+        case .waist: return .pink
         case .hip: return .pink
         case .thighs: return .blue
-        case .calves: return .cyan
+        case .calves: return .info
         }
     }
 
@@ -88,6 +88,7 @@ enum ChartMetric: String, CaseIterable {
 
 struct BodyProgressView: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(\.bentoTheme) private var theme
     @State private var authenticated = false
     @State private var entries: [BodyProgressEntry] = []
     @State private var showingAddSheet = false
@@ -111,75 +112,89 @@ struct BodyProgressView: View {
     }
 
     private var content: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.l) {
-                    if entries.isEmpty {
-                        emptyState
-                    } else {
-                        bodyMapCard
-                        if entriesForChart.count >= 2 { chartCard }
-                        if entries.contains(where: { !$0.photoPaths.isEmpty }) {
-                            galleryButton
-                        }
-                        timelineList
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            BentoPageHeader(
+                eyebrow: Text("FORTSCHRITT"),
+                title: Text("Körper"),
+                subtitle: Text(entries.isEmpty ? "Noch keine Einträge" : "\(entries.count) Einträge")
+            ) {
+                if entries.contains(where: { !$0.photoPaths.isEmpty }) {
+                    BentoIconButton(
+                        systemImage: "photo.on.rectangle.angled",
+                        accessibilityLabel: Text("Galerie"),
+                        variant: .secondary
+                    ) {
+                        showingGallery = true
                     }
                 }
-                .padding(.vertical, Theme.Spacing.l)
-                .padding(.bottom, 100)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Körper")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: Theme.Spacing.s) {
-                        if entries.contains(where: { !$0.photoPaths.isEmpty }) {
-                            Button { showingGallery = true } label: {
-                                Image(systemName: "photo.on.rectangle.angled")
-                                    .font(.title3)
-                            }
-                        }
-                        Button { showingAddSheet = true } label: {
-                            Image(systemName: "plus.circle.fill").font(.title3)
-                        }
-                    }
+                BentoIconButton(
+                    systemImage: "plus",
+                    accessibilityLabel: Text("Neuer Eintrag"),
+                    variant: .primary
+                ) {
+                    showingAddSheet = true
                 }
             }
-            .sheet(isPresented: $showingAddSheet) {
-                BodyProgressEntryEditor(env: env, existingEntry: nil) {
-                    loadEntries()
-                    showingAddSheet = false
+
+            if entries.isEmpty {
+                emptyState
+            } else {
+                bodyMapCard
+                if entriesForChart.count >= 2 { chartCard }
+                if entries.contains(where: { !$0.photoPaths.isEmpty }) {
+                    galleryButton
                 }
+                timelineList
             }
-            .sheet(item: $editingEntry) { entry in
+
+            Spacer(minLength: theme.spacing.xxl)
+        }
+        .bentoSheet(
+            isPresented: $showingAddSheet,
+            title: Text("Neuer Eintrag"),
+            detents: [.large]
+        ) {
+            BodyProgressEntryEditor(env: env, existingEntry: nil) {
+                loadEntries()
+                showingAddSheet = false
+            }
+        }
+        .bentoSheet(
+            isPresented: Binding(
+                get: { editingEntry != nil },
+                set: { if !$0 { editingEntry = nil } }
+            ),
+            title: Text("Eintrag bearbeiten"),
+            detents: [.large]
+        ) {
+            if let entry = editingEntry {
                 BodyProgressEntryEditor(env: env, existingEntry: entry) {
                     loadEntries()
                     editingEntry = nil
                 }
             }
-            .fullScreenCover(item: $selectedEntry) { entry in
-                BodyProgressDetailView(entry: entry, env: env) {
-                    loadEntries()
-                } onEdit: {
-                    editingEntry = entry
-                    selectedEntry = nil
-                } onDelete: {
-                    env.bodyProgressService.deleteEntry(entry)
-                    Haptics.selection()
-                    selectedEntry = nil
-                    loadEntries()
-                }
-            }
-            .fullScreenCover(isPresented: $showingGallery) {
-                BodyProgressGalleryView(entries: entries.reversed())
-            }
-            .errorAlert(errors)
         }
+        .fullScreenCover(item: $selectedEntry) { entry in
+            BodyProgressDetailView(entry: entry, env: env) {
+                loadEntries()
+            } onEdit: {
+                editingEntry = entry
+                selectedEntry = nil
+            } onDelete: {
+                env.bodyProgressService.deleteEntry(entry)
+                Haptics.selection()
+                selectedEntry = nil
+                loadEntries()
+            }
+        }
+        .fullScreenCover(isPresented: $showingGallery) {
+            BodyProgressGalleryView(entries: entries.reversed())
+        }
+        .errorAlert(errors)
         .task { loadEntries() }
         .onChange(of: selectedZone) { _, newZone in
             if let zone = newZone {
-                withAnimation(.easeInOut(duration: 0.25)) {
+                withAnimation(theme.motion.snappy) {
                     chartMetric = zone.chartMetric
                 }
             }
@@ -189,25 +204,35 @@ struct BodyProgressView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.l) {
-            Spacer().frame(height: Theme.Spacing.xxl)
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.system(size: 52))
-                .foregroundStyle(.tertiary)
-            Text("Noch keine Einträge")
-                .font(.title3.weight(.semibold))
-            Text("Erstelle deinen ersten Eintrag, um deinen Fortschritt zu verfolgen.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button { showingAddSheet = true } label: {
-                Label("Ersten Eintrag erstellen", systemImage: "plus.circle.fill")
-                    .font(.headline)
+        BentoCard(tone: .accent, style: .elevated, padding: .xl, radius: .extraLarge) {
+            VStack(spacing: theme.spacing.lg) {
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.system(size: 56))
+                    .foregroundStyle(theme.colors.onAccent)
+                    .symbolEffect(.bounce, value: true)
+
+                VStack(spacing: theme.spacing.xs) {
+                    BentoText("Noch keine Einträge", style: .title3, color: theme.colors.onAccent)
+                    BentoText(
+                        "Erstelle deinen ersten Eintrag, um deinen Fortschritt zu verfolgen.",
+                        style: .body,
+                        color: theme.colors.onAccent.opacity(0.85)
+                    )
+                    .multilineTextAlignment(.center)
+                }
+
+                BentoButton(
+                    Text("Ersten Eintrag erstellen"),
+                    systemImage: "plus.circle.fill",
+                    variant: .secondary,
+                    expands: true
+                ) {
+                    showingAddSheet = true
+                }
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.top, Theme.Spacing.s)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, Theme.Spacing.xl)
+        .padding(.top, theme.spacing.xl)
     }
 
     // MARK: - Body Map Card
@@ -215,57 +240,61 @@ struct BodyProgressView: View {
     private var bodyMapCard: some View {
         let latest = entries.first!
 
-        return VStack(spacing: Theme.Spacing.m) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(latest.date.formatted(.dateTime.day().month(.abbreviated)))
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text("Aktueller Stand")
-                        .font(.headline)
+        return BentoCard(style: .outlined, padding: .lg, radius: .large) {
+            VStack(spacing: theme.spacing.md) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        BentoText(
+                            verbatim: latest.date.formatted(.dateTime.day().month(.abbreviated)),
+                            style: .caption,
+                            color: theme.colors.onSurfaceMuted
+                        )
+                        BentoText("Aktueller Stand", style: .headline)
+                    }
+                    Spacer()
+                    if let w = latest.weightKg {
+                        BentoBadge(
+                            Text(verbatim: String(format: "%.1f %@", w, latest.weightUnitRaw == "kg" ? "kg" : "lbs")),
+                            tone: .blue,
+                            systemImage: "scalemass.fill"
+                        )
+                    }
+                    if let bf = latest.bodyFatPercentage {
+                        BentoBadge(
+                            Text(verbatim: String(format: "%.1f%%", bf)),
+                            tone: .warning
+                        )
+                    }
                 }
-                Spacer()
-                if let w = latest.weightKg {
-                    Text(String(format: "%.1f %@", w, latest.weightUnitRaw == "kg" ? "kg" : "lbs"))
-                        .font(.subheadline.bold().monospacedDigit())
-                        .foregroundStyle(.blue)
-                }
-                if let bf = latest.bodyFatPercentage {
-                    Text(String(format: "%.1f%%", bf))
-                        .font(.subheadline.bold().monospacedDigit())
-                        .foregroundStyle(.orange)
-                }
-            }
 
-            BodyMeasurementMapView(entry: latest, selectedZone: $selectedZone, showFront: $showFront)
+                BodyMeasurementMapView(entry: latest, selectedZone: $selectedZone, showFront: $showFront)
 
-            if let zone = selectedZone {
-                zoneDetailRow(for: zone, entry: latest)
+                if let zone = selectedZone {
+                    BentoDivider()
+                    zoneDetailRow(for: zone, entry: latest)
+                }
             }
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
-        .padding(.horizontal, Theme.Spacing.l)
     }
 
     private func zoneDetailRow(for zone: MeasurementZone, entry: BodyProgressEntry) -> some View {
-        HStack(spacing: Theme.Spacing.m) {
-            Image(systemName: zoneIcon(for: zone))
-                .font(.callout)
-                .foregroundStyle(Color.accentColor)
+        HStack(spacing: theme.spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(theme.colors.accent.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: zoneIcon(for: zone))
+                    .font(.callout)
+                    .foregroundStyle(theme.colors.accent)
+            }
             VStack(alignment: .leading, spacing: 1) {
-                Text(zone.label)
-                    .font(.subheadline.weight(.semibold))
+                BentoText(verbatim: zone.label, style: .bodyStrong)
                 if let val = zoneValueText(for: zone, entry: entry) {
-                    Text(val)
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                    BentoText(verbatim: val, style: .callout, color: theme.colors.onSurfaceMuted)
                 }
             }
             Spacer()
         }
-        .padding(.horizontal, Theme.Spacing.s)
-        .padding(.vertical, Theme.Spacing.xs)
     }
 
     private func zoneIcon(for zone: MeasurementZone) -> String {
@@ -321,134 +350,153 @@ struct BodyProgressView: View {
 
     private var chartCard: some View {
         let data = entriesForChart
-        let titleSuffix = chartMetric == .weight ? "verlauf" : "verlauf"
 
-        return VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("\(chartMetric.rawValue)\(titleSuffix)")
-                .font(.headline)
-                .padding(.horizontal, Theme.Spacing.l)
+        return BentoSection(
+            title: Text("\(chartMetric.rawValue)verlauf"),
+            subtitle: Text("\(data.count) Messungen")
+        ) {
+            BentoCard(style: .outlined, padding: .md, radius: .large) {
+                VStack(alignment: .leading, spacing: theme.spacing.md) {
+                    // Metric chips
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: theme.spacing.xs) {
+                            ForEach(ChartMetric.allCases, id: \.self) { metric in
+                                BentoChip(
+                                    Text(verbatim: metric.rawValue),
+                                    systemImage: metric.icon,
+                                    tone: metric.tone,
+                                    isSelected: chartMetric == metric
+                                ) {
+                                    Haptics.selection()
+                                    withAnimation(theme.motion.snappy) {
+                                        chartMetric = metric
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-            if data.count >= 2 {
-                Chart {
-                    ForEach(Array(data.enumerated()), id: \.offset) { _, point in
-                        AreaMark(x: .value("Datum", point.date), y: .value(chartMetric.rawValue, point.value))
-                            .interpolationMethod(.catmullRom)
-                            .foregroundStyle(LinearGradient(colors: [chartMetric.tint.opacity(0.3), chartMetric.tint.opacity(0.05)], startPoint: .top, endPoint: .bottom))
-                        LineMark(x: .value("Datum", point.date), y: .value(chartMetric.rawValue, point.value))
-                            .interpolationMethod(.catmullRom)
-                            .foregroundStyle(chartMetric.tint)
-                            .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    if data.count >= 2 {
+                        Chart {
+                            ForEach(Array(data.enumerated()), id: \.offset) { _, point in
+                                AreaMark(x: .value("Datum", point.date), y: .value(chartMetric.rawValue, point.value))
+                                    .interpolationMethod(.catmullRom)
+                                    .foregroundStyle(LinearGradient(
+                                        colors: [theme.colors.accent.opacity(0.3), theme.colors.accent.opacity(0.05)],
+                                        startPoint: .top, endPoint: .bottom
+                                    ))
+                                LineMark(x: .value("Datum", point.date), y: .value(chartMetric.rawValue, point.value))
+                                    .interpolationMethod(.catmullRom)
+                                    .foregroundStyle(theme.colors.accent)
+                                    .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                            }
+                        }
+                        .chartYAxis { AxisMarks(position: .leading) { AxisGridLine().foregroundStyle(theme.colors.outlineSubtle); AxisValueLabel() } }
+                        .chartXAxis { AxisMarks(values: .stride(by: data.count > 60 ? .month : data.count > 14 ? .weekOfYear : .day)) { AxisGridLine().foregroundStyle(theme.colors.outlineSubtle.opacity(0.5)); AxisValueLabel(format: .dateTime.day().month(.abbreviated)) } }
+                        .frame(height: 180)
                     }
                 }
-                .chartYAxis { AxisMarks(position: .leading) { AxisGridLine().foregroundStyle(.secondary.opacity(0.15)); AxisValueLabel() } }
-                .chartXAxis { AxisMarks(values: .stride(by: data.count > 60 ? .month : data.count > 14 ? .weekOfYear : .day)) { AxisGridLine().foregroundStyle(.secondary.opacity(0.1)); AxisValueLabel(format: .dateTime.day().month(.abbreviated)) } }
-                .frame(height: 160)
-                .padding(.horizontal, Theme.Spacing.m)
             }
         }
-        .padding(.vertical, Theme.Spacing.m)
-        .cardStyle()
-        .padding(.horizontal, Theme.Spacing.l)
     }
 
     // MARK: - Gallery Button
 
     private var galleryButton: some View {
         Button { showingGallery = true } label: {
-            HStack(spacing: Theme.Spacing.m) {
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.title2)
-                    .foregroundStyle(.blue)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Fotogalerie")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Alle Fortschrittsfotos chronologisch")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            BentoCard(style: .outlined, padding: .lg, radius: .large) {
+                HStack(spacing: theme.spacing.md) {
+                    ZStack {
+                        Circle()
+                            .fill(theme.colors.accent.opacity(0.12))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: "photo.on.rectangle.angled")
+                            .foregroundStyle(theme.colors.accent)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        BentoText("Fotogalerie", style: .bodyStrong)
+                        BentoText("Alle Fortschrittsfotos chronologisch", style: .caption, color: theme.colors.onSurfaceMuted)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(theme.colors.onSurfaceMuted)
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
             }
-            .padding(Theme.Spacing.l)
-            .cardStyle()
-            .padding(.horizontal, Theme.Spacing.l)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleStyle())
     }
 
     // MARK: - Timeline
 
     private var timelineList: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Verlauf")
-                .font(.headline)
-                .padding(.horizontal, Theme.Spacing.l)
+        VStack(alignment: .leading, spacing: theme.spacing.md) {
+            BentoSectionHeader(title: Text("Verlauf"), subtitle: Text("\(entries.count) Einträge"))
 
-            ForEach(entries) { entry in
-                Button { selectedEntry = entry } label: {
-                    entryRow(entry)
+            VStack(spacing: theme.spacing.sm) {
+                ForEach(entries) { entry in
+                    Button { selectedEntry = entry } label: {
+                        entryRow(entry)
+                    }
+                    .buttonStyle(PressScaleStyle())
                 }
-                .buttonStyle(.plain)
             }
         }
     }
 
     private func entryRow(_ entry: BodyProgressEntry) -> some View {
-        HStack(spacing: Theme.Spacing.m) {
-            VStack(spacing: 2) {
-                Text(entry.date.formatted(.dateTime.day()))
-                    .font(.title3.bold().monospacedDigit())
-                Text(entry.date.formatted(.dateTime.month(.abbreviated)))
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .frame(width: 40)
+        BentoCard(style: .outlined, padding: .md, radius: .large) {
+            HStack(spacing: theme.spacing.md) {
+                VStack(spacing: 2) {
+                    Text(verbatim: entry.date.formatted(.dateTime.day()))
+                        .font(Theme.Typography.title3.bold().monospacedDigit())
+                    BentoText(
+                        verbatim: entry.date.formatted(.dateTime.month(.abbreviated)),
+                        style: .caption,
+                        color: theme.colors.onSurfaceMuted
+                    )
+                }
+                .frame(width: 44)
 
-            RoundedRectangle(cornerRadius: 1)
-                .fill(Color.accentColor.opacity(0.3))
-                .frame(width: 2, height: 36)
+                Rectangle()
+                    .fill(theme.colors.accent.opacity(0.3))
+                    .frame(width: 2, height: 36)
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: Theme.Spacing.s) {
-                    if let w = entry.weightKg {
-                        Text(String(format: "%.1f %@", w, entry.weightUnitRaw))
-                            .font(.subheadline.weight(.semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: theme.spacing.xs) {
+                        if let w = entry.weightKg {
+                            BentoText(verbatim: String(format: "%.1f %@", w, entry.weightUnitRaw), style: .bodyStrong)
+                        }
+                        if let bf = entry.bodyFatPercentage {
+                            BentoBadge(Text(verbatim: String(format: "%.1f%%", bf)), tone: .warning)
+                        }
+                        if let waist = entry.waistCm {
+                            let u = entry.measurementUnitRaw == "in" ? "in" : "cm"
+                            BentoText(verbatim: String(format: "%.0f %@", waist, u), style: .caption, color: theme.colors.onSurfaceMuted)
+                        }
                     }
-                    if let bf = entry.bodyFatPercentage {
-                        Text(String(format: "%.1f%%", bf))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.orange)
-                    }
-                    if let waist = entry.waistCm {
-                        let u = entry.measurementUnitRaw == "in" ? "in" : "cm"
-                        Text(String(format: "%.0f %@", waist, u))
-                            .font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: theme.spacing.xs) {
+                        if !entry.photoPaths.isEmpty {
+                            Image(systemName: "photo.fill").font(.caption2).foregroundStyle(theme.colors.accent)
+                        }
+                        if !entry.notes.isEmpty {
+                            Image(systemName: "note.text").font(.caption2).foregroundStyle(theme.colors.onSurfaceMuted)
+                        }
+                        if entry.onPump {
+                            BentoBadge(Text("Pump"), tone: .danger)
+                        }
+                        if let e = entry.energyLevel {
+                            BentoBadge(Text(verbatim: String(repeating: "⚡️", count: e)), tone: .warning)
+                        }
                     }
                 }
-                HStack(spacing: Theme.Spacing.xs) {
-                    if !entry.photoPaths.isEmpty {
-                        Image(systemName: "photo.fill").font(.caption2).foregroundStyle(.blue)
-                    }
-                    if !entry.notes.isEmpty {
-                        Image(systemName: "note.text").font(.caption2).foregroundStyle(.secondary)
-                    }
-                    if entry.onPump {
-                        Text("Pump").font(.caption2).fontWeight(.bold).foregroundStyle(.red)
-                    }
-                    if let e = entry.energyLevel {
-                        Text(String(repeating: "⚡️", count: e)).font(.caption2)
-                    }
-                }
-            }
 
-            Spacer()
-            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(theme.colors.onSurfaceMuted)
+            }
         }
-        .padding(Theme.Spacing.m)
-        .cardStyle()
-        .padding(.horizontal, Theme.Spacing.l)
     }
 
     // MARK: - Auth

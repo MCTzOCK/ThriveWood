@@ -9,6 +9,7 @@ import SwiftUI
 
 struct BodyProgressGalleryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.bentoTheme) private var theme
     let entries: [BodyProgressEntry]
 
     @State private var selectedPhoto: PhotoLocation?
@@ -18,41 +19,57 @@ struct BodyProgressGalleryView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: Theme.Spacing.xl) {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+                BentoPageHeader(
+                    eyebrow: Text("FORTSCHRITT"),
+                    title: Text("Fotogalerie"),
+                    subtitle: Text("\(entriesWithPhotos.count) Einträge mit Fotos")
+                ) {
+                    BentoIconButton(
+                        systemImage: "xmark",
+                        accessibilityLabel: Text("Schließen"),
+                        variant: .secondary
+                    ) {
+                        dismiss()
+                    }
+                }
+                .foregroundStyle(.white)
+
+                LazyVStack(spacing: theme.spacing.xl) {
                     ForEach(entriesWithPhotos, id: \.id) { entry in
                         dateSection(for: entry)
                     }
                 }
-                .padding(.vertical, Theme.Spacing.l)
             }
-            .background(Color.black)
-            .navigationTitle("Fotogalerie")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fertig") { dismiss() }
-                        .foregroundStyle(.white)
-                }
-            }
-            .fullScreenCover(item: $selectedPhoto) { loc in
-                PhotoViewer(entries: entriesWithPhotos, initialEntry: loc.entryIndex, initialPhoto: loc.photoIndex)
-            }
+        }
+        .fullScreenCover(item: $selectedPhoto) { loc in
+            PhotoViewer(entries: entriesWithPhotos, initialEntry: loc.entryIndex, initialPhoto: loc.photoIndex)
         }
     }
 
     private func dateSection(for entry: BodyProgressEntry) -> some View {
-        VStack(spacing: Theme.Spacing.s) {
-            Text("— \(entry.date.formatted(.dateTime.day().month(.wide).year())) —")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.7))
+        VStack(spacing: theme.spacing.sm) {
+            HStack {
+                Rectangle()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(height: 1)
+                BentoText(
+                    verbatim: entry.date.formatted(.dateTime.day().month(.wide).year()),
+                    style: .callout,
+                    color: .white.opacity(0.8)
+                )
+                Rectangle()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(height: 1)
+            }
 
-            let columns = [GridItem(.adaptive(minimum: (UIScreen.main.bounds.width - Theme.Spacing.l * 2 - Theme.Spacing.s) / 3), spacing: Theme.Spacing.s)]
+            let columns = [GridItem(.adaptive(minimum: (UIScreen.main.bounds.width - theme.spacing.lg * 2 - theme.spacing.sm) / 3), spacing: theme.spacing.sm)]
 
-            LazyVGrid(columns: columns, spacing: Theme.Spacing.s) {
+            LazyVGrid(columns: columns, spacing: theme.spacing.sm) {
                 ForEach(Array(entry.photoPaths.enumerated()), id: \.offset) { index, path in
                     if let image = loadImage(path) {
                         Button {
@@ -63,14 +80,13 @@ struct BodyProgressGalleryView: View {
                             Image(uiImage: image)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: (UIScreen.main.bounds.width - Theme.Spacing.l * 2 - Theme.Spacing.s * 2) / 3,
-                                       height: (UIScreen.main.bounds.width - Theme.Spacing.l * 2 - Theme.Spacing.s * 2) / 3)
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .frame(width: (UIScreen.main.bounds.width - theme.spacing.lg * 2 - theme.spacing.sm * 2) / 3,
+                                       height: (UIScreen.main.bounds.width - theme.spacing.lg * 2 - theme.spacing.sm * 2) / 3)
+                                .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
                         }
                     }
                 }
             }
-            .padding(.horizontal, Theme.Spacing.l)
         }
     }
 
@@ -131,11 +147,11 @@ struct PhotoViewer: View {
                     .foregroundStyle(.white.opacity(0.8))
             }
             Spacer()
-            Text(currentEntry.date.formatted(.dateTime.day().month(.abbreviated).year()))
+            Text(verbatim: currentEntry.date.formatted(.dateTime.day().month(.abbreviated).year()))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.8))
             Spacer()
-            Text("\(photoNumber) / \(totalPhotos)")
+            Text(verbatim: "\(photoNumber) / \(totalPhotos)")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.white.opacity(0.6))
         }
@@ -155,12 +171,13 @@ struct PhotoViewer: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .always))
+        .indexViewStyle(.page(backgroundDisplayMode: .always))
     }
 
     private var footer: some View {
         VStack(spacing: Theme.Spacing.xs) {
             if totalPhotos > 1 {
-                Text("\(currentEntryIndex + 1) von \(entries.count) Einträgen")
+                Text(verbatim: "\(currentEntryIndex + 1) von \(entries.count) Einträgen")
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.5))
             }
