@@ -105,42 +105,45 @@ struct BentoSettingsView: View {
     // MARK: - Content
 
     private func content(profile: UserProfile) -> some View {
-        @Bindable var profile = profile
-
-        return BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
-            VStack(spacing: Theme.Spacing.l) {
-                pageHeader
-
-                profileHeroCard(profile: profile)
-
-                subscriptionCard
-
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            // Type-Erasure an den Sektions-Grenzen: verhindert, dass der
+            // gesamte Profil-Tab als ein einziger riesiger generischer
+            // Composite-Type kompiliert wird (Stack-Overflow auf dem Gerät:
+            // EXC_BAD_ACCESS code=2 beim Tab-Wechsel).
+            AnyView(
                 VStack(spacing: Theme.Spacing.l) {
-                    habitsAndGoalsSection(profile: profile)
-                    sportSection(profile: profile)
-                    notificationsSection(profile: profile)
-                    appleHealthSection
-                    appIconSection
-                    onboardingSection
-                    dataSection
-                    aboutSection
+                    AnyView(pageHeader)
+                    AnyView(profileHeroCard(profile: profile))
+                    AnyView(subscriptionCard)
+
+                    AnyView(
+                        VStack(spacing: Theme.Spacing.l) {
+                            AnyView(habitsAndGoalsSection(profile: profile))
+                            AnyView(sportSection(profile: profile))
+                            AnyView(notificationsSection(profile: profile))
+                            AnyView(appleHealthSection)
+                            AnyView(appIconSection)
+                            AnyView(onboardingSection)
+                            AnyView(dataSection)
+                            AnyView(aboutSection)
+                        }
+                        .padding(.horizontal, Theme.Spacing.l)
+                    )
+
+                    AnyView(dangerZone)
+                    AnyView(footerText)
                 }
-                .padding(.horizontal, Theme.Spacing.l)
-
-                dangerZone
-
-                footerText
+                .padding(.bottom, Theme.Spacing.xxxl)
+            )
+            .onChange(of: profile.dailyPointGoal) { _, _ in save(profile) }
+            .onChange(of: profile.weekStartsOnRaw) { _, _ in
+                AppCalendarConfig.shared.update(weekStartsOn: profile.weekStartsOn)
+                save(profile)
             }
-            .padding(.bottom, Theme.Spacing.xxxl)
+            .onChange(of: profile.preferredWeightUnitRaw) { _, _ in save(profile) }
+            .onChange(of: profile.defaultRestSeconds) { _, _ in save(profile) }
+            .onChange(of: profile.iCloudSyncEnabled) { _, _ in save(profile) }
         }
-        .onChange(of: profile.dailyPointGoal) { _, _ in save(profile) }
-        .onChange(of: profile.weekStartsOnRaw) { _, _ in
-            AppCalendarConfig.shared.update(weekStartsOn: profile.weekStartsOn)
-            save(profile)
-        }
-        .onChange(of: profile.preferredWeightUnitRaw) { _, _ in save(profile) }
-        .onChange(of: profile.defaultRestSeconds) { _, _ in save(profile) }
-        .onChange(of: profile.iCloudSyncEnabled) { _, _ in save(profile) }
     }
 
     // MARK: - Page Header
