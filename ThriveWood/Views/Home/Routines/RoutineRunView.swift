@@ -42,13 +42,25 @@ final class RoutineRunViewModel {
         } catch { errors.show(error) }
     }
 
+    /// Routine-Zielwert für ein Habit: wenn in `routine.habitTargets` hinterlegt
+    /// und > 0, dieser; sonst das Tagesziel des Habits.
+    func routineTarget(for habit: Habit) -> Double {
+        let custom = routine.habitTargets[habit.id] ?? 0
+        return custom > 0 ? custom : habit.targetValue
+    }
+
     private func refreshStatus() {
         completedIDs.removeAll()
         progress.removeAll()
         for habit in habits {
-            let p = (try? env.habitService.currentProgress(habit)) ?? (value: 0, target: habit.targetValue, progress: 0)
-            progress[habit.id] = p
-            if p.progress >= 1.0 { completedIDs.insert(habit.id) }
+            let target = routineTarget(for: habit)
+            let daily = (try? env.habitService.currentProgress(habit))
+                ?? (value: 0, target: habit.targetValue, progress: 0)
+            // Für die Routine zählt der Tagesfortschritt nur bis zum Routine-Ziel.
+            let value = min(daily.value, target)
+            let p = target > 0 ? min(1.0, value / target) : (habit.isMeasurable ? 0 : 1.0)
+            progress[habit.id] = (value: value, target: target, progress: p)
+            if p >= 1.0 { completedIDs.insert(habit.id) }
         }
     }
 
@@ -61,8 +73,19 @@ final class RoutineRunViewModel {
     }
 
     func increment(_ habit: Habit) {
+        // Simple Habits werden über toggle abgehakt.
+        guard habit.isMeasurable else { toggle(habit); return }
         do {
-            _ = try env.habitService.increment(habit)
+            let target = routineTarget(for: habit)
+            let current = (try? env.habitService.currentProgress(habit).value) ?? 0
+            let step = habit.incrementValue
+            // Wenn der nächste volle Schritt über das Routine-Ziel hinausschießt,
+            // exakt auf das Ziel setzen (z. B. 250ml-Schritte landen punktgenau bei 500ml).
+            if current < target && current + step > target {
+                _ = try env.habitService.setValue(habit, value: target)
+            } else {
+                _ = try env.habitService.increment(habit)
+            }
             refreshStatus()
             checkCompletion()
         } catch { errors.show(error) }
