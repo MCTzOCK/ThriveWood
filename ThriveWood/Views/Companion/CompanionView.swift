@@ -2,8 +2,9 @@
 //  CompanionView.swift
 //  ThriveWood
 //
-//  Detail-Ansicht des „Thrive Companion": großes Wesen, Energie, Evolution,
-//  Umbenennen, Companion wechseln. Wird als bentoSheet präsentiert.
+//  Detail-Ansicht des „Thrive Companion": großes animiertes Wesen, Energie,
+//  Evolution, Umbenennen, Companion wechseln. Observiert CompanionService
+//  direkt → alle Änderungen sofort live.
 //
 
 import SwiftUI
@@ -11,11 +12,13 @@ import SwiftUI
 struct CompanionView: View {
     @Environment(\.bentoTheme) private var theme
     @Environment(\.dismiss) private var dismiss
-    @Bindable var vm: CompanionViewModel
+    @Environment(AppEnvironment.self) private var env
 
     @State private var editingName = false
     @State private var nameDraft = ""
     @State private var switchingCompanion = false
+
+    private var service: CompanionService { env.companionService }
 
     var body: some View {
         VStack(spacing: theme.spacing.lg) {
@@ -23,15 +26,16 @@ struct CompanionView: View {
             energyCard
             evolutionCard
             actionsCard
-            if vm.decayPaused { decayPausedHint }
+            if service.decayPaused { decayPausedHint }
             Spacer(minLength: theme.spacing.lg)
         }
         .padding(.horizontal, theme.spacing.lg)
         .padding(.top, theme.spacing.md)
-        .animation(theme.motion.snappy, value: vm.energy)
-        .animation(theme.motion.snappy, value: vm.stage)
+        .animation(theme.motion.snappy, value: service.energy)
+        .animation(theme.motion.snappy, value: service.stage)
+        .animation(theme.motion.snappy, value: service.revision)
         .bentoSheet(isPresented: $switchingCompanion, title: Text("Companion wechseln"), detents: [.medium, .large]) {
-            CompanionPicker(vm: vm)
+            CompanionPicker(onChosen: { switchingCompanion = false })
         }
     }
 
@@ -39,31 +43,27 @@ struct CompanionView: View {
 
     private var hero: some View {
         VStack(spacing: theme.spacing.sm) {
-            ZStack {
-                Circle()
-                    .fill(speciesColor.opacity(0.15))
-                    .frame(width: 132, height: 132)
-                Image(systemName: vm.species.symbol)
-                    .font(.system(size: 56, weight: .semibold))
-                    .foregroundStyle(speciesColor)
-                    .symbolEffect(.bounce, value: vm.energy)
-                    .symbolEffect(.pulse, options: .repeating, isActive: vm.mood == .critical)
-            }
+            CompanionCreature(
+                species: service.species.kitType,
+                stage: service.stage.kitType,
+                mood: service.mood.kitType,
+                size: 132
+            )
+            .padding(.top, theme.spacing.sm)
 
             VStack(spacing: 2) {
-                Text(vm.name)
+                Text(service.name)
                     .font(.system(size: 24, weight: .bold))
-                Text("\(vm.species.label) · \(vm.stage.label)")
+                Text("\(service.species.label) · \(service.stage.label)")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(.secondary)
-                Text("\(vm.mood.emoji) \(vm.mood.label)")
+                Text("\(service.mood.emoji) \(service.mood.label)")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(moodColor)
                     .padding(.top, 2)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, theme.spacing.sm)
     }
 
     // MARK: - Energie
@@ -74,12 +74,12 @@ struct CompanionView: View {
                 HStack {
                     BentoText(verbatim: "Energie", style: .headline)
                     Spacer()
-                    Text("\(Int(vm.energy)) / 100")
+                    Text("\(Int(service.energy)) / 100")
                         .font(Theme.Typography.mono.weight(.semibold))
                         .foregroundStyle(moodColor)
                         .contentTransition(.numericText())
                 }
-                BentoProgressBar(progress: vm.energy / 100, tone: moodTone, height: 12)
+                BentoProgressBar(progress: service.energy / 100, tone: moodTone, height: 12)
                 BentoText(
                     verbatim: "Steigt durch erledigte Habits, Workouts und dein Tagesziel. Sinkt bei mehrtägiger Inaktivität.",
                     style: .caption,
@@ -98,7 +98,7 @@ struct CompanionView: View {
                 HStack {
                     BentoText(verbatim: "Entwicklung", style: .headline)
                     Spacer()
-                    BentoBadge(Text("\(vm.activeDaysTotal)"), tone: .accent, systemImage: "calendar.badge.checkmark")
+                    BentoBadge(Text("\(service.activeDaysTotal)"), tone: .accent, systemImage: "calendar.badge.checkmark")
                 }
 
                 HStack(spacing: theme.spacing.xs) {
@@ -106,26 +106,26 @@ struct CompanionView: View {
                         VStack(spacing: 4) {
                             ZStack {
                                 Circle()
-                                    .fill(stage.rawValue <= vm.stage.rawValue
+                                    .fill(stage.rawValue <= service.stage.rawValue
                                           ? speciesColor.opacity(0.18)
                                           : Color.gray.opacity(0.12))
                                     .frame(width: 40, height: 40)
                                 Image(systemName: stageIcon(stage))
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(stage.rawValue <= vm.stage.rawValue
+                                    .foregroundStyle(stage.rawValue <= service.stage.rawValue
                                                      ? speciesColor
                                                      : Color.secondary.opacity(0.5))
                             }
                             Text(stage.label)
                                 .font(Theme.Typography.caption2)
-                                .foregroundStyle(stage.rawValue <= vm.stage.rawValue ? .primary : .secondary)
+                                .foregroundStyle(stage.rawValue <= service.stage.rawValue ? .primary : .secondary)
                         }
                         .frame(maxWidth: .infinity)
                     }
                 }
 
-                BentoProgressBar(progress: vm.nextStageProgress, tone: .accent, height: 6)
-                BentoText(verbatim: vm.nextStageLabel, style: .caption, color: .secondary)
+                BentoProgressBar(progress: nextStageProgress, tone: .accent, height: 6)
+                BentoText(verbatim: nextStageLabel, style: .caption, color: .secondary)
             }
         }
     }
@@ -139,13 +139,13 @@ struct CompanionView: View {
                     HStack(spacing: theme.spacing.xs) {
                         BentoTextField(text: $nameDraft, prompt: Text("Name"))
                         BentoButton(Text("OK"), variant: .primary, size: .small) {
-                            vm.rename(nameDraft)
+                            service.rename(nameDraft)
                             editingName = false
                         }
                     }
                 } else {
                     BentoButton(Text("Umbenennen"), systemImage: "pencil", variant: .secondary, expands: true) {
-                        nameDraft = vm.name
+                        nameDraft = service.name
                         editingName = true
                     }
                 }
@@ -155,12 +155,12 @@ struct CompanionView: View {
                 }
 
                 BentoButton(
-                    Text(vm.decayPaused ? "Energie-Verfall deaktiviert" : "Energie-Verfall pausieren"),
-                    systemImage: vm.decayPaused ? "play.circle" : "pause.circle",
+                    Text(service.decayPaused ? "Energie-Verfall deaktiviert" : "Energie-Verfall pausieren"),
+                    systemImage: service.decayPaused ? "play.circle" : "pause.circle",
                     variant: .ghost,
                     expands: true
                 ) {
-                    vm.toggleDecayPaused()
+                    service.setDecayPaused(!service.decayPaused)
                 }
             }
         }
@@ -177,7 +177,7 @@ struct CompanionView: View {
     // MARK: - Helper
 
     private var speciesColor: Color {
-        switch vm.species {
+        switch service.species {
         case .fox:  return .orange
         case .owl:  return .indigo
         case .bear: return .brown
@@ -187,7 +187,7 @@ struct CompanionView: View {
     }
 
     private var moodColor: Color {
-        switch vm.mood {
+        switch service.mood {
         case .vibrant:  return .green
         case .content:  return .accentColor
         case .tired:    return .orange
@@ -196,7 +196,7 @@ struct CompanionView: View {
     }
 
     private var moodTone: BentoTone {
-        switch vm.mood {
+        switch service.mood {
         case .vibrant:  return .success
         case .content:  return .accent
         case .tired:    return .warning
@@ -204,11 +204,26 @@ struct CompanionView: View {
         }
     }
 
+    private var nextStageProgress: Double {
+        guard let next = service.stage.nextThreshold else { return 1 }
+        let thresholds = CompanionStage.thresholds
+        guard let idx = thresholds.firstIndex(of: next) else { return 1 }
+        let current = idx > 0 ? thresholds[idx - 1] : 0
+        let span = next - current
+        guard span > 0 else { return 1 }
+        return min(1, Double(service.activeDaysTotal - current) / Double(span))
+    }
+
+    private var nextStageLabel: String {
+        guard let next = service.stage.nextThreshold else { return "Maximale Stufe erreicht" }
+        return "Nächste Stufe in \(max(0, next - service.activeDaysTotal)) aktiven Tagen"
+    }
+
     private func stageIcon(_ stage: CompanionStage) -> String {
         switch stage {
         case .seedling:    return "leaf.fill"
         case .juvenile:    return "sprout"
-        case .adult:       return vm.species.symbol
+        case .adult:       return service.species.symbol
         case .enlightened: return "sparkles"
         }
     }
@@ -218,12 +233,23 @@ struct CompanionView: View {
 
 struct CompanionPicker: View {
     @Environment(\.bentoTheme) private var theme
-    @Bindable var vm: CompanionViewModel
+    @Environment(AppEnvironment.self) private var env
+    let onChosen: () -> Void
+
     @State private var selectedSpecies: CompanionSpecies = .fox
     @State private var nameDraft = ""
 
     var body: some View {
         VStack(spacing: theme.spacing.lg) {
+            // Live-Vorschau der gewählten Art
+            CompanionCreature(
+                species: selectedSpecies.kitType,
+                stage: .seedling,
+                mood: .content,
+                size: 96
+            )
+            .padding(.top, theme.spacing.sm)
+
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: theme.spacing.sm)], spacing: theme.spacing.sm) {
                 ForEach(CompanionSpecies.allCases) { species in
                     speciesTile(species)
@@ -235,8 +261,11 @@ struct CompanionPicker: View {
                 .padding(.horizontal, theme.spacing.lg)
 
             BentoButton(Text("Companion wählen"), systemImage: "checkmark.circle.fill", variant: .primary, expands: true) {
-                vm.choose(species: selectedSpecies, name: nameDraft)
-                nameDraft = ""
+                do {
+                    _ = try env.companionService.choose(species: selectedSpecies, name: nameDraft)
+                    nameDraft = ""
+                    onChosen()
+                } catch { }
             }
             .padding(.horizontal, theme.spacing.lg)
 
@@ -244,8 +273,8 @@ struct CompanionPicker: View {
         }
         .padding(.vertical, theme.spacing.md)
         .onAppear {
-            selectedSpecies = vm.species
-            nameDraft = vm.name
+            selectedSpecies = env.companionService.species
+            nameDraft = env.companionService.name
         }
     }
 
@@ -255,16 +284,7 @@ struct CompanionPicker: View {
             withAnimation(theme.motion.snappy) { selectedSpecies = species }
         } label: {
             VStack(spacing: theme.spacing.xs) {
-                ZStack {
-                    Circle()
-                        .fill(selectedSpecies == species
-                              ? color(for: species).opacity(0.2)
-                              : Color.gray.opacity(0.1))
-                        .frame(width: 56, height: 56)
-                    Image(systemName: species.symbol)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(selectedSpecies == species ? color(for: species) : .secondary)
-                }
+                CompanionCreature(species: species.kitType, stage: .seedling, mood: .content, size: 48)
                 Text(species.label)
                     .font(Theme.Typography.caption.weight(.medium))
                     .foregroundStyle(selectedSpecies == species ? .primary : .secondary)

@@ -42,10 +42,13 @@ struct CompanionStep: View {
                         .fill(color(for: species).opacity(0.15))
                         .frame(width: 120, height: 120)
                         .scaleEffect(appear ? 1 : 0.7)
-                    Image(systemName: species.symbol)
-                        .font(.system(size: 52, weight: .semibold))
-                        .foregroundStyle(color(for: species))
-                        .scaleEffect(appear ? 1 : 0.5)
+                    CompanionCreature(
+                        species: species.kitType,
+                        stage: .seedling,
+                        mood: .content,
+                        size: 110
+                    )
+                    .scaleEffect(appear ? 1 : 0.5)
                 }
                 .padding(.top, Theme.Spacing.s)
 
@@ -94,9 +97,12 @@ struct CompanionStep: View {
                               ? color(for: sp).opacity(0.2)
                               : Color.gray.opacity(0.1))
                         .frame(width: 52, height: 52)
-                    Image(systemName: sp.symbol)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(species == sp ? color(for: sp) : .secondary)
+                    CompanionCreature(
+                        species: sp.kitType,
+                        stage: .seedling,
+                        mood: .content,
+                        size: 44
+                    )
                 }
                 Text(sp.label)
                     .font(Theme.Typography.caption.weight(.medium))

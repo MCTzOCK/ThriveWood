@@ -3,6 +3,7 @@
 //  ThriveWood
 //
 //  Kompakte Companion-Karte für den Home-Screen. Tap → CompanionView.
+//  Observiert CompanionService direkt → Energie-Änderungen erscheinen live.
 //
 
 import SwiftUI
@@ -10,62 +11,39 @@ import SwiftUI
 struct CompanionCard: View {
     @Environment(\.bentoTheme) private var theme
     @Environment(AppEnvironment.self) private var env
-    @State private var vm: CompanionViewModel?
     @State private var showingDetail = false
 
-    var body: some View {
-        Group {
-            if let vm {
-                card(vm: vm)
-            } else {
-                BentoCard(style: .elevated, padding: .lg) {
-                    HStack { BentoSpinner(size: 24); Spacer() }
-                }
-            }
-        }
-        .task {
-            if vm == nil { vm = CompanionViewModel(env: env) }
-            vm?.load()
-        }
-        .bentoSheet(isPresented: $showingDetail, title: Text("Companion"), detents: [.large]) {
-            if let vm { CompanionView(vm: vm) }
-        }
-    }
+    private var service: CompanionService { env.companionService }
 
-    @ViewBuilder
-    private func card(vm: CompanionViewModel) -> some View {
+    var body: some View {
         Button {
             Haptics.selection()
             showingDetail = true
         } label: {
-            BentoCard(tone: tone(for: vm.species), style: .elevated, padding: .lg, radius: .extraLarge) {
+            BentoCard(tone: tone(for: service.species), style: .elevated, padding: .lg, radius: .extraLarge) {
                 HStack(spacing: theme.spacing.lg) {
-                    // Wesen-Visual
-                    ZStack {
-                        Circle()
-                            .fill(theme.colors.onAccent.opacity(0.18))
-                            .frame(width: 64, height: 64)
-                        Image(systemName: vm.species.symbol)
-                            .font(.system(size: 26, weight: .semibold))
-                            .foregroundStyle(theme.colors.onAccent)
-                            .symbolEffect(.bounce, value: vm.energy)
-                    }
+                    CompanionCreature(
+                        species: service.species.kitType,
+                        stage: service.stage.kitType,
+                        mood: service.mood.kitType,
+                        size: 64
+                    )
 
                     VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                         HStack(spacing: theme.spacing.xxs) {
-                            Text(vm.name)
+                            Text(service.name)
                                 .font(.system(size: 17, weight: .bold))
                                 .foregroundStyle(theme.colors.onAccent)
-                            Text(vm.mood.emoji)
+                            Text(service.mood.emoji)
                         }
 
-                        Text("\(vm.stage.label) · \(vm.mood.label)")
+                        Text("\(service.stage.label) · \(service.mood.label)")
                             .font(Theme.Typography.callout)
                             .foregroundStyle(theme.colors.onAccent.opacity(0.8))
 
                         // Energie-Bar
                         BentoProgressBar(
-                            progress: vm.energy / 100,
+                            progress: service.energy / 100,
                             tone: .neutral,
                             height: 8
                         )
@@ -82,6 +60,9 @@ struct CompanionCard: View {
             }
         }
         .buttonStyle(.plain)
+        .bentoSheet(isPresented: $showingDetail, title: Text("Companion"), detents: [.large]) {
+            CompanionView()
+        }
     }
 
     private func tone(for species: CompanionSpecies) -> BentoTone {

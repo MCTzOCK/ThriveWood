@@ -60,7 +60,7 @@ struct BentoSettingsView: View {
         }
         .sheet(isPresented: $showingPaywall) { PaywallView() }
         .bentoSheet(isPresented: $showingCompanion, title: Text("Companion"), detents: [.large]) {
-            CompanionView(vm: CompanionViewModel(env: env))
+            CompanionView()
         }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isRerun: true) { showOnboarding = false }

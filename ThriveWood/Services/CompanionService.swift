@@ -31,13 +31,41 @@ final class CompanionService {
     /// (für UI-Animationen / Haptik).
     private(set) var lastDelta: Double = 0
 
+    /// Gespiegelte Werte für direkte UI-Observation. Werden bei jeder
+    /// Änderung aktualisiert, sodass Views (z.B. CompanionCard) live
+    /// reagieren, ohne manuell neu laden zu müssen.
+    private(set) var energy: Double = 60
+    private(set) var name: String = ""
+    private(set) var species: CompanionSpecies = .fox
+    private(set) var stage: CompanionStage = .seedling
+    private(set) var activeDaysTotal: Int = 0
+    private(set) var mood: CompanionMood = .content
+    private(set) var decayPaused: Bool = false
+    /// Monoton wachsender Trigger — Views können darauf .animation(value:)
+    /// setzen, um auf jegliche Companion-Änderung zu reagieren.
+    private(set) var revision: Int = 0
+
     init(repo: any CompanionRepository) {
         self.repo = repo
+        syncSnapshot()
     }
 
     // MARK: - Read
 
     func current() throws -> Companion { try repo.currentCompanion() }
+
+    /// Aktualisiert die gespiegelten Werte aus dem persistenten Companion.
+    private func syncSnapshot() {
+        guard let c = try? repo.currentCompanion() else { return }
+        energy = c.energy
+        name = c.name
+        species = c.species
+        activeDaysTotal = c.activeDaysTotal
+        stage = CompanionStage.stage(forActiveDays: c.activeDaysTotal)
+        mood = CompanionMood.mood(forEnergy: c.energy)
+        decayPaused = c.decayPaused
+        revision &+= 1
+    }
 
     // MARK: - Trigger
 
@@ -73,6 +101,7 @@ final class CompanionService {
             lastDelta = gain
             markActiveDay(c)
             try repo.update(c)
+            syncSnapshot()
         } catch {
             #if DEBUG
             print("[CompanionService] apply failed: \(error)")
@@ -102,6 +131,7 @@ final class CompanionService {
             c.energy = min(Config.energyCap, c.energy + Config.loginBonus)
             c.lastLoginDay = today
             try repo.update(c)
+            syncSnapshot()
         } catch {
             #if DEBUG
             print("[CompanionService] login bonus failed: \(error)")
@@ -118,6 +148,7 @@ final class CompanionService {
             guard !c.decayPaused else {
                 c.lastEnergyDecayDay = Calendar.app.startOfDay(for: .now)
                 try repo.update(c)
+            syncSnapshot()
                 return
             }
 
@@ -158,6 +189,7 @@ final class CompanionService {
                 }
                 c.lastEnergyDecayDay = today
                 try repo.update(c)
+            syncSnapshot()
             }
         } catch {
             #if DEBUG
@@ -180,7 +212,9 @@ final class CompanionService {
 
     @discardableResult
     func choose(species: CompanionSpecies, name: String) throws -> Companion {
-        try repo.choose(species: species, name: name)
+        let c = try repo.choose(species: species, name: name)
+        syncSnapshot()
+        return c
     }
 
     func rename(_ name: String) {
@@ -189,6 +223,7 @@ final class CompanionService {
             let trimmed = name.trimmingCharacters(in: .whitespaces)
             c.name = trimmed.isEmpty ? c.species.defaultName : trimmed
             try repo.update(c)
+            syncSnapshot()
         } catch {
             #if DEBUG
             print("[CompanionService] rename failed: \(error)")
@@ -201,6 +236,7 @@ final class CompanionService {
             let c = try repo.currentCompanion()
             c.decayPaused = paused
             try repo.update(c)
+            syncSnapshot()
         } catch {
             #if DEBUG
             print("[CompanionService] setDecayPaused failed: \(error)")
