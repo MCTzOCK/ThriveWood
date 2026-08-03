@@ -118,6 +118,9 @@ struct RootTabView: View {
         .task {
             _ = try? env.profileRepo.currentProfile()
             env.achievementService.checkAll(silent: true)
+            // Thrive Companion: lazy Day-Rollover (Energie-Verfall) +
+            // täglicher Login-Bonus beim App-Start.
+            env.companionService.onAppAppear()
         }
         .onAppear {
             if needsOnboarding { showOnboarding = true }

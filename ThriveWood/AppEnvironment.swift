@@ -57,7 +57,9 @@ final class AppEnvironment {
     let bodyProgressService: BodyProgressService
     let wellnessRepo: WellnessRepository
     let wellnessService: WellnessService
-    
+    let companionRepo: any CompanionRepository
+    let companionService: CompanionService
+
     let workoutLiveActivity = WorkoutLiveActivityManager()
     
     
@@ -135,12 +137,21 @@ final class AppEnvironment {
         self.bodyProgressService = BodyProgressService(repo: bodyProgressRepo)
         self.wellnessRepo = SwiftDataWellnessRepository(context: context)
         self.wellnessService = WellnessService(repo: wellnessRepo, completionRepo: completionRepo, sessionRepo: sessionRepo)
+        let companionRepo = SwiftDataCompanionRepository(context: context)
+        self.companionRepo = companionRepo
+        self.companionService = CompanionService(repo: companionRepo)
+
+        // Thrive Companion: Habit-Erledigung füttert das Wesen.
+        habitService.onHabitCompleted = { [weak companionService] delta in
+            companionService?.feedHabit(pointsDelta: delta)
+        }
         
         
         // Seed & Bootstrap
         try? exerciseRepo.seedBuiltInsIfNeeded()
         _ = try? profileRepo.currentProfile()
         _ = try? forestRepo.currentForest()
+        _ = try? companionRepo.currentCompanion()
         
         if let profile = try? profileRepo.currentProfile() {
             AppCalendarConfig.shared.update(weekStartsOn: profile.weekStartsOn)

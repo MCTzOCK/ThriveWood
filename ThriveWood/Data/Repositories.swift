@@ -1020,3 +1020,34 @@ final class SwiftDataWellnessRepository: SwiftDataRepository, WellnessRepository
     }
 }
 
+// MARK: - Companion
+
+@MainActor
+final class SwiftDataCompanionRepository: SwiftDataRepository, CompanionRepository {
+    func currentCompanion() throws -> Companion {
+        let d = FetchDescriptor<Companion>(sortBy: [SortDescriptor(\.createdAt)])
+        if let existing = try context.fetch(d).first { return existing }
+        let companion = Companion()
+        context.insert(companion)
+        try save()
+        return companion
+    }
+
+    func update(_ companion: Companion) throws { try save() }
+
+    func choose(species: CompanionSpecies, name: String) throws -> Companion {
+        // Bestehende Companion entfernen (nur eins pro User).
+        let d = FetchDescriptor<Companion>()
+        for existing in try context.fetch(d) { context.delete(existing) }
+
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let companion = Companion(
+            species: species,
+            name: trimmed.isEmpty ? species.defaultName : trimmed
+        )
+        context.insert(companion)
+        try save()
+        return companion
+    }
+}
+

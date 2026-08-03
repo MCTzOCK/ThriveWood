@@ -147,6 +147,8 @@ struct HomeView: View {
                 
                 heroProgressCard(vm: vm)
 
+                CompanionCard()
+
                 bentoHabitList(vm: vm)
             }
         }

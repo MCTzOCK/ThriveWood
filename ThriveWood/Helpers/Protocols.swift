@@ -114,3 +114,11 @@ protocol HabitRoutineRepository {
     /// Entfernt die Habit-ID aus allen Routinen (Auto-Cleanup beim Archivieren/Löschen).
     func removeHabitFromAllRoutines(_ habitID: UUID) throws
 }
+
+protocol CompanionRepository {
+    /// Liefert das Companion des Users (erstellt ggf. ein Default-Wesen).
+    func currentCompanion() throws -> Companion
+    func update(_ companion: Companion) throws
+    /// Erstellt/ersetzt das Companion bei der Wahl im Onboarding.
+    func choose(species: CompanionSpecies, name: String) throws -> Companion
+}

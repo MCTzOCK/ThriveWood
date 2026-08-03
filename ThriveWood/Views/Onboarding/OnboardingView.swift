@@ -9,7 +9,7 @@
 import SwiftUI
 
 enum OnboardingStep: Int, CaseIterable {
-    case welcome, concept, profile, firstHabit, notifications, ready
+    case welcome, concept, profile, firstHabit, companion, notifications, ready
 }
 
 struct OnboardingView: View {
@@ -33,6 +33,9 @@ struct OnboardingView: View {
     @State private var habitIcon: String = "leaf.fill"
     @State private var habitColor: HabitColor = .green
     @State private var habitPoints: HabitPoints = .medium
+
+    @State private var companionSpecies: CompanionSpecies = .fox
+    @State private var companionName: String = ""
 
     @State private var notificationsGranted: Bool = false
 
@@ -113,6 +116,13 @@ struct OnboardingView: View {
                 accent: accentTheme,
                 onNext: next, onBack: back, onSkip: next
             )
+        case .companion:
+            CompanionStep(
+                species: $companionSpecies,
+                name: $companionName,
+                accent: accentTheme,
+                onNext: next, onBack: back, onSkip: next
+            )
         case .notifications:
             NotificationStep(
                 granted: $notificationsGranted,
@@ -181,6 +191,9 @@ struct OnboardingView: View {
 
             // Wald sicherstellen
             _ = try env.forestRepo.currentForest()
+
+            // Companion anlegen (vom Onboarding gewählt)
+            _ = try env.companionRepo.choose(species: companionSpecies, name: companionName)
         } catch {
             // Leise – Onboarding soll nicht crashen
         }

@@ -157,6 +157,7 @@ final class WorkoutService {
         )
 
         env.trainingsPlanService.handleSessionFinished()
+        env.companionService.feedWorkout()
     }
     
     func cancelSession() throws {
