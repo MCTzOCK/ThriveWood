@@ -9,11 +9,12 @@ import SwiftUI
 import SwiftData
 
 enum AppTab: Hashable, CaseIterable {
-    case home, analytics, sport, settings
+    case home, routines, analytics, sport, settings
 
     var label: String {
         switch self {
         case .home: "Habits"
+        case .routines: "Routinen"
         case .analytics: "Analyse"
         case .sport: "Sport"
         case .settings: "Profil"
@@ -23,6 +24,7 @@ enum AppTab: Hashable, CaseIterable {
     var icon: String {
         switch self {
         case .home: "checklist"
+        case .routines: "sun.max"
         case .analytics: "chart.bar.xaxis"
         case .sport: "dumbbell.fill"
         case .settings: "person.crop.circle"
@@ -32,6 +34,7 @@ enum AppTab: Hashable, CaseIterable {
     var selectedIcon: String {
         switch self {
         case .home: "checkmark.circle.fill"
+        case .routines: "sun.max.fill"
         case .analytics: "chart.bar.xaxis"
         case .sport: "dumbbell.fill"
         case .settings: "person.crop.circle.fill"
@@ -59,6 +62,10 @@ struct RootTabView: View {
             HomeView()
                 .tabItem { Label(AppTab.home.label, systemImage: AppTab.home.icon) }
                 .tag(AppTab.home)
+
+            RoutinesView()
+                .tabItem { Label(AppTab.routines.label, systemImage: AppTab.routines.icon) }
+                .tag(AppTab.routines)
 
             AnalyticsView()
                 .tabItem { Label(AppTab.analytics.label, systemImage: AppTab.analytics.icon) }
@@ -93,12 +100,14 @@ struct RootTabView: View {
     var body: some View {
         BentoTabScaffold(selection: $selection, items: [
             BentoTabItem(id: AppTab.home, title: Text("Habits"), systemImage: "checklist"),
+            BentoTabItem(id: AppTab.routines, title: Text("Routinen"), systemImage: "sun.max.fill"),
             BentoTabItem(id: AppTab.analytics, title: Text("Annalyse"), systemImage: "chart.bar.xaxis"),
             BentoTabItem(id: AppTab.sport, title: Text("Sport"), systemImage: "dumbbell.fill"),
             BentoTabItem(id: AppTab.settings, title: Text("Profil"), systemImage: "person.crop.circle")
         ]) {
             switch selection {
             case .home: HomeView()
+            case .routines: RoutinesView()
             case .analytics: AnalyticsView()
             case .sport: SportViewV2()
             case .settings: BentoSettingsView()
