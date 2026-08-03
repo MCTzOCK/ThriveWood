@@ -63,19 +63,25 @@ struct SportInsightsView: View {
                 .padding(.bottom, 120)
             }
         }
-        .bentoSheet(isPresented: $showingAll1RM, title: Text("Geschätztes 1RM"), detents: [.large]) {
-            AllExercisesList(title: "Geschätztes 1RM — Alle Übungen") {
-                computeEstimated1RM(limit: 999)
+        .sheet(isPresented: $showingAll1RM) {
+            NavigationStack {
+                AllExercisesList(title: "Geschätztes 1RM") {
+                    computeEstimated1RM(limit: 999)
+                }
             }
         }
-        .bentoSheet(isPresented: $showingAllOverload, title: Text("Progressive Overload"), detents: [.large]) {
-            AllOverloadList(title: "Progressive Overload — Alle Übungen") {
-                computeProgressiveOverload()
+        .sheet(isPresented: $showingAllOverload) {
+            NavigationStack {
+                AllOverloadList(title: "Progressive Overload") {
+                    computeProgressiveOverload()
+                }
             }
         }
-        .bentoSheet(isPresented: $showingAllTopExercises, title: Text("Top Übungen"), detents: [.large]) {
-            AllTopExercisesList(title: "Top Übungen — Alle") {
-                computeTopExercises(limit: 999)
+        .sheet(isPresented: $showingAllTopExercises) {
+            NavigationStack {
+                AllTopExercisesList(title: "Top Übungen") {
+                    computeTopExercises(limit: 999)
+                }
             }
         }
     }
@@ -921,6 +927,7 @@ private struct InsightCard<Content: View>: View {
 private struct AllTopExercisesList: View {
     let title: String
     let items: [TopExercise]
+    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [TopExercise]) {
         self.title = title
@@ -933,33 +940,44 @@ private struct AllTopExercisesList: View {
     }
 
     var body: some View {
-        LazyVStack(spacing: Theme.Spacing.s) {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            BentoPageHeader(
+                eyebrow: Text("VOLUMEN"),
+                title: Text("Top Übungen"),
+                subtitle: Text("\(items.count) Übungen nach Volumen")
+            )
+
             if items.isEmpty {
-                Text("Keine Daten vorhanden.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
+                BentoEmptyState(
+                    systemImage: "trophy",
+                    title: Text("Keine Daten"),
+                    message: Text("Schließe Workouts ab, um deine Top-Übungen zu sehen.")
+                )
+                .padding(.top, Theme.Spacing.xxl)
             } else {
-                ForEach(items, id: \.name) { item in
-                    HStack(spacing: Theme.Spacing.m) {
-                        Text("#\(item.rank)")
-                            .font(Theme.Typography.caption.weight(.bold))
-                            .foregroundStyle(.tertiary)
-                            .frame(width: 28)
-                        Text(item.name)
-                            .font(Theme.Typography.body)
-                            .lineLimit(1)
-                        Spacer()
-                        Text(SportInsightsView.formatVolumeStatic(item.volume))
-                            .font(Theme.Typography.mono)
-                            .foregroundStyle(.secondary)
+                LazyVStack(spacing: Theme.Spacing.s) {
+                    ForEach(items, id: \.name) { item in
+                        RankRow(
+                            rank: item.rank,
+                            name: item.name,
+                            primary: SportInsightsView.formatVolumeStatic(item.volume) + " kg",
+                            secondary: "Volumen",
+                            tone: .accent,
+                            icon: "trophy.fill"
+                        )
                     }
-                    .padding(Theme.Spacing.m)
-                    .cardStyle()
                 }
             }
+
+            Spacer(minLength: 40)
         }
-        .padding(.horizontal, Theme.Spacing.l)
-        .padding(.bottom, Theme.Spacing.xl)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Schließen") { dismiss() }
+            }
+        }
     }
 }
 
@@ -991,6 +1009,7 @@ private struct QuickStatTile: View {
 private struct AllExercisesList: View {
     let title: String
     let items: [E1RM]
+    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [E1RM]) {
         self.title = title
@@ -1003,32 +1022,50 @@ private struct AllExercisesList: View {
     }
 
     var body: some View {
-        LazyVStack(spacing: Theme.Spacing.s) {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            BentoPageHeader(
+                eyebrow: Text("KRAFT"),
+                title: Text("Geschätztes 1RM"),
+                subtitle: Text("\(items.count) Übungen — Epley-Formel")
+            )
+
+            BentoCallout(
+                kind: .info,
+                title: Text("Wie wird das berechnet?"),
+                message: Text("Das 1-Repetition-Maximum ist das Gewicht, das du theoretisch genau einmal bewegen kannst. Geschätzt aus deinem schwersten Satz: Gewicht × (1 + Reps / 30).")
+            )
+
             if items.isEmpty {
-                Text("Noch keine Sätze mit Gewicht erfasst.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
+                BentoEmptyState(
+                    systemImage: "dumbbell",
+                    title: Text("Keine Daten"),
+                    message: Text("Erfasse Sätze mit Gewicht, um dein geschätztes 1RM zu sehen.")
+                )
+                .padding(.top, Theme.Spacing.xxl)
             } else {
-                ForEach(items, id: \.name) { item in
-                    HStack {
-                        Text(item.name)
-                            .font(Theme.Typography.body)
-                            .lineLimit(1)
-                        Spacer()
-                        Text("\(item.e1rm.clean) kg")
-                            .font(Theme.Typography.mono)
-                            .foregroundStyle(.primary)
-                        Text("(\(item.weight.clean) × \(item.reps))")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(.secondary)
+                LazyVStack(spacing: Theme.Spacing.s) {
+                    ForEach(items, id: \.name) { item in
+                        RankRow(
+                            rank: nil,
+                            name: item.name,
+                            primary: "\(item.e1rm.clean) kg",
+                            secondary: "\(item.weight.clean) kg × \(item.reps)",
+                            tone: .danger,
+                            icon: "dumbbell.fill"
+                        )
                     }
-                    .padding(Theme.Spacing.m)
-                    .cardStyle()
                 }
             }
+
+            Spacer(minLength: 40)
         }
-        .padding(.horizontal, Theme.Spacing.l)
-        .padding(.bottom, Theme.Spacing.xl)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Schließen") { dismiss() }
+            }
+        }
     }
 }
 
@@ -1037,6 +1074,7 @@ private struct AllExercisesList: View {
 private struct AllOverloadList: View {
     let title: String
     let items: [OverloadItem]
+    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [OverloadItem]) {
         self.title = title
@@ -1049,32 +1087,160 @@ private struct AllOverloadList: View {
     }
 
     var body: some View {
-        LazyVStack(spacing: Theme.Spacing.s) {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            BentoPageHeader(
+                eyebrow: Text("FORTSCHRITT"),
+                title: Text("Progressive Overload"),
+                subtitle: Text("\(items.count) Übungen im Vergleich")
+            )
+
+            BentoCallout(
+                kind: .info,
+                title: Text("Wie wird verglichen?"),
+                message: Text("Vergleicht das Ø-Volumen pro Satz der ersten Hälfte deiner Sessions mit der zweiten. Positiv = du hast dich gesteigert.")
+            )
+
             if items.isEmpty {
-                Text("Noch nicht genug Daten für einen Vergleich.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
+                BentoEmptyState(
+                    systemImage: "arrow.up.right.circle",
+                    title: Text("Noch keine Daten"),
+                    message: Text("Schließe mehr Workouts ab, um deine Progression zu sehen.")
+                )
+                .padding(.top, Theme.Spacing.xxl)
             } else {
-                ForEach(items, id: \.name) { item in
-                    HStack(spacing: Theme.Spacing.m) {
-                        Text(item.name)
-                            .font(Theme.Typography.body)
-                            .lineLimit(1)
-                        Spacer()
-                        HStack(spacing: 4) {
-                            Text(item.trend == .up ? "↑" : item.trend == .down ? "↓" : "→")
-                                .foregroundStyle(item.trend == .up ? .green : item.trend == .down ? .red : .secondary)
-                            Text("\(item.pctChange >= 0 ? "+" : "")\(Int(item.pctChange))%")
-                                .font(Theme.Typography.mono)
-                                .foregroundStyle(item.trend == .up ? .green : item.trend == .down ? .red : .secondary)
-                        }
+                LazyVStack(spacing: Theme.Spacing.s) {
+                    ForEach(items, id: \.name) { item in
+                        OverloadRow(item: item)
                     }
-                    .padding(Theme.Spacing.m)
-                    .cardStyle()
                 }
             }
+
+            Spacer(minLength: 40)
         }
-        .padding(.horizontal, Theme.Spacing.l)
-        .padding(.bottom, Theme.Spacing.xl)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Schließen") { dismiss() }
+            }
+        }
+    }
+}
+
+// MARK: - Row Components
+
+private struct RankRow: View {
+    let rank: Int?
+    let name: String
+    let primary: String
+    let secondary: String
+    let tone: BentoTone
+    let icon: String
+
+    var body: some View {
+        BentoCard(style: .outlined, padding: .md) {
+            HStack(spacing: Theme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                        .fill(toneFill.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    if let rank {
+                        Text(verbatim: "\(rank)")
+                            .font(Theme.Typography.callout.weight(.heavy))
+                            .foregroundStyle(toneFill)
+                    } else {
+                        Image(systemName: icon)
+                            .font(Theme.Typography.callout)
+                            .foregroundStyle(toneFill)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(Theme.Typography.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Text(secondary)
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 8)
+
+                Text(primary)
+                    .font(Theme.Typography.mono.weight(.semibold))
+                    .foregroundStyle(toneFill)
+                    .contentTransition(.numericText())
+            }
+        }
+    }
+
+    private var toneFill: Color {
+        switch tone {
+        case .accent: return .accentColor
+        case .danger: return .red
+        case .success: return .green
+        case .warning: return .orange
+        case .info: return .blue
+        default: return .accentColor
+        }
+    }
+}
+
+private struct OverloadRow: View {
+    let item: OverloadItem
+
+    var body: some View {
+        BentoCard(style: .outlined, padding: .md) {
+            HStack(spacing: Theme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                        .fill(trendColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: trendIcon)
+                        .font(Theme.Typography.callout.weight(.bold))
+                        .foregroundStyle(trendColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.name)
+                        .font(Theme.Typography.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Text(trendLabel)
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 8)
+
+                Text("\(item.pctChange >= 0 ? "+" : "")\(Int(item.pctChange))%")
+                    .font(Theme.Typography.mono.weight(.heavy))
+                    .foregroundStyle(trendColor)
+                    .contentTransition(.numericText())
+            }
+        }
+    }
+
+    private var trendColor: Color {
+        switch item.trend {
+        case .up: return .green
+        case .down: return .red
+        case .flat: return .secondary
+        }
+    }
+
+    private var trendIcon: String {
+        switch item.trend {
+        case .up: return "arrow.up.right"
+        case .down: return "arrow.down.right"
+        case .flat: return "arrow.right"
+        }
+    }
+
+    private var trendLabel: String {
+        switch item.trend {
+        case .up: return "Gestiegen"
+        case .down: return "Gesunken"
+        case .flat: return "Konstant"
+        }
     }
 }
