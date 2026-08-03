@@ -44,9 +44,6 @@ struct PRListView: View {
                 prContent
             }
         }
-        .navigationTitle("PRs")
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Übung suchen")
         .onAppear { load() }
         .bentoSheet(
             isPresented: Binding(
@@ -63,21 +60,20 @@ struct PRListView: View {
     }
 
     private var prContent: some View {
-        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
-            VStack(spacing: Theme.Spacing.l) {
-                BentoPageHeader(
-                    eyebrow: Text("REKORDE"),
-                    title: Text("Persönliche PRs"),
-                    subtitle: Text("\(entries.count) Übungen mit PR")
-                )
-                .padding(.horizontal, Theme.Spacing.l)
-                .padding(.top, Theme.Spacing.m)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            BentoPageHeader(
+                eyebrow: Text("REKORDE"),
+                title: Text("Persönliche PRs"),
+                subtitle: Text("\(entries.count) Übungen mit PR")
+            )
 
+            BentoSearchField(text: $searchText, prompt: Text("Übung suchen")) {
+                Haptics.selection()
+            }
+
+            LazyVStack(alignment: .leading, spacing: Theme.Spacing.l, pinnedViews: [.sectionHeaders]) {
                 ForEach(sections, id: \.letter) { letter, items in
-                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                        BentoText(verbatim: letter, style: .overline, color: .secondary)
-                            .padding(.horizontal, Theme.Spacing.l)
-
+                    Section {
                         VStack(spacing: Theme.Spacing.s) {
                             ForEach(items, id: \.exercise.id) { exercise, topSet in
                                 Button {
@@ -88,11 +84,14 @@ struct PRListView: View {
                                 .buttonStyle(PressScaleStyle())
                             }
                         }
-                        .padding(.horizontal, Theme.Spacing.l)
+                    } header: {
+                        BentoText(verbatim: letter, style: .overline, color: .secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(.bottom, 120)
             }
+
+            Spacer(minLength: 40)
         }
     }
 

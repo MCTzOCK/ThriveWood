@@ -63,8 +63,6 @@ struct SportInsightsView: View {
                 .padding(.bottom, 120)
             }
         }
-        .navigationTitle("Sport Insights")
-        .navigationBarTitleDisplayMode(.inline)
         .bentoSheet(isPresented: $showingAll1RM, title: Text("Geschätztes 1RM"), detents: [.large]) {
             NavigationStack {
                 AllExercisesList(title: "Geschätztes 1RM — Alle Übungen") {

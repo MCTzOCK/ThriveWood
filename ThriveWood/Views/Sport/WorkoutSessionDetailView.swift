@@ -224,7 +224,6 @@ struct WorkoutSessionDetailView: View {
                 }
             }
         }
-        .navigationTitle(session.workout?.name ?? "Freies Training")
         .navigationBarTitleDisplayMode(.inline)
         .errorAlert(errors)
         .onAppear { loadPRs() }

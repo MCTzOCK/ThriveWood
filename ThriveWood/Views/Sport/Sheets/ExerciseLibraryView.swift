@@ -119,16 +119,7 @@ struct ExerciseLibraryView: View {
                 }
             }
         }
-        .navigationTitle("Übungen")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(asSheet ? .visible : .visible, for: .navigationBar)
-        .toolbar {
-            if asSheet {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { dismiss() }
-                }
-            }
-        }
         .bentoSheet(
             isPresented: $showingNew,
             title: Text("Neue Übung"),

@@ -88,7 +88,6 @@ struct MuscleRankingScreen: View {
             .padding(.bottom, 100)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle(mapMode == .ranking ? "Muskel-Ranking" : "Erholung")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { showLegend = true } label: {

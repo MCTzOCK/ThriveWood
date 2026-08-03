@@ -66,7 +66,5 @@ struct AllSessionsView: View {
             }
         }
         .refreshable { refreshID = UUID() }
-        .navigationTitle("Trainings-Historie")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -57,8 +57,6 @@ struct CreateTrainingsPlanSheet: View {
                         BentoSectionHeader(title: Text("Plantyp"))
 
                         BentoSegmentedPicker(options: TrainingsPlanType.allCases, selection: $planType) { type in
-                            Label(type.label, systemImage: type.icon)
-                                .labelStyle(.iconOnly)
                             Text(verbatim: type.label)
                         }
 

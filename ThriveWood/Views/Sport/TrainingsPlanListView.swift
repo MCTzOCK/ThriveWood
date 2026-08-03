@@ -14,12 +14,8 @@ struct TrainingsPlanListView: View {
     @State private var showCreateSheet = false
     @State private var showAIGenerator = false
     @State private var selectedPlan: TrainingsPlan?
-    @State private var searchText: String = ""
 
-    private var filteredPlans: [TrainingsPlan] {
-        guard !searchText.isEmpty else { return plans }
-        return plans.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
+    private var filteredPlans: [TrainingsPlan] { plans }
 
     var body: some View {
         BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
@@ -100,27 +96,6 @@ struct TrainingsPlanListView: View {
                 .padding(.bottom, 120)
             }
         }
-        .navigationTitle("Trainingspläne")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 4) {
-                    /*if env.aiService.isAvailable() {
-                        Button {
-                            showAIGenerator = true
-                        } label: {
-                            Image(systemName: "sparkles")
-                                .foregroundStyle(.purple)
-                        }
-                    }*/
-                    Button {
-                        showCreateSheet = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-        }
         .bentoSheet(
             isPresented: $showCreateSheet,
             title: Text("Neuer Trainingsplan"),
@@ -135,9 +110,7 @@ struct TrainingsPlanListView: View {
             title: Text("KI-Plan-Generator"),
             detents: [.large]
         ) {
-            NavigationStack {
-                AIPlanGeneratorView()
-            }
+            AIPlanGeneratorView()
         }
         .bentoSheet(
             isPresented: Binding(
@@ -148,12 +121,9 @@ struct TrainingsPlanListView: View {
             detents: [.large]
         ) {
             if let plan = selectedPlan {
-                NavigationStack {
-                    TrainingsPlanDetailView(plan: plan)
-                }
+                TrainingsPlanDetailView(plan: plan)
             }
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
         .task { await load() }
         .refreshable { await load() }
     }

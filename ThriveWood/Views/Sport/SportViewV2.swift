@@ -247,31 +247,29 @@ struct SportViewV2: View {
         )
         .padding(.top, theme.spacing.md)
 
-        BentoCard(style: .outlined, padding: .md, radius: .large) {
-            BentoAdaptiveGrid(minimumItemWidth: 150) {
-                exploreTile(title: "Verlauf", subtitle: "Sessions", icon: "clock.fill", tone: .green) {
-                    AnyView(AllSessionsView())
-                }
-                exploreTile(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", tone: .info) {
-                    AnyView(SportInsightsView())
-                }
-                exploreTile(title: "Muskeln", subtitle: "Ranking", icon: "figure.musculature.fill", tone: .warning) {
-                    AnyView(MuscleRankingScreen())
-                }
-                exploreTile(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", tone: .danger) {
-                    AnyView(ExerciseLibraryView(onSelect: { exercise in
-                        selectedExercise = exercise
-                    }, asSheet: false, onlyFor: nil))
-                }
-                exploreTile(title: "Pläne", subtitle: "Trainingspläne", icon: "list.bullet.rectangle.portrait", tone: .blue) {
-                    AnyView(TrainingsPlanListView())
-                }
-                exploreTile(title: "PRs", subtitle: "Rekorde", icon: "flame.fill", tone: .warning) {
-                    AnyView(PRListView())
-                }
-                exploreTile(title: "Körper", subtitle: "Fortschritt", icon: "figure.stand.line.dotted.figure.stand", tone: .pink) {
-                    AnyView(BodyProgressView())
-                }
+        BentoAdaptiveGrid(minimumItemWidth: 150) {
+            exploreTile(title: "Verlauf", subtitle: "Sessions", icon: "clock.fill", tone: .green) {
+                AnyView(AllSessionsView())
+            }
+            exploreTile(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", tone: .info) {
+                AnyView(SportInsightsView())
+            }
+            exploreTile(title: "Muskeln", subtitle: "Ranking", icon: "figure.musculature.fill", tone: .warning) {
+                AnyView(MuscleRankingScreen())
+            }
+            exploreTile(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", tone: .danger) {
+                AnyView(ExerciseLibraryView(onSelect: { exercise in
+                    selectedExercise = exercise
+                }, asSheet: false, onlyFor: nil))
+            }
+            exploreTile(title: "Pläne", subtitle: "Trainingspläne", icon: "list.bullet.rectangle.portrait", tone: .blue) {
+                AnyView(TrainingsPlanListView())
+            }
+            exploreTile(title: "PRs", subtitle: "Rekorde", icon: "flame.fill", tone: .warning) {
+                AnyView(PRListView())
+            }
+            exploreTile(title: "Körper", subtitle: "Fortschritt", icon: "figure.stand.line.dotted.figure.stand", tone: .pink) {
+                AnyView(BodyProgressView())
             }
         }
     }
