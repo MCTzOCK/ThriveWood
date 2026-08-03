@@ -21,6 +21,13 @@ final class WorkoutService {
     
     /// Aktive Session wird live im State gehalten – Views können direkt binden.
     private(set) var activeSession: WorkoutSession?
+
+    /// Per-Exercise Memoizing innerhalb einer aktiven Session. Verhindert, dass
+    /// `getTopSet`/`getRecentWorkingStats` bei jedem Aufruf die komplette Session-
+    /// Historie neu fetchen (sie wurden zuvor inline im Body und pro recache pro
+    /// Exercise aufgerufen — Hauptursache des Session-Screen-Lags).
+    private var topSetCache: [UUID: SetEntry] = [:]
+    private var workingStatsCache: [UUID: ExerciseWorkingStats] = [:]
     
     init(
         workouts: any WorkoutRepository,
@@ -74,6 +81,10 @@ final class WorkoutService {
         if let existing = try sessions.activeSession() {
             throw ServiceError.sessionAlreadyActive
         }
+        // Caches leeren — eine neue Session kann neue PRs liefern; alte gecachte
+        // Top-Sets/Working-Stats sind potenziell veraltet.
+        topSetCache.removeAll()
+        workingStatsCache.removeAll()
         // Einheit aus Profil lesen
         let unit: WeightUnit = (try? profileRepo.currentProfile().preferredWeightUnit) ?? .kilograms
         let session = WorkoutSession(workout: workout, startedAt: .now, weightUnit: unit)
@@ -121,6 +132,10 @@ final class WorkoutService {
         session.perceivedExertion = perceivedExertion
         session.notes = notes
         try sessions.update(session)
+
+        // Session-Statistiken haben sich geändert (neue PRs möglich) → Caches leeren.
+        topSetCache.removeAll()
+        workingStatsCache.removeAll()
         
         let savedSession = session
         
@@ -148,6 +163,8 @@ final class WorkoutService {
         guard let session = activeSession else { throw ServiceError.noActiveSession }
         try sessions.delete(session)
         self.activeSession = nil
+        topSetCache.removeAll()
+        workingStatsCache.removeAll()
     }
     
     // MARK: Set Logging
@@ -177,18 +194,20 @@ final class WorkoutService {
     func archiveWorkout(_ workout: Workout) throws { try workouts.archive(workout) }
     
     func getTopSet(for exercise: Exercise) -> SetEntry? {
+        if let cached = topSetCache[exercise.id] {
+            return cached
+        }
         let allSessions = (try? sessions.fetchAll()) ?? []
         let relevant = allSessions
             .flatMap(\.sets)
             .filter { $0.exercise?.id == exercise.id && $0.isCompleted && !$0.isWarmup }
 
-        guard let top = relevant.max(by: { setIsLess($0, $1, for: exercise) }) else {
-            return SetEntry(
-                order: 0, exercise: exercise,
-                reps: 0, weight: 0, durationSeconds: 0, distanceMeters: 0
-            )
-        }
-        return top
+        let result: SetEntry = relevant.max(by: { setIsLess($0, $1, for: exercise) }) ?? SetEntry(
+            order: 0, exercise: exercise,
+            reps: 0, weight: 0, durationSeconds: 0, distanceMeters: 0
+        )
+        topSetCache[exercise.id] = result
+        return result
     }
     
     func getTopSetBefore(exercise: Exercise, date: Date) -> SetEntry? {
@@ -297,6 +316,9 @@ final class WorkoutService {
     }
 
     func getRecentWorkingStats(for exercise: Exercise, lastNSessions: Int = 5) -> ExerciseWorkingStats? {
+        if let cached = workingStatsCache[exercise.id] {
+            return cached
+        }
         let allSessions = (try? sessions.fetchAll()) ?? []
         let relevantSessions = allSessions
             .filter { $0.endedAt != nil }
@@ -320,11 +342,13 @@ final class WorkoutService {
         let avgWeight = weights.reduce(0, +) / Double(weights.count)
         let avgReps = Double(reps.reduce(0, +)) / Double(reps.count)
 
-        return ExerciseWorkingStats(
+        let stats = ExerciseWorkingStats(
             avgWeight: avgWeight,
             avgReps: Int(avgReps.rounded()),
             recentSessionCount: recentSessions.count
         )
+        workingStatsCache[exercise.id] = stats
+        return stats
     }
 
     // return in minutes
