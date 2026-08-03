@@ -247,99 +247,31 @@ struct SportViewV2: View {
         )
         .padding(.top, theme.spacing.md)
 
-        exploreHeroRow
-
-        BentoAdaptiveGrid(minimumItemWidth: 160) {
-            exploreTile(
-                title: "Insights", subtitle: "Analysen",
-                icon: "chart.bar.xaxis", tone: .info
-            ) { AnyView(SportInsightsView()) }
-
-            exploreTile(
-                title: "Muskeln", subtitle: "Ranking & Erholung",
-                icon: "figure.musculature.fill", tone: .warning
-            ) { AnyView(MuscleRankingScreen()) }
-
-            exploreTile(
-                title: "Übungen", subtitle: "Bibliothek",
-                icon: "figure.strengthtraining.traditional", tone: .danger
-            ) {
-                AnyView(ExerciseLibraryView(onSelect: { exercise in
-                    selectedExercise = exercise
-                }, asSheet: false, onlyFor: nil))
-            }
-
-            exploreTile(
-                title: "Pläne", subtitle: "Trainingspläne",
-                icon: "list.bullet.rectangle.portrait", tone: .blue
-            ) { AnyView(TrainingsPlanListView()) }
-
-            exploreTile(
-                title: "PRs", subtitle: "Rekorde",
-                icon: "flame.fill", tone: .warning
-            ) { AnyView(PRListView()) }
-
-            exploreTile(
-                title: "Körper", subtitle: "Fortschritt",
-                icon: "figure.stand.line.dotted.figure.stand", tone: .pink
-            ) { AnyView(BodyProgressView()) }
-
-            exploreTile(
-                title: "Wellness", subtitle: "Check-in",
-                icon: "heart.fill", tone: .pink
-            ) { AnyView(WellnessView()) }
-        }
-    }
-
-    /// Zwei große Hero-Tiles für die häufigsten Ziele.
-    @ViewBuilder
-    private var exploreHeroRow: some View {
-        NavigationLink(destination: { AllSessionsView() }) {
-            exploreHeroTile(
-                title: "Verlauf",
-                subtitle: "Alle Sessions",
-                icon: "clock.fill",
-                tone: .green
-            )
-        }
-        .buttonStyle(BounceButtonStyle())
-
-        NavigationLink(destination: { MuscleRankingScreen() }) {
-            exploreHeroTile(
-                title: "Muskeln",
-                subtitle: "Ranking & Erholung",
-                icon: "figure.musculature.fill",
-                tone: .warning
-            )
-        }
-        .buttonStyle(BounceButtonStyle())
-    }
-
-    private func exploreHeroTile(title: String, subtitle: String, icon: String, tone: BentoTone) -> some View {
-        BentoTile(
-            tone: tone,
-            minimumHeight: 110,
-            alignment: .center
-        ) {
-            HStack(spacing: theme.spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(.white.opacity(0.18))
-                        .frame(width: 46, height: 46)
-                    Image(systemName: icon)
-                        .font(.title3.weight(.semibold))
+        BentoCard(style: .outlined, padding: .md, radius: .large) {
+            BentoAdaptiveGrid(minimumItemWidth: 150) {
+                exploreTile(title: "Verlauf", subtitle: "Sessions", icon: "clock.fill", tone: .green) {
+                    AnyView(AllSessionsView())
                 }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(Theme.Typography.headline)
-                    if !subtitle.isEmpty {
-                        BentoText(verbatim: subtitle, style: .caption)
-                            .lineLimit(1)
-                    }
+                exploreTile(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", tone: .info) {
+                    AnyView(SportInsightsView())
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
+                exploreTile(title: "Muskeln", subtitle: "Ranking", icon: "figure.musculature.fill", tone: .warning) {
+                    AnyView(MuscleRankingScreen())
+                }
+                exploreTile(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", tone: .danger) {
+                    AnyView(ExerciseLibraryView(onSelect: { exercise in
+                        selectedExercise = exercise
+                    }, asSheet: false, onlyFor: nil))
+                }
+                exploreTile(title: "Pläne", subtitle: "Trainingspläne", icon: "list.bullet.rectangle.portrait", tone: .blue) {
+                    AnyView(TrainingsPlanListView())
+                }
+                exploreTile(title: "PRs", subtitle: "Rekorde", icon: "flame.fill", tone: .warning) {
+                    AnyView(PRListView())
+                }
+                exploreTile(title: "Körper", subtitle: "Fortschritt", icon: "figure.stand.line.dotted.figure.stand", tone: .pink) {
+                    AnyView(BodyProgressView())
+                }
             }
         }
     }
@@ -352,7 +284,28 @@ struct SportViewV2: View {
         @ViewBuilder destination: @escaping () -> Destination
     ) -> some View {
         NavigationLink(destination: destination) {
-            SportNavigationCardV2(title: title, subtitle: subtitle, icon: icon, tone: tone)
+            BentoTile(
+                tone: tone,
+                minimumHeight: 130,
+                alignment: .center
+            ) {
+                VStack(spacing: theme.spacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(.white.opacity(0.2))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: icon)
+                            .font(.title3.weight(.semibold))
+                    }
+                    VStack(spacing: 1) {
+                        Text(title)
+                            .font(Theme.Typography.subheadline.weight(.semibold))
+                        BentoText(verbatim: subtitle, style: .caption)
+                            .lineLimit(1)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
         }
         .buttonStyle(BounceButtonStyle())
     }

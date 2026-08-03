@@ -193,13 +193,16 @@ struct WorkoutSessionDetailView: View {
                                 showDeleteConfirm = true
                             } label: { Label("Löschen", systemImage: "trash") }
                         } label: {
-                            BentoIconButton(
-                                systemImage: "ellipsis.circle",
-                                accessibilityLabel: Text("Menü"),
-                                variant: .ghost,
-                                size: .medium
-                            ) {}
+                            Image(systemName: "ellipsis.circle")
+                                .font(.body)
+                                .frame(width: 48, height: 48)
+                                .foregroundStyle(theme.colors.onSurface)
+                                .background(theme.colors.surfaceSecondary, in: Circle())
+                                .overlay(
+                                    Circle().stroke(theme.colors.outlineSubtle, lineWidth: 1)
+                                )
                         }
+                        .accessibilityLabel("Menü")
                     }
 
                     headerCard
@@ -223,7 +226,6 @@ struct WorkoutSessionDetailView: View {
         }
         .navigationTitle(session.workout?.name ?? "Freies Training")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
         .errorAlert(errors)
         .onAppear { loadPRs() }
         .bentoSheet(
