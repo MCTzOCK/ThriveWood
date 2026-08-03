@@ -22,14 +22,14 @@ struct PlayModeViewV3: View {
 
     var body: some View {
         ZStack {
-            theme.colors.background.ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
             if vm.groups.isEmpty {
                 VStack(spacing: theme.spacing.md) {
-                    Image(systemName: "tray").font(.largeTitle).foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.4))
+                    Image(systemName: "tray").font(.largeTitle).foregroundStyle(.white.opacity(0.4))
                     Text(verbatim: "Keine Übungen")
                         .font(.headline)
-                        .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.6))
                 }
             } else {
                 VStack(spacing: 0) {
@@ -68,16 +68,24 @@ struct PlayModeViewV3: View {
     private var topBar: some View {
         HStack {
             Button { onClose(); dismiss() } label: {
-                Image(systemName: "list.bullet")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(theme.colors.onSurface)
+                HStack(spacing: 6) {
+                    Image(systemName: "xmark")
+                        .font(.subheadline.weight(.bold))
+                    Text(verbatim: "Schließen")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(Color.white.opacity(0.12)))
             }
+            .buttonStyle(BounceButtonStyle())
             Spacer()
             pageDots
             Spacer()
-            Color.clear.frame(width: 28, height: 28)
+            Color.clear.frame(width: 90, height: 36)
         }
-        .padding(.horizontal, theme.spacing.xl)
+        .padding(.horizontal, theme.spacing.lg)
         .padding(.top, theme.spacing.md)
         .padding(.bottom, theme.spacing.sm)
     }
@@ -86,7 +94,7 @@ struct PlayModeViewV3: View {
         HStack(spacing: 6) {
             ForEach(0..<vm.groups.count, id: \.self) { i in
                 Capsule()
-                    .fill(i == currentIndex ? accentColor : theme.colors.onSurfaceMuted.opacity(0.25))
+                    .fill(i == currentIndex ? accentColor : Color.white.opacity(0.25))
                     .frame(width: i == currentIndex ? 24 : 8, height: 4)
                     .animation(reduceMotion ? nil : theme.motion.snappy, value: currentIndex)
             }
@@ -180,17 +188,17 @@ private struct ExercisePlayCardV3: View {
             }
             Text(exercise.name)
                 .font(.title3.bold())
-                .foregroundStyle(theme.colors.onSurface)
+                .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
             HStack(spacing: 8) {
                 Text(verbatim: "\(exerciseIndex) / \(totalExercises)")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.5))
                 if !sets.isEmpty {
-                    Text(verbatim: "·").font(.caption).foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.3))
+                    Text(verbatim: "·").font(.caption).foregroundStyle(.white.opacity(0.3))
                     Text(verbatim: "\(completed)/\(sets.count) Sätze")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(allDone ? theme.colors.success : theme.colors.onSurfaceMuted.opacity(0.6))
+                        .foregroundStyle(allDone ? theme.colors.success : .white.opacity(0.6))
                 }
             }
             if !sets.isEmpty { progressBar }
@@ -200,7 +208,7 @@ private struct ExercisePlayCardV3: View {
     private var progressBar: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(theme.colors.onSurfaceMuted.opacity(0.15))
+                Capsule().fill(.white.opacity(0.15))
                 Capsule()
                     .fill(allDone ? theme.colors.success : accentColor)
                     .frame(width: geo.size.width * progress)
@@ -216,7 +224,7 @@ private struct ExercisePlayCardV3: View {
     private var inlineRestTimer: some View {
         VStack(spacing: 20) {
             ZStack {
-                Circle().stroke(theme.colors.onSurfaceMuted.opacity(0.2), lineWidth: 6).frame(width: 100, height: 100)
+                Circle().stroke(.white.opacity(0.2), lineWidth: 6).frame(width: 100, height: 100)
                 Circle()
                     .trim(from: 0, to: rest.progress)
                     .stroke(accentColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
@@ -225,20 +233,20 @@ private struct ExercisePlayCardV3: View {
                 VStack(spacing: 2) {
                     Text(verbatim: rest.formatted)
                         .font(.title.bold().monospacedDigit())
-                        .foregroundStyle(theme.colors.onSurface)
+                        .foregroundStyle(.white)
                     Text(verbatim: "Pause")
                         .font(.caption)
-                        .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.6))
                 }
             }
             HStack(spacing: 12) {
                 Button { rest.add(15); Haptics.selection() } label: {
                     Text(verbatim: "+15s")
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(theme.colors.onSurface)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
-                        .background(Capsule().fill(theme.colors.onSurfaceMuted.opacity(0.15)))
+                        .background(Capsule().fill(.white.opacity(0.15)))
                 }
                 .buttonStyle(BounceButtonStyle())
 
@@ -254,7 +262,7 @@ private struct ExercisePlayCardV3: View {
             }
             Text(verbatim: "Satz \(viewSetIndex + 1) · als nächstes")
                 .font(.caption)
-                .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.5))
+                .foregroundStyle(.white.opacity(0.5))
         }
     }
 
@@ -264,7 +272,7 @@ private struct ExercisePlayCardV3: View {
             HStack(spacing: 8) {
                 Text(verbatim: "Satz \(viewSetIndex + 1)")
                     .font(.headline.weight(.semibold))
-                    .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.6))
                 if set.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption)
@@ -281,12 +289,12 @@ private struct ExercisePlayCardV3: View {
                         Text(verbatim: "Wieder öffnen")
                     }
                     .font(.headline.bold())
-                    .foregroundStyle(theme.colors.onSurface)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(
                         RoundedRectangle(cornerRadius: theme.radii.large, style: .continuous)
-                            .fill(theme.colors.onSurfaceMuted.opacity(0.12))
+                            .fill(.white.opacity(0.12))
                     )
                 }
                 .buttonStyle(BounceButtonStyle())
@@ -320,7 +328,7 @@ private struct ExercisePlayCardV3: View {
             }
             Text(verbatim: "Übung abgeschlossen")
                 .font(.title3.bold())
-                .foregroundStyle(theme.colors.onSurface)
+                .foregroundStyle(.white)
             Button { onAddSet() } label: {
                 Label("Satz hinzufügen", systemImage: "plus")
                     .font(.subheadline.weight(.semibold))
@@ -336,10 +344,10 @@ private struct ExercisePlayCardV3: View {
         VStack(spacing: 16) {
             Image(systemName: "tray")
                 .font(.largeTitle)
-                .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.4))
+                .foregroundStyle(.white.opacity(0.4))
             Text(verbatim: "Keine Sätze")
                 .font(.headline)
-                .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.6))
+                .foregroundStyle(.white.opacity(0.6))
             Button { onAddSet() } label: {
                 Label("Satz hinzufügen", systemImage: "plus.circle.fill")
                     .font(.subheadline.weight(.semibold))
@@ -361,10 +369,10 @@ private struct ExercisePlayCardV3: View {
                     Text(verbatim: "Satz \(max(1, viewSetIndex))")
                 }
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(viewSetIndex > 0 ? theme.colors.onSurface : theme.colors.onSurfaceMuted.opacity(0.15))
+                .foregroundStyle(viewSetIndex > 0 ? .white : .white.opacity(0.15))
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .background(Capsule().fill(viewSetIndex > 0 ? theme.colors.onSurfaceMuted.opacity(0.1) : Color.clear))
+                .background(Capsule().fill(viewSetIndex > 0 ? .white.opacity(0.1) : Color.clear))
             }
             .disabled(viewSetIndex == 0)
             .buttonStyle(BounceButtonStyle())
@@ -373,7 +381,7 @@ private struct ExercisePlayCardV3: View {
 
             Text(verbatim: "\(viewSetIndex + 1) / \(sets.count)")
                 .font(.caption.weight(.semibold).monospacedDigit())
-                .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.5))
+                .foregroundStyle(.white.opacity(0.5))
 
             Spacer()
 
@@ -434,7 +442,7 @@ private struct PlaySetInputsV3: View {
                     suffix: unit.rawValue,
                     keyboard: .decimalPad
                 )
-                Text(verbatim: "×").font(.title.weight(.bold)).foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.3))
+                Text(verbatim: "×").font(.title.weight(.bold)).foregroundStyle(.white.opacity(0.3))
                 bigInput(
                     text: Binding(
                         get: { setEntry.reps.map { String($0) } ?? "" },
@@ -473,10 +481,10 @@ private struct PlaySetInputsV3: View {
                     Text(verbatim: showAssisted ? "Assisted aktiv" : "Assisted Reps")
                 }
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(showAssisted ? .orange : theme.colors.onSurfaceMuted.opacity(0.6))
+                .foregroundStyle(showAssisted ? .orange : .white.opacity(0.6))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Capsule().fill(showAssisted ? Color.orange.opacity(0.2) : theme.colors.onSurfaceMuted.opacity(0.1)))
+                .background(Capsule().fill(showAssisted ? Color.orange.opacity(0.2) : .white.opacity(0.1)))
             }
         }
         .onAppear {
@@ -577,21 +585,21 @@ private struct PlaySetInputsV3: View {
         VStack(spacing: 8) {
             TextField("0", text: text)
                 .font(.system(size: 40, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundStyle(theme.colors.onSurface)
+                .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
                 .keyboardType(keyboard)
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: theme.radii.large, style: .continuous)
-                        .fill(theme.colors.onSurfaceMuted.opacity(0.1))
+                        .fill(.white.opacity(0.1))
                 )
             HStack(spacing: 3) {
                 Text(verbatim: label).font(.caption.weight(.semibold))
                 if !suffix.isEmpty {
-                    Text(verbatim: "· \(suffix)").font(.caption2).foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.6))
+                    Text(verbatim: "· \(suffix)").font(.caption2).foregroundStyle(.white.opacity(0.6))
                 }
             }
-            .foregroundStyle(theme.colors.onSurfaceMuted.opacity(0.7))
+            .foregroundStyle(.white.opacity(0.7))
         }
         .frame(maxWidth: .infinity)
     }
