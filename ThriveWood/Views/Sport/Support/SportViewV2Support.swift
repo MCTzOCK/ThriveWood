@@ -466,22 +466,36 @@ struct SportNavigationCardV2: View {
     let title: String
     let subtitle: String
     let icon: String
-    let iconColor: Color
+    let tone: BentoTone
+
+    init(title: String, subtitle: String, icon: String, tone: BentoTone) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.tone = tone
+    }
+
+    /// Convenience für bestehende Aufrufer, die eine Farbe mitbringen.
+    init(title: String, subtitle: String, icon: String, iconColor: Color) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.tone = BentoTone.tone(for: iconColor)
+    }
 
     var body: some View {
-        BentoCard(
-            tone: .neutral,
-            style: .elevated,
-            padding: .lg
+        BentoTile(
+            tone: tone,
+            minimumHeight: 150,
+            alignment: .center
         ) {
             VStack(spacing: Theme.Spacing.m) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                        .fill(iconColor.opacity(0.15))
+                    Circle()
+                        .fill(.white.opacity(0.18))
                         .frame(width: 52, height: 52)
                     Image(systemName: icon)
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(iconColor)
                         .symbolEffect(.bounce, value: title)
                 }
 
@@ -490,13 +504,30 @@ struct SportNavigationCardV2: View {
                         .font(Theme.Typography.subheadline.weight(.semibold))
                         .multilineTextAlignment(.center)
                     if !subtitle.isEmpty {
-                        BentoText(verbatim: subtitle, style: .caption, color: .secondary)
+                        BentoText(verbatim: subtitle, style: .caption)
                             .lineLimit(1)
                             .multilineTextAlignment(.center)
                     }
                 }
             }
             .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+private extension BentoTone {
+    /// Mappt eine freie Farbe auf den passenden BentoTone.
+    static func tone(for color: Color) -> BentoTone {
+        switch color {
+        case .green: return .green
+        case .teal, .cyan: return .info
+        case .yellow: return .yellow
+        case .red: return .danger
+        case .blue: return .blue
+        case .orange: return .warning
+        case .purple: return .accent
+        case .pink: return .pink
+        default: return .neutral
         }
     }
 }

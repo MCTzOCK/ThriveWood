@@ -10,6 +10,7 @@ import SwiftUI
 struct SportViewV2: View {
 
     @Environment(AppEnvironment.self) private var env
+    @Environment(\.bentoTheme) private var theme
 
     @State private var vm: SportViewV2Model?
     @State private var showingNewWorkout = false
@@ -28,7 +29,7 @@ struct SportViewV2: View {
                         .transition(.opacity)
                 } else {
                     BentoScreen(scrolls: false) {
-                        VStack(spacing: Theme.Spacing.m) {
+                        VStack(spacing: theme.spacing.md) {
                             BentoSpinner(size: 36)
                             BentoText(verbatim: "Sport wird geladen…", style: .callout, color: .secondary)
                         }
@@ -38,23 +39,48 @@ struct SportViewV2: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $showingNewWorkout) {
-            WorkoutEditorView(workout: nil).onDisappear { vm?.load() }
-        }
-        .sheet(item: $editingWorkout) { w in
-            WorkoutEditorView(workout: w).onDisappear { vm?.load() }
-        }
-        .sheet(isPresented: $showingPaywall) { PaywallView() }
-        .sheet(item: $selectedExercise) { e in
-            ExerciseDetailsSheet(exercise: e)
-        }
-        .fullScreenCover(item: $presentedSession) { session in
-            ActiveSessionViewV2(session: session).onDisappear { vm?.load() }
-        }
-        .task {
-            if vm == nil { vm = SportViewV2Model(env: env) }
-            vm?.load()
-        }
+            .bentoSheet(
+                isPresented: $showingNewWorkout,
+                title: Text("Neues Workout"),
+                subtitle: Text("Lege Übungen, Sätze und Ziele fest"),
+                detents: [.large]
+            ) {
+                WorkoutEditorView(workout: nil).onDisappear { vm?.load() }
+            }
+            .bentoSheet(
+                isPresented: Binding(
+                    get: { editingWorkout != nil },
+                    set: { if !$0 { editingWorkout = nil } }
+                ),
+                title: Text("Workout bearbeiten"),
+                detents: [.large]
+            ) {
+                if let workout = editingWorkout {
+                    WorkoutEditorView(workout: workout).onDisappear { vm?.load() }
+                }
+            }
+            .bentoSheet(isPresented: $showingPaywall, title: Text("ThriveWood Pro"), detents: [.large]) {
+                PaywallView()
+            }
+            .bentoSheet(
+                isPresented: Binding(
+                    get: { selectedExercise != nil },
+                    set: { if !$0 { selectedExercise = nil } }
+                ),
+                title: Text("Übung"),
+                detents: [.large]
+            ) {
+                if let exercise = selectedExercise {
+                    ExerciseDetailsSheet(exercise: exercise)
+                }
+            }
+            .fullScreenCover(item: $presentedSession) { session in
+                ActiveSessionViewV2(session: session).onDisappear { vm?.load() }
+            }
+            .task {
+                if vm == nil { vm = SportViewV2Model(env: env) }
+                vm?.load()
+            }
         }
     }
 
@@ -62,43 +88,55 @@ struct SportViewV2: View {
 
     @ViewBuilder
     private func content(vm: SportViewV2Model) -> some View {
-        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
-            VStack(spacing: Theme.Spacing.l) {
-                BentoPageHeader(
-                    eyebrow: Text("TRAINING"),
-                    title: Text("Sport"),
-                    subtitle: Text("\(vm.weeklySessionCount) Sessions diese Woche")
+        @Bindable var vm = vm
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            BentoPageHeader(
+                eyebrow: Text("TRAINING"),
+                title: Text("Sport"),
+                subtitle: Text("\(vm.weeklySessionCount) Sessions diese Woche")
+            ) {
+                BentoIconButton(
+                    systemImage: "plus",
+                    accessibilityLabel: Text("Neues Workout"),
+                    variant: .primary,
+                    size: .medium
                 ) {
-                    BentoIconButton(
-                        systemImage: "plus",
-                        accessibilityLabel: Text("Neues Workout"),
-                        variant: .primary
-                    ) {
-                        if env.entitlements.canCreateWorkout {
-                            showingNewWorkout = true
-                        } else {
-                            showingPaywall = true
-                        }
+                    if env.entitlements.canCreateWorkout {
+                        showingNewWorkout = true
+                    } else {
+                        showingPaywall = true
                     }
                 }
-                .padding(.horizontal, Theme.Spacing.l)
-                .padding(.top, Theme.Spacing.m)
-
-                if let active = vm.activeSession {
-                    ActiveSessionBanner(session: active) {
-                        presentedSession = active
-                    }
-                    .padding(.horizontal, Theme.Spacing.l)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
-                todaySection(vm: vm)
-
-                trainingSection(vm: vm)
-
-                navigationGrid(vm: vm)
             }
-            .padding(.bottom, 120)
+
+            if let active = vm.activeSession {
+                ActiveSessionBanner(session: active) {
+                    presentedSession = active
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            todayHero(vm: vm)
+
+            weekAndRecoveryRow(vm: vm)
+
+            quickStartSection(vm: vm)
+
+            if vm.weeklySessionCount > 0 {
+                WeeklyStatsCardV2(
+                    sessionCount: vm.weeklySessionCount,
+                    volume: vm.weeklyVolume,
+                    durationMinutes: vm.weeklyDurationMinutes
+                )
+            }
+
+            if !vm.recentSessions.isEmpty {
+                recentSessionsCard(vm: vm)
+            }
+
+            navigationGrid(vm: vm)
+
+            Spacer(minLength: theme.spacing.xxl)
         }
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
@@ -108,67 +146,68 @@ struct SportViewV2: View {
         }
     }
 
-    // MARK: - Today Section
+    // MARK: - Today Hero
 
     @ViewBuilder
-    private func todaySection(vm: SportViewV2Model) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            BentoSectionHeader(title: Text("Heute")) {
-                EmptyView()
+    private func todayHero(vm: SportViewV2Model) -> some View {
+        if vm.todayIsRestDay {
+            BentoCard(
+                background: theme.colors.info.opacity(0.15),
+                foreground: .primary,
+                style: .flat,
+                padding: .lg,
+                radius: .extraLarge
+            ) {
+                VStack(spacing: theme.spacing.sm) {
+                    Image(systemName: "moon.zzz.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(theme.colors.info)
+                        .symbolEffect(.pulse, options: .repeating)
+                    BentoText("Ruhetag", style: .title3)
+                    BentoText(
+                        "Dein Plan sieht heute Pause vor. Nutze den Tag für Mobilität, Spaziergänge oder Schlaf.",
+                        style: .callout,
+                        color: theme.colors.onSurfaceMuted
+                    )
+                    .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, Theme.Spacing.l)
-
-            if vm.todayIsRestDay {
-                RestDayCardV2()
-                    .padding(.horizontal, Theme.Spacing.l)
-            } else if let workout = vm.todaysPlannedWorkout {
-                TodayWorkoutCardV2(
-                    workout: workout,
-                    estimatedDuration: avgDuration(for: workout, fallback: workout.estimatedDurationMinutes),
-                    exerciseCount: workout.exercises.count,
-                    isCompleted: vm.todayWorkoutCompleted,
-                    onStart: {
-                        if let s = vm.startSession(for: workout) { presentedSession = s }
-                    }
-                )
-                .padding(.horizontal, Theme.Spacing.l)
-            } else if let last = vm.lastSession, let lastWorkout = last.workout {
-                TodayWorkoutCardV2(
-                    workout: lastWorkout,
-                    estimatedDuration: avgDuration(for: lastWorkout, fallback: lastWorkout.estimatedDurationMinutes),
-                    exerciseCount: lastWorkout.exercises.count,
-                    isCompleted: vm.didCompleteToday(lastWorkout),
-                    onStart: {
-                        if let s = vm.startSession(for: lastWorkout) { presentedSession = s }
-                    }
-                )
-                .padding(.horizontal, Theme.Spacing.l)
-            } else {
-                TodayWorkoutCardV2(
-                    workout: nil,
-                    estimatedDuration: 0,
-                    exerciseCount: 0,
-                    isCompleted: false,
-                    onStart: {
-                        if let s = vm.startSession(for: nil) { presentedSession = s }
-                    }
-                )
-                .padding(.horizontal, Theme.Spacing.l)
-            }
-
-            SportWeekStripCard(model: vm)
-                .padding(.horizontal, Theme.Spacing.l)
-
-            RecoveryMiniCard(dashboard: vm.recoveryDashboard)
-                .padding(.horizontal, Theme.Spacing.l)
+        } else {
+            TodayWorkoutCardV2(
+                workout: vm.todaysPlannedWorkout ?? vm.lastSession?.workout,
+                estimatedDuration: avgDuration(
+                    for: vm.todaysPlannedWorkout ?? vm.lastSession?.workout,
+                    fallback: vm.todaysPlannedWorkout?.estimatedDurationMinutes
+                        ?? vm.lastSession?.workout?.estimatedDurationMinutes ?? 0
+                ),
+                exerciseCount: vm.todaysPlannedWorkout?.exercises.count
+                    ?? vm.lastSession?.workout?.exercises.count ?? 0,
+                isCompleted: vm.todayWorkoutCompleted,
+                onStart: {
+                    let workout = vm.todaysPlannedWorkout ?? vm.lastSession?.workout
+                    if let s = vm.startSession(for: workout) { presentedSession = s }
+                }
+            )
         }
     }
 
-    // MARK: - Training Section
+    // MARK: - Week + Recovery Row
 
     @ViewBuilder
-    private func trainingSection(vm: SportViewV2Model) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+    private func weekAndRecoveryRow(vm: SportViewV2Model) -> some View {
+        BentoSplitCard {
+            SportWeekStripCard(model: vm)
+        } trailing: {
+            RecoveryMiniCard(dashboard: vm.recoveryDashboard)
+        }
+    }
+
+    // MARK: - Quick Start
+
+    @ViewBuilder
+    private func quickStartSection(vm: SportViewV2Model) -> some View {
+        BentoSection(title: Text("Schnellstart"), subtitle: Text("\(vm.workouts.count) Workouts")) {
             QuickStartGridV2(
                 onFreeTraining: {
                     if let s = vm.startSession(for: nil) { presentedSession = s }
@@ -189,52 +228,44 @@ struct SportViewV2: View {
                     searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased())
                 }
             )
+        }
+    }
 
-            if vm.weeklySessionCount > 0 {
-                WeeklyStatsCardV2(
-                    sessionCount: vm.weeklySessionCount,
-                    volume: vm.weeklyVolume,
-                    durationMinutes: vm.weeklyDurationMinutes
-                )
-            }
+    // MARK: - Recent Sessions
 
-            if !vm.recentSessions.isEmpty {
-                RecentSessionsSection(sessions: vm.recentSessions) { selected in
-                    detailSession = selected
-                }
+    @ViewBuilder
+    private func recentSessionsCard(vm: SportViewV2Model) -> some View {
+        BentoSection(title: Text("Zuletzt"), subtitle: Text("Letzte Trainingssessions")) {
+            RecentSessionsSection(sessions: vm.recentSessions) { selected in
+                detailSession = selected
             }
         }
-        .padding(.horizontal, Theme.Spacing.l)
     }
 
     // MARK: - Navigation Grid
 
-    private func avgDuration(for workout: Workout, fallback: Int) -> Int {
+    private func avgDuration(for workout: Workout?, fallback: Int?) -> Int {
+        guard let workout else { return fallback ?? 0 }
         let avg = env.workoutService.getAverageDuration(workout: workout)
-        return avg > 0 ? Int(avg) : fallback
+        return avg > 0 ? Int(avg) : (fallback ?? 0)
     }
 
     @ViewBuilder
     private func navigationGrid(vm: SportViewV2Model) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            BentoSectionHeader(title: Text("Entdecken")) {
-                EmptyView()
-            }
-            .padding(.horizontal, Theme.Spacing.l)
-
-            BentoAdaptiveGrid(minimumItemWidth: 150) {
+        BentoSection(title: Text("Entdecken"), subtitle: Text("Mehr aus dem Sport-Tab")) {
+            BentoAdaptiveGrid(minimumItemWidth: 160) {
                 NavigationLink(destination: { AllSessionsView() }) {
-                    SportNavigationCardV2(title: "Alle Sessions", subtitle: "Verlauf", icon: "clock.fill", iconColor: .green)
+                    SportNavigationCardV2(title: "Alle Sessions", subtitle: "Verlauf", icon: "clock.fill", tone: .green)
                 }
                 .buttonStyle(BounceButtonStyle())
 
                 NavigationLink(destination: { SportInsightsView() }) {
-                    SportNavigationCardV2(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", iconColor: .teal)
+                    SportNavigationCardV2(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", tone: .info)
                 }
                 .buttonStyle(BounceButtonStyle())
 
                 NavigationLink(destination: { MuscleRankingScreen() }) {
-                    SportNavigationCardV2(title: "Muskel-Ranking", subtitle: "Erholung", icon: "trophy.fill", iconColor: .yellow)
+                    SportNavigationCardV2(title: "Muskel-Ranking", subtitle: "Erholung", icon: "trophy.fill", tone: .yellow)
                 }
                 .buttonStyle(BounceButtonStyle())
 
@@ -243,31 +274,30 @@ struct SportViewV2: View {
                         selectedExercise = exercise
                     }, asSheet: false, onlyFor: nil)
                 }) {
-                    SportNavigationCardV2(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", iconColor: .red)
+                    SportNavigationCardV2(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", tone: .danger)
                 }
                 .buttonStyle(BounceButtonStyle())
 
                 NavigationLink(destination: { TrainingsPlanListView() }) {
-                    SportNavigationCardV2(title: "Trainingspläne", subtitle: "Pläne", icon: "list.bullet.rectangle.portrait", iconColor: .blue)
+                    SportNavigationCardV2(title: "Trainingspläne", subtitle: "Pläne", icon: "list.bullet.rectangle.portrait", tone: .blue)
                 }
                 .buttonStyle(BounceButtonStyle())
 
                 NavigationLink(destination: { PRListView() }) {
-                    SportNavigationCardV2(title: "PRs", subtitle: "Rekorde", icon: "flame.fill", iconColor: .orange)
+                    SportNavigationCardV2(title: "PRs", subtitle: "Rekorde", icon: "flame.fill", tone: .warning)
                 }
                 .buttonStyle(BounceButtonStyle())
 
                 NavigationLink(destination: { BodyProgressView() }) {
-                    SportNavigationCardV2(title: "Körper", subtitle: "Fortschritt", icon: "figure.stand.line.dotted.figure.stand", iconColor: .purple)
+                    SportNavigationCardV2(title: "Körper", subtitle: "Fortschritt", icon: "figure.stand.line.dotted.figure.stand", tone: .pink)
                 }
                 .buttonStyle(BounceButtonStyle())
 
                 NavigationLink(destination: { WellnessView() }) {
-                    SportNavigationCardV2(title: "Wellness", subtitle: "Check-in", icon: "heart.fill", iconColor: .pink)
+                    SportNavigationCardV2(title: "Wellness", subtitle: "Check-in", icon: "heart.fill", tone: .pink)
                 }
                 .buttonStyle(BounceButtonStyle())
             }
-            .padding(.horizontal, Theme.Spacing.l)
         }
     }
 }
