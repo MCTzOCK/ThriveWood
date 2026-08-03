@@ -40,6 +40,8 @@ struct RoutinesView: View {
     @State private var showingNew = false
     @State private var editingRoutine: HabitRoutine?
     @State private var presentedRoutine: HabitRoutine?
+    @State private var menuRoutine: HabitRoutine?
+    @State private var deletingRoutine: HabitRoutine?
 
     var body: some View {
         Group {
@@ -83,6 +85,54 @@ struct RoutinesView: View {
             RoutineRunView(routine: routine) {
                 vm?.load()
             }
+        }
+        .confirmationDialog(
+            Text("Routine"),
+            isPresented: Binding(
+                get: { menuRoutine != nil },
+                set: { if !$0 { menuRoutine = nil } }
+            ),
+            presenting: menuRoutine
+        ) { routine in
+            Button {
+                editingRoutine = routine
+                menuRoutine = nil
+            } label: {
+                Text("Bearbeiten")
+            }
+            Button(role: .destructive) {
+                deletingRoutine = routine
+                menuRoutine = nil
+            } label: {
+                Text("Löschen")
+            }
+            Button(role: .cancel) {
+                menuRoutine = nil
+            } label: {
+                Text("Abbrechen")
+            }
+        }
+        .confirmationDialog(
+            Text("Routine löschen?"),
+            isPresented: Binding(
+                get: { deletingRoutine != nil },
+                set: { if !$0 { deletingRoutine = nil } }
+            ),
+            presenting: deletingRoutine
+        ) { routine in
+            Button(role: .destructive) {
+                vm?.delete(routine)
+                deletingRoutine = nil
+            } label: {
+                Text("Löschen")
+            }
+            Button(role: .cancel) {
+                deletingRoutine = nil
+            } label: {
+                Text("Abbrechen")
+            }
+        } message: { _ in
+            Text("Diese Routine wird endgültig entfernt. Die enthaltenen Habits bleiben erhalten.")
         }
         .task {
             if vm == nil { vm = RoutinesViewModel(env: env) }
@@ -160,24 +210,23 @@ struct RoutinesView: View {
     private func routinesList(vm: RoutinesViewModel) -> some View {
         VStack(spacing: theme.spacing.md) {
             ForEach(vm.routines) { routine in
-                Button {
-                    presentedRoutine = routine
-                } label: {
-                    routineCard(routine)
-                }
-                .buttonStyle(PressScaleStyle())
-                .contextMenu {
-                    Button {
-                        editingRoutine = routine
-                    } label: {
-                        Label("Bearbeiten", systemImage: "pencil")
+                routineCard(routine)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        presentedRoutine = routine
                     }
-                    Button(role: .destructive) {
-                        vm.delete(routine)
-                    } label: {
-                        Label("Löschen", systemImage: "trash")
+                    .contextMenu {
+                        Button {
+                            editingRoutine = routine
+                        } label: {
+                            Label("Bearbeiten", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            deletingRoutine = routine
+                        } label: {
+                            Label("Löschen", systemImage: "trash")
+                        }
                     }
-                }
             }
         }
     }
@@ -204,6 +253,16 @@ struct RoutinesView: View {
                 }
 
                 Spacer()
+
+                BentoIconButton(
+                    systemImage: "ellipsis",
+                    accessibilityLabel: Text("Optionen"),
+                    variant: .secondary,
+                    size: .small
+                ) {
+                    menuRoutine = routine
+                }
+                .buttonStyle(.plain)
 
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.bold))

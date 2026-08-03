@@ -18,6 +18,9 @@ struct BentoHabitRowView: View {
     let onIncrement: () -> Void
     let onDecrement: () -> Void
     let onEdit: () -> Void
+    /// `false` blendet den Bearbeiten-Button (Ellipsis) aus — z. B. in der
+    /// Routine-Ansicht, wo Habits nicht editierbar sind.
+    var showsEditButton: Bool = true
 
     var body: some View {
         BentoCard(
@@ -50,7 +53,9 @@ struct BentoHabitRowView: View {
         HStack {
             iconBadge
             Spacer()
-            editButton
+            if showsEditButton {
+                editButton
+            }
         }
     }
 

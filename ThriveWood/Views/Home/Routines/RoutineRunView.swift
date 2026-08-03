@@ -240,7 +240,8 @@ struct RoutineRunView: View {
                         onToggle: { vm.toggle(habit) },
                         onIncrement: { vm.increment(habit) },
                         onDecrement: { vm.decrement(habit) },
-                        onEdit: {}
+                        onEdit: {},
+                        showsEditButton: false
                     )
                 }
             }
