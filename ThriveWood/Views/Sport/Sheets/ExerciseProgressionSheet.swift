@@ -44,26 +44,15 @@ struct ExerciseProgressionSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.l) {
-                    prHeader
-                    if progression.count >= 2 {
-                        chartCard
-                    } else if progression.isEmpty {
-                        emptyProgression
-                    }
-                    historyList
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                prHeader
+                if progression.count >= 2 {
+                    chartCard
+                } else if progression.isEmpty {
+                    emptyProgression
                 }
-                .padding(Theme.Spacing.l)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(exercise.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { dismiss() }
-                }
+                historyList
             }
         }
         .onAppear { load() }

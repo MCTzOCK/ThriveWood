@@ -67,42 +67,32 @@ struct WorkoutSummaryImageSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                TabView(selection: $selectedDesign) {
-                    ForEach(SummaryDesign.allCases) { design in
-                        ScrollView(.vertical, showsIndicators: true) {
-                            WorkoutSummaryImage(data: data, design: design)
-                                .padding(.vertical, Theme.Spacing.m)
-                        }
-                        .tag(design)
+        VStack(spacing: 0) {
+            TabView(selection: $selectedDesign) {
+                ForEach(SummaryDesign.allCases) { design in
+                    ScrollView(.vertical, showsIndicators: true) {
+                        WorkoutSummaryImage(data: data, design: design)
+                            .padding(.vertical, Theme.Spacing.m)
                     }
+                    .tag(design)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .indexViewStyle(.page(backgroundDisplayMode: .always))
-                .frame(maxHeight: .infinity)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .always))
+            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .frame(maxHeight: .infinity)
 
-                bottomBar
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Zusammenfassung")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { dismiss() }
-                }
-            }
-            .bentoSheet(
-                isPresented: Binding(
-                    get: { shareItem != nil },
-                    set: { if !$0 { shareItem = nil } }
-                ),
-                title: Text("Teilen"),
-                detents: [.medium]
-            ) {
-                if let item = shareItem {
-                    WorkoutSummaryShareSheet(image: item.image)
-                }
+            bottomBar
+        }
+        .bentoSheet(
+            isPresented: Binding(
+                get: { shareItem != nil },
+                set: { if !$0 { shareItem = nil } }
+            ),
+            title: Text("Teilen"),
+            detents: [.medium]
+        ) {
+            if let item = shareItem {
+                WorkoutSummaryShareSheet(image: item.image)
             }
         }
     }

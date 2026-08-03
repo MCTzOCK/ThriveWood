@@ -19,54 +19,43 @@ struct ExerciseDetailsSheet: View {
     var exercise: Exercise
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    if !exercise.images.isEmpty {
-                        imageCarousel
-                            .frame(height: 200)
-                    } else {
-                        placeholderImage
-                            .frame(height: 200)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 24) {
-                        headerSection
-                        
-                        infoPillsSection
-                        
-                        if !exercise.instructions.isEmpty {
-                            instructionsSection
-                        }
-                        
-                        if !exercise.details.isEmpty {
-                            detailsSection
-                        }
-                        
-                        muscleGroupsSection
-                        
-                        if exercise.isBuiltIn {
-                            metadataSection
-                        }
-                    }
-                    .padding()
+        ScrollView {
+            VStack(spacing: 0) {
+                if !exercise.images.isEmpty {
+                    imageCarousel
+                        .frame(height: 200)
+                } else {
+                    placeholderImage
+                        .frame(height: 200)
                 }
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Schließen")
+
+                VStack(alignment: .leading, spacing: 24) {
+                    headerSection
+
+                    infoPillsSection
+
+                    if !exercise.instructions.isEmpty {
+                        instructionsSection
+                    }
+
+                    if !exercise.details.isEmpty {
+                        detailsSection
+                    }
+
+                    muscleGroupsSection
+
+                    if exercise.isBuiltIn {
+                        metadataSection
                     }
                 }
+                .padding()
             }
-            .bentoSheet(isPresented: $showingEditDetails, title: Text("Details"), detents: [.large]) {
-                ExerciseEditDetailsSheet(exercise: exercise)
-            }
-            .bentoSheet(isPresented: $showingEditMuscleGroups, title: Text("Muskelgruppen"), detents: [.large]) {
-                ExerciseEditMuscleGroupsSheet(exercise: exercise)
-            }
+        }
+        .bentoSheet(isPresented: $showingEditDetails, title: Text("Details"), detents: [.large]) {
+            ExerciseEditDetailsSheet(exercise: exercise)
+        }
+        .bentoSheet(isPresented: $showingEditMuscleGroups, title: Text("Muskelgruppen"), detents: [.large]) {
+            ExerciseEditMuscleGroupsSheet(exercise: exercise)
         }
     }
     private var imageCarousel: some View {
@@ -551,76 +540,81 @@ struct ExerciseEditDetailsSheet: View {
     }
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Allgemein") {
-                    TextField("Name", text: $name)
-                        .textInputAutocapitalization(.sentences)
-                    TextField("Beschreibung (optional)", text: $details, axis: .vertical)
-                        .lineLimit(1...3)
-                    Picker("Kategorie", selection: $category) {
-                        ForEach(ExerciseCategory.allCases) { c in
-                            Text(c.id).tag(c)
-                        }
-                    }
-                }
-                
-                Section("Symbol") {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(iconOptions, id: \.self) { name in
-                                Button {
-                                    Haptics.selection()
-                                    icon = name
-                                } label: {
-                                    Image(systemName: name)
-                                        .font(.title3)
-                                        .frame(width: 44, height: 44)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(icon == name
-                                                      ? Color.blue.opacity(0.18)
-                                                      : Color(.tertiarySystemFill))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .strokeBorder(icon == name ? Color.blue : .clear, lineWidth: 2)
-                                        )
-                                        .foregroundStyle(icon == name ? .blue : .primary)
-                                }
-                                .buttonStyle(.plain)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Allgemein"))
+                        TextField("Name", text: $name)
+                            .textInputAutocapitalization(.sentences)
+                        TextField("Beschreibung (optional)", text: $details, axis: .vertical)
+                            .lineLimit(1...3)
+                        Picker("Kategorie", selection: $category) {
+                            ForEach(ExerciseCategory.allCases) { c in
+                                Text(c.id).tag(c)
                             }
                         }
-                        .padding(.vertical, 4)
+                    }
+                }
+
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Symbol"))
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(iconOptions, id: \.self) { name in
+                                    Button {
+                                        Haptics.selection()
+                                        icon = name
+                                    } label: {
+                                        Image(systemName: name)
+                                            .font(.title3)
+                                            .frame(width: 44, height: 44)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .fill(icon == name
+                                                          ? Color.blue.opacity(0.18)
+                                                          : Color(.tertiarySystemFill))
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .strokeBorder(icon == name ? Color.blue : .clear, lineWidth: 2)
+                                            )
+                                            .foregroundStyle(icon == name ? .blue : .primary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
                     }
                 }
             }
-            .navigationTitle("Details bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig", action: save)
-                        .disabled(!isValid)
-                        .fontWeight(.semibold)
-                }
+        }
+        .bentoActionBar {
+            BentoButton(
+                Text("Fertig"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
             }
-            .onAppear {
-                name = exercise.name
-                details = exercise.details
-                category = exercise.category
-                trackingType = exercise.trackingType
-                icon = exercise.iconSystemName
-            }
-            .onChange(of: category) { _, newCategory in
-                guard !hasManuallyChangedTracking else { return }
-                trackingType = defaultTracking(for: newCategory)
-            }
-            .onChange(of: trackingType) { _, _ in
-                hasManuallyChangedTracking = true
-            }
+            .disabled(!isValid)
+        }
+        .onAppear {
+            name = exercise.name
+            details = exercise.details
+            category = exercise.category
+            trackingType = exercise.trackingType
+            icon = exercise.iconSystemName
+        }
+        .onChange(of: category) { _, newCategory in
+            guard !hasManuallyChangedTracking else { return }
+            trackingType = defaultTracking(for: newCategory)
+        }
+        .onChange(of: trackingType) { _, _ in
+            hasManuallyChangedTracking = true
         }
     }
     
@@ -688,40 +682,40 @@ struct ExerciseEditMuscleGroupsSheet: View {
     }
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    DisclosureGroup("Hauptmuskeln (\(primary.count))") {
-                        MuscleGroupGrid(selection: $primary)
-                    }
-                    DisclosureGroup("Sekundärmuskeln (\(secondary.count))") {
-                        MuscleGroupGrid(selection: $secondary)
-                    }
-                } header: {
-                    Text("Muskelgruppen")
-                } footer: {
-                    if primary.isEmpty {
-                        Text("Mindestens eine Hauptmuskelgruppe wählen.")
-                            .foregroundStyle(.red)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Muskelgruppen"))
+                        DisclosureGroup("Hauptmuskeln (\(primary.count))") {
+                            MuscleGroupGrid(selection: $primary)
+                        }
+                        DisclosureGroup("Sekundärmuskeln (\(secondary.count))") {
+                            MuscleGroupGrid(selection: $secondary)
+                        }
+                        if primary.isEmpty {
+                            Text("Mindestens eine Hauptmuskelgruppe wählen.")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
                     }
                 }
             }
-            .navigationTitle("Muskeln bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig", action: save)
-                        .disabled(!isValid)
-                        .fontWeight(.semibold)
-                }
+        }
+        .bentoActionBar {
+            BentoButton(
+                Text("Fertig"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
             }
-            .onAppear {
-                primary = Set(exercise.primaryMuscleGroups)
-                secondary = Set(exercise.secondaryMuscleGroups)
-            }
+            .disabled(!isValid)
+        }
+        .onAppear {
+            primary = Set(exercise.primaryMuscleGroups)
+            secondary = Set(exercise.secondaryMuscleGroups)
         }
     }
     

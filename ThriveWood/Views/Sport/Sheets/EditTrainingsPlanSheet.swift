@@ -23,57 +23,76 @@ struct EditTrainingsPlanSheet: View {
     ]
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $name)
-                    TextField("Beschreibung", text: $details, axis: .vertical)
-                        .lineLimit(2...4)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Allgemein"))
+
+                        BentoTextField(
+                            label: Text("Name"),
+                            text: $name,
+                            prompt: Text("Name")
+                        )
+
+                        BentoTextArea(
+                            label: Text("Beschreibung"),
+                            text: $details,
+                            prompt: Text("Beschreibung"),
+                            minimumHeight: 90
+                        )
+                    }
                 }
-                
-                Section {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
-                        ForEach(colors, id: \.self) { color in
-                            Circle()
-                                .fill(Color(hex: color) ?? .gray)
-                                .frame(width: 32, height: 32)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(.white, lineWidth: selectedColor == color ? 3 : 0)
-                                )
-                                .onTapGesture {
-                                    selectedColor = color
-                                    Haptics.selection()
-                                }
+
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Farbe"))
+
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
+                            ForEach(colors, id: \.self) { color in
+                                Circle()
+                                    .fill(Color(hex: color) ?? .gray)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(.white, lineWidth: selectedColor == color ? 3 : 0)
+                                    )
+                                    .onTapGesture {
+                                        selectedColor = color
+                                        Haptics.selection()
+                                    }
+                            }
                         }
                     }
-                } header: {
-                    Text("Farbe")
                 }
-                
-                Section {
-                    Toggle("Als aktiven Plan setzen", isOn: Binding(
-                        get: { plan.isActive },
-                        set: { if $0 { setActive() } }
-                    ))
+
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        Toggle("Als aktiven Plan setzen", isOn: Binding(
+                            get: { plan.isActive },
+                            set: { if $0 { setActive() } }
+                        ))
+                    }
                 }
+
+                Spacer(minLength: 40)
             }
-            .navigationTitle("Plan bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Speichern") { save() }
-                        .disabled(name.isEmpty)
-                }
+        }
+        .bentoActionBar {
+            BentoButton(
+                Text("Speichern"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
             }
-            .onAppear {
-                name = plan.name
-                details = plan.details
-                selectedColor = plan.color
-            }
+            .disabled(name.isEmpty)
+        }
+        .onAppear {
+            name = plan.name
+            details = plan.details
+            selectedColor = plan.color
         }
     }
     

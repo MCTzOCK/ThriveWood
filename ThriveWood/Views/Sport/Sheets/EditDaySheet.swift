@@ -21,46 +21,50 @@ struct EditDaySheet: View {
     @State private var availableWorkouts: [Workout] = []
     
     var body: some View {
-        Form {
-            Section {
-                HStack {
-                    Image(systemName: day.weekday.icon)
-                        .foregroundStyle(.blue)
-                    Text(day.weekday.label)
-                        .font(.headline)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoCard(style: .outlined, padding: .lg) {
+                    HStack {
+                        Image(systemName: day.weekday.icon)
+                            .foregroundStyle(.blue)
+                        Text(day.weekday.label)
+                            .font(.headline)
+                    }
                 }
-            }
-            
-            if !isRestDay {
-                Section {
-                    // Use the workout id (UUID) as the picker's selection tag because
-                    // model objects are not Hashable for use as tags.
-                    Picker("Workout", selection: $selectedWorkoutID) {
-                        Text("Kein Workout").tag(nil as UUID?)
-                        ForEach(availableWorkouts) { workout in
-                            Text(workout.name).tag(workout.id)
+
+                if !isRestDay {
+                    BentoCard(style: .outlined, padding: .lg) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                            BentoSectionHeader(title: Text("Workout auswählen"))
+                            // Use the workout id (UUID) as the picker's selection tag because
+                            // model objects are not Hashable for use as tags.
+                            Picker("Workout", selection: $selectedWorkoutID) {
+                                Text("Kein Workout").tag(nil as UUID?)
+                                ForEach(availableWorkouts) { workout in
+                                    Text(workout.name).tag(workout.id)
+                                }
+                            }
                         }
                     }
-                } header: {
-                    Text("Workout auswählen")
+                }
+
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Notizen"))
+                        TextField("Notizen (optional)", text: $notes, axis: .vertical)
+                            .lineLimit(2...5)
+                    }
                 }
             }
-            
-            Section {
-                TextField("Notizen (optional)", text: $notes, axis: .vertical)
-                    .lineLimit(2...5)
-            } header: {
-                Text("Notizen")
-            }
         }
-        .navigationTitle(day.weekday.label)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Abbrechen") { dismiss() }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Speichern") { save() }
+        .bentoActionBar {
+            BentoButton(
+                Text("Speichern"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
             }
         }
         .task { await load() }

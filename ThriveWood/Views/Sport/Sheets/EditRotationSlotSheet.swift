@@ -20,55 +20,62 @@ struct EditRotationSlotSheet: View {
     @State private var availableWorkouts: [Workout] = []
 
     var body: some View {
-        Form {
-            Section {
-                HStack {
-                    ZStack {
-                        Circle()
-                            .fill(planColor.opacity(0.2))
-                            .frame(width: 44, height: 44)
-                        Text(slotLetter)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoCard(style: .outlined, padding: .lg) {
+                    HStack {
+                        ZStack {
+                            Circle()
+                                .fill(planColor.opacity(0.2))
+                                .frame(width: 44, height: 44)
+                            Text(slotLetter)
+                                .font(.headline)
+                                .foregroundStyle(planColor)
+                        }
+                        Text(slotTitle)
                             .font(.headline)
-                            .foregroundStyle(planColor)
-                    }
-                    Text(slotTitle)
-                        .font(.headline)
-                }
-            }
-
-            Section {
-                TextField("Label (z.B. A, Push, Oberkörper)", text: $label)
-            } header: {
-                Text("Bezeichnung")
-            }
-
-            Section {
-                Picker("Workout", selection: $selectedWorkoutID) {
-                    Text("Kein Workout").tag(nil as UUID?)
-                    ForEach(availableWorkouts) { workout in
-                        Text(workout.name).tag(workout.id)
                     }
                 }
-            } header: {
-                Text("Workout auswählen")
-            }
 
-            if day.workout == nil {
-                Section {
-                    Button("Slot löschen", role: .destructive) {
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Bezeichnung"))
+                        TextField("Label (z.B. A, Push, Oberkörper)", text: $label)
+                    }
+                }
+
+                BentoCard(style: .outlined, padding: .lg) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                        BentoSectionHeader(title: Text("Workout auswählen"))
+                        Picker("Workout", selection: $selectedWorkoutID) {
+                            Text("Kein Workout").tag(nil as UUID?)
+                            ForEach(availableWorkouts) { workout in
+                                Text(workout.name).tag(workout.id)
+                            }
+                        }
+                    }
+                }
+
+                if day.workout == nil {
+                    BentoButton(
+                        Text("Slot löschen"),
+                        systemImage: "trash",
+                        variant: .destructive,
+                        expands: true
+                    ) {
                         deleteSlot()
                     }
                 }
             }
         }
-        .navigationTitle("Slot \(slotLetter)")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Abbrechen") { dismiss() }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Speichern") { save() }
+        .bentoActionBar {
+            BentoButton(
+                Text("Speichern"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
             }
         }
         .task { await load() }

@@ -151,13 +151,46 @@ struct WorkoutEditorView: View {
                     .padding(.vertical, Theme.Spacing.s)
                 } else {
                     VStack(spacing: Theme.Spacing.s) {
-                        ForEach(slots.sorted(by: { $0.order < $1.order })) { slot in
-                            SlotRow(slot: slot) {
-                                toggleSuperset(for: slot)
+                        ForEach(Array(slots.sorted(by: { $0.order < $1.order }).enumerated()), id: \.element.id) { index, slot in
+                            BentoCard(style: .outlined, padding: .md) {
+                                VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                                    SlotRow(slot: slot)
+
+                                    HStack(spacing: Theme.Spacing.xs) {
+                                        BentoIconButton(
+                                            systemImage: "chevron.up",
+                                            accessibilityLabel: Text("Nach oben"),
+                                            variant: .ghost,
+                                            size: .small
+                                        ) {
+                                            moveSlot(at: index, delta: -1)
+                                        }
+                                        .disabled(index == 0)
+
+                                        BentoIconButton(
+                                            systemImage: "chevron.down",
+                                            accessibilityLabel: Text("Nach unten"),
+                                            variant: .ghost,
+                                            size: .small
+                                        ) {
+                                            moveSlot(at: index, delta: 1)
+                                        }
+                                        .disabled(index == slots.sorted(by: { $0.order < $1.order }).count - 1)
+
+                                        Spacer()
+
+                                        BentoIconButton(
+                                            systemImage: "trash",
+                                            accessibilityLabel: Text("Entfernen"),
+                                            variant: .ghost,
+                                            size: .small
+                                        ) {
+                                            deleteSlot(slot)
+                                        }
+                                    }
+                                }
                             }
                         }
-                        .onDelete(perform: deleteSlots)
-                        .onMove(perform: moveSlots)
                     }
                 }
 
@@ -199,26 +232,19 @@ struct WorkoutEditorView: View {
         slots.append(slot)
     }
 
-    private func deleteSlots(at offsets: IndexSet) {
-        let sorted = slots.sorted { $0.order < $1.order }
-        for i in offsets { slots.removeAll { $0.id == sorted[i].id } }
+    private func deleteSlot(_ slot: WorkoutExercise) {
+        slots.removeAll { $0.id == slot.id }
         for (i, s) in slots.sorted(by: { $0.order < $1.order }).enumerated() { s.order = i }
     }
 
-    private func moveSlots(from source: IndexSet, to destination: Int) {
+    private func moveSlot(at index: Int, delta: Int) {
         var sorted = slots.sorted { $0.order < $1.order }
-        sorted.move(fromOffsets: source, toOffset: destination)
+        let newIndex = index + delta
+        guard sorted.indices.contains(index), sorted.indices.contains(newIndex) else { return }
+        sorted.swapAt(index, newIndex)
         for (i, s) in sorted.enumerated() { s.order = i }
         slots = sorted
-    }
-
-    private func toggleSuperset(for slot: WorkoutExercise) {
-        if slot.supersetGroup == nil {
-            let maxGroup = slots.compactMap(\.supersetGroup).max() ?? 0
-            slot.supersetGroup = maxGroup + 1
-        } else {
-            slot.supersetGroup = nil
-        }
+        Haptics.selection()
     }
 
     private func save() {

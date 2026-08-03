@@ -35,147 +35,177 @@ struct ExerciseEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
                 detailsSection
                 trackingSection
                 muscleSection
                 appearanceSection
                 previewSection
+
+                Spacer(minLength: 40)
             }
-            .navigationTitle("Neue Übung")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Speichern", action: save)
-                        .disabled(!isValid)
-                        .fontWeight(.semibold)
-                }
+        }
+        .bentoActionBar {
+            BentoButton(
+                Text("Speichern"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
             }
-            .onChange(of: category) { _, newCategory in
-                guard !hasManuallyChangedTracking else { return }
-                trackingType = defaultTracking(for: newCategory)
-            }
+            .disabled(!isValid)
+        }
+        .onChange(of: category) { _, newCategory in
+            guard !hasManuallyChangedTracking else { return }
+            trackingType = defaultTracking(for: newCategory)
         }
     }
 
     // MARK: - Sections
 
     private var detailsSection: some View {
-        Section("Details") {
-            TextField("Name", text: $name)
-                .textInputAutocapitalization(.sentences)
-            TextField("Beschreibung (optional)", text: $details, axis: .vertical)
-                .lineLimit(1...3)
-            Picker("Kategorie", selection: $category) {
-                ForEach(ExerciseCategory.allCases) { c in
-                    Text(c.id).tag(c)
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Details"))
+
+                BentoTextField(
+                    label: Text("Name"),
+                    text: $name,
+                    prompt: Text("Name"),
+                    capitalization: .sentences
+                )
+
+                BentoTextArea(
+                    label: Text("Beschreibung (optional)"),
+                    text: $details,
+                    prompt: Text("Beschreibung (optional)"),
+                    minimumHeight: 90
+                )
+
+                Picker("Kategorie", selection: $category) {
+                    ForEach(ExerciseCategory.allCases) { c in
+                        Text(c.id).tag(c)
+                    }
                 }
             }
         }
     }
 
     private var trackingSection: some View {
-        Section {
-            Picker("Tracking-Methode", selection: $trackingType) {
-                ForEach(ExerciseTrackingType.allCases) { t in
-                    HStack {
-                        Image(systemName: trackingIcon(t))
-                        Text(t.label)
-                    }.tag(t)
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Wie wird getrackt?"))
+
+                Picker("Tracking-Methode", selection: $trackingType) {
+                    ForEach(ExerciseTrackingType.allCases) { t in
+                        HStack {
+                            Image(systemName: trackingIcon(t))
+                            Text(t.label)
+                        }.tag(t)
+                    }
                 }
+                .pickerStyle(.inline)
+                .labelsHidden()
+                .onChange(of: trackingType) { _, _ in
+                    hasManuallyChangedTracking = true
+                    Haptics.selection()
+                }
+
+                Text(trackingHint(trackingType))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .pickerStyle(.inline)
-            .labelsHidden()
-            .onChange(of: trackingType) { _, _ in
-                hasManuallyChangedTracking = true
-                Haptics.selection()
-            }
-        } header: {
-            Text("Wie wird getrackt?")
-        } footer: {
-            Text(trackingHint(trackingType))
         }
     }
 
     private var muscleSection: some View {
-        Section {
-            DisclosureGroup("Hauptmuskeln (\(primary.count))") {
-                MuscleGroupGrid(selection: $primary)
-            }
-            DisclosureGroup("Sekundärmuskeln (\(secondary.count))") {
-                MuscleGroupGrid(selection: $secondary)
-            }
-        } header: {
-            Text("Muskelgruppen")
-        } footer: {
-            if primary.isEmpty {
-                Text("Mindestens eine Hauptmuskelgruppe wählen.")
-                    .foregroundStyle(.red)
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Muskelgruppen"))
+
+                DisclosureGroup("Hauptmuskeln (\(primary.count))") {
+                    MuscleGroupGrid(selection: $primary)
+                }
+                DisclosureGroup("Sekundärmuskeln (\(secondary.count))") {
+                    MuscleGroupGrid(selection: $secondary)
+                }
+
+                if primary.isEmpty {
+                    Text("Mindestens eine Hauptmuskelgruppe wählen.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
             }
         }
     }
 
     private var appearanceSection: some View {
-        Section("Symbol") {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(iconOptions, id: \.self) { name in
-                        Button {
-                            Haptics.selection()
-                            icon = name
-                        } label: {
-                            Image(systemName: name)
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(icon == name
-                                              ? Color.blue.opacity(0.18)
-                                              : Color(.tertiarySystemFill))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .strokeBorder(icon == name ? Color.blue : .clear, lineWidth: 2)
-                                )
-                                .foregroundStyle(icon == name ? .blue : .primary)
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Symbol"))
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(iconOptions, id: \.self) { name in
+                            Button {
+                                Haptics.selection()
+                                icon = name
+                            } label: {
+                                Image(systemName: name)
+                                    .font(.title3)
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(icon == name
+                                                  ? Color.blue.opacity(0.18)
+                                                  : Color(.tertiarySystemFill))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .strokeBorder(icon == name ? Color.blue : .clear, lineWidth: 2)
+                                    )
+                                    .foregroundStyle(icon == name ? .blue : .primary)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
             }
         }
     }
 
     private var previewSection: some View {
-        Section("Vorschau") {
-            HStack(spacing: Theme.Spacing.m) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(Color.blue.gradient))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(name.isEmpty ? "Übungsname" : name)
-                        .font(.headline)
-                        .foregroundStyle(name.isEmpty ? .secondary : .primary)
-                    HStack(spacing: 6) {
-                        Text(category.id)
-                            .font(.caption2.weight(.semibold))
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(Capsule().fill(Color.secondary.opacity(0.15)))
-                        Text(trackingType.label)
-                            .font(.caption2.weight(.semibold))
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(Capsule().fill(Color.blue.opacity(0.15)))
-                            .foregroundStyle(.blue)
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Vorschau"))
+
+                HStack(spacing: Theme.Spacing.m) {
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Circle().fill(Color.blue.gradient))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(name.isEmpty ? "Übungsname" : name)
+                            .font(.headline)
+                            .foregroundStyle(name.isEmpty ? .secondary : .primary)
+                        HStack(spacing: 6) {
+                            Text(category.id)
+                                .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Capsule().fill(Color.secondary.opacity(0.15)))
+                            Text(trackingType.label)
+                                .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Capsule().fill(Color.blue.opacity(0.15)))
+                                .foregroundStyle(.blue)
+                        }
                     }
+                    Spacer()
                 }
-                Spacer()
             }
         }
     }

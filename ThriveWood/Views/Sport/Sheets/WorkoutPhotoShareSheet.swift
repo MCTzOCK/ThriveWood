@@ -245,46 +245,39 @@ struct WorkoutPhotoShareSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                previewArea
-                controls
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Bild teilen")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        exportImage()
-                    } label: {
-                        Label("Teilen", systemImage: "square.and.arrow.up")
-                    }
-                    .disabled(backgroundImage == nil)
-                }
-            }
-            .bentoSheet(
-                isPresented: Binding(
-                    get: { shareItem != nil },
-                    set: { if !$0 { shareItem = nil } }
-                ),
-                title: Text("Teilen"),
-                detents: [.medium]
+        VStack(spacing: 0) {
+            previewArea
+            controls
+        }
+        .bentoActionBar {
+            BentoButton(
+                Text("Teilen"),
+                systemImage: "square.and.arrow.up",
+                variant: .primary,
+                expands: true
             ) {
-                if let item = shareItem {
-                    WorkoutSummaryShareSheet(image: item.image)
-                }
+                exportImage()
             }
-            .onChange(of: photoItem) { _, item in
-                Task {
-                    if let d = try? await item?.loadTransferable(type: Data.self),
-                       let uiImage = UIImage(data: d) {
-                        backgroundImage = uiImage
-                        resetPositions()
-                    }
+            .disabled(backgroundImage == nil)
+        }
+        .bentoSheet(
+            isPresented: Binding(
+                get: { shareItem != nil },
+                set: { if !$0 { shareItem = nil } }
+            ),
+            title: Text("Teilen"),
+            detents: [.medium]
+        ) {
+            if let item = shareItem {
+                WorkoutSummaryShareSheet(image: item.image)
+            }
+        }
+        .onChange(of: photoItem) { _, item in
+            Task {
+                if let d = try? await item?.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: d) {
+                    backgroundImage = uiImage
+                    resetPositions()
                 }
             }
         }

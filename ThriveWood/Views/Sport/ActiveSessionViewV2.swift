@@ -47,7 +47,6 @@ struct ActiveSessionViewV2: View {
                         .padding(.top, 12)
 
                     ForEach(Array(groups.enumerated()), id: \.element.exercise.id) { index, group in
-                        let supersetColor = supersetColorFor(exerciseId: group.exercise.id)
                         let recommendation = group.exercise.trackingType == .repsWeight
                             ? env.setRecommendationService.recommend(for: group.exercise, currentSets: group.sets, weightUnit: session.weightUnit)
                             : nil
@@ -57,7 +56,6 @@ struct ActiveSessionViewV2: View {
                             unit: session.weightUnit,
                             topSet: topSets[group.exercise.id],
                             accentColor: workoutColor,
-                            supersetColor: supersetColor,
                             recommendation: recommendation,
                             aiService: env.aiService,
                             onAddSet: { addSet(for: group.exercise) },
@@ -359,14 +357,6 @@ struct ActiveSessionViewV2: View {
         return "\(Int(v))"
     }
 
-    private func supersetColorFor(exerciseId: UUID) -> Color? {
-        guard let workout = session.workout else { return nil }
-        let slot = workout.exercises.first(where: { $0.exercise?.id == exerciseId })
-        guard let group = slot?.supersetGroup else { return nil }
-        let colors: [Color] = [.orange, .purple, .teal, .pink, .indigo, .brown]
-        return colors[(group - 1) % colors.count]
-    }
-
     private func applyRecommendation(for exercise: Exercise, recommendation: SetRecommendation?) {
         guard let rec = recommendation else { return }
         let existing = session.sets.filter { $0.exercise?.id == exercise.id }
@@ -595,7 +585,6 @@ private struct ExerciseCardV2: View {
     let unit: WeightUnit
     let topSet: SetEntry?
     let accentColor: Color
-    var supersetColor: Color? = nil
     var recommendation: SetRecommendation? = nil
     var aiService: AIService? = nil
     let onAddSet: () -> Void
@@ -653,14 +642,6 @@ private struct ExerciseCardV2: View {
                 .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: accentColor.opacity(0.12), radius: 10, y: 3)
         )
-        .overlay(alignment: .leading) {
-            if let sc = supersetColor {
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(sc)
-                    .frame(width: 4)
-                    .padding(.vertical, 8)
-            }
-        }
     }
 
     private var cardHeader: some View {
@@ -676,11 +657,6 @@ private struct ExerciseCardV2: View {
                     Text(exercise.name)
                         .font(.headline)
                         .lineLimit(1)
-                    if let sc = supersetColor {
-                        Image(systemName: "link")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(sc)
-                    }
                 }
                 if let topSet, topSet.volumeValue > 0 {
                     HStack(spacing: 3) {

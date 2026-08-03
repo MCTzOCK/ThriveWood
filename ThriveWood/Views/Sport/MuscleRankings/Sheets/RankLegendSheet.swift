@@ -9,37 +9,35 @@
 import SwiftUI
 
 struct RankLegendSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.xl) {
-                    // Header
-                    VStack(spacing: Theme.Spacing.s) {
-                        Image(systemName: "trophy.fill")
-                            .font(.system(size: 44))
-                            .foregroundStyle(.yellow.gradient)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                // Header
+                VStack(spacing: Theme.Spacing.s) {
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(.yellow.gradient)
 
-                        Text("Rang-System")
-                            .font(.title.bold())
+                    Text("Rang-System")
+                        .font(.title.bold())
 
-                        Text("Sammle Volumen und steige im Rang auf!")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
+                    Text("Sammle Volumen und steige im Rang auf!")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top)
+
+                // Ranks Grid
+                VStack(spacing: Theme.Spacing.m) {
+                    ForEach(MuscleRank.allCases, id: \.self) { rank in
+                        RankLegendRow(rank: rank)
                     }
-                    .padding(.top)
+                }
 
-                    // Ranks Grid
-                    LazyVStack(spacing: Theme.Spacing.m) {
-                        ForEach(MuscleRank.allCases, id: \.self) { rank in
-                            RankLegendRow(rank: rank)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Info
+                // Info
+                BentoCard(style: .outlined, padding: .lg) {
                     VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                         Label("So funktioniert's", systemImage: "questionmark.circle.fill")
                             .font(.headline)
@@ -52,19 +50,6 @@ struct RankLegendSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .padding()
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .padding(.horizontal)
-                }
-                .padding(.bottom, Theme.Spacing.xl)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig") { dismiss() }
-                        .fontWeight(.semibold)
                 }
             }
         }

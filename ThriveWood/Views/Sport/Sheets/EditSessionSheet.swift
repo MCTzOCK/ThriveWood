@@ -55,81 +55,84 @@ struct EditSessionSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
                 timeSection
                 rpeSection
                 exercisesSection
                 notesSection
             }
-            .navigationTitle("Workout bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Speichern") {
-                        save()
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-            .bentoSheet(
-                isPresented: $showingAddExercise,
-                title: Text("Übung hinzufügen"),
-                detents: [.large]
-            ) {
-                ExerciseLibraryView(onSelect: { ex in
-                    addExercise(ex)
-                }, asSheet: false, onlyFor: nil)
-            }
-            .bentoSheet(
-                isPresented: Binding(
-                    get: { showingReplaceExercise != nil },
-                    set: { if !$0 { showingReplaceExercise = nil } }
-                ),
-                title: Text("Übung ersetzen"),
-                detents: [.large]
-            ) {
-                if let original = showingReplaceExercise {
-                    ReplaceExerciseSheet(
-                        originalExercise: original,
-                        trackingType: original.trackingType,
-                        onSelect: { replacement in
-                            replaceExercise(original, with: replacement)
-                        }
-                    )
-                }
-            }
-            .errorAlert(errors)
         }
+        .bentoActionBar {
+            BentoButton(
+                Text("Speichern"),
+                systemImage: "checkmark",
+                variant: .primary,
+                expands: true
+            ) {
+                save()
+                dismiss()
+            }
+        }
+        .bentoSheet(
+            isPresented: $showingAddExercise,
+            title: Text("Übung hinzufügen"),
+            detents: [.large]
+        ) {
+            ExerciseLibraryView(onSelect: { ex in
+                addExercise(ex)
+            }, asSheet: false, onlyFor: nil)
+        }
+        .bentoSheet(
+            isPresented: Binding(
+                get: { showingReplaceExercise != nil },
+                set: { if !$0 { showingReplaceExercise = nil } }
+            ),
+            title: Text("Übung ersetzen"),
+            detents: [.large]
+        ) {
+            if let original = showingReplaceExercise {
+                ReplaceExerciseSheet(
+                    originalExercise: original,
+                    trackingType: original.trackingType,
+                    onSelect: { replacement in
+                        replaceExercise(original, with: replacement)
+                    }
+                )
+            }
+        }
+        .errorAlert(errors)
     }
 
     // MARK: - Time
 
     private var timeSection: some View {
-        Section("Zeit") {
-            DatePicker("Start", selection: $draftStart, in: ...Date.now, displayedComponents: [.date, .hourAndMinute])
-            DatePicker("Ende", selection: $draftEnd, in: draftStart...Date.now, displayedComponents: [.date, .hourAndMinute])
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Zeit"))
+                DatePicker("Start", selection: $draftStart, in: ...Date.now, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("Ende", selection: $draftEnd, in: draftStart...Date.now, displayedComponents: [.date, .hourAndMinute])
+            }
         }
     }
 
     // MARK: - RPE
 
     private var rpeSection: some View {
-        Section("Anstrengung (RPE)") {
-            VStack {
-                HStack {
-                    Text("RPE").foregroundStyle(.secondary)
-                    Spacer()
-                    Text("\(draftRPE)/10").font(.headline.monospacedDigit())
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Anstrengung (RPE)"))
+                VStack {
+                    HStack {
+                        Text("RPE").foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(draftRPE)/10").font(.headline.monospacedDigit())
+                    }
+                    Slider(value: Binding(
+                        get: { Double(draftRPE) },
+                        set: { draftRPE = Int($0) }
+                    ), in: 1...10, step: 1)
                 }
-                Slider(value: Binding(
-                    get: { Double(draftRPE) },
-                    set: { draftRPE = Int($0) }
-                ), in: 1...10, step: 1)
             }
         }
     }
@@ -137,37 +140,41 @@ struct EditSessionSheet: View {
     // MARK: - Exercises
 
     private var exercisesSection: some View {
-        Section {
-            ForEach(Array(sortedExercises.enumerated()), id: \.offset) { _, pair in
-                EditableExerciseBlock(
-                    exercise: pair.0,
-                    sets: pair.1,
-                    unit: session.weightUnit,
-                    onAddSet: { addSet(for: pair.0) },
-                    onDeleteSet: { deleteSet($0) },
-                    onRemoveExercise: { removeExercise(pair.0) },
-                    onReplaceExercise: { showingReplaceExercise = pair.0 }
-                )
-            }
-            Button {
-                showingAddExercise = true
-            } label: {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Übung hinzufügen")
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Übungen"))
+                ForEach(Array(sortedExercises.enumerated()), id: \.offset) { _, pair in
+                    EditableExerciseBlock(
+                        exercise: pair.0,
+                        sets: pair.1,
+                        unit: session.weightUnit,
+                        onAddSet: { addSet(for: pair.0) },
+                        onDeleteSet: { deleteSet($0) },
+                        onRemoveExercise: { removeExercise(pair.0) },
+                        onReplaceExercise: { showingReplaceExercise = pair.0 }
+                    )
+                }
+                Button {
+                    showingAddExercise = true
+                } label: {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Übung hinzufügen")
+                    }
                 }
             }
-        } header: {
-            Text("Übungen")
         }
     }
 
     // MARK: - Notes
 
     private var notesSection: some View {
-        Section("Notizen") {
-            TextField("Wie war's?", text: $draftNotes, axis: .vertical)
-                .lineLimit(3...10)
+        BentoCard(style: .outlined, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Notizen"))
+                TextField("Wie war's?", text: $draftNotes, axis: .vertical)
+                    .lineLimit(3...10)
+            }
         }
     }
 
@@ -437,48 +444,39 @@ private struct ReplaceExerciseSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List(filtered) { exercise in
-                Button {
-                    onSelect(exercise)
-                    dismiss()
-                } label: {
-                    HStack(spacing: Theme.Spacing.m) {
-                        Image(systemName: exercise.iconSystemName)
-                            .foregroundStyle(.tint)
-                            .frame(width: 32)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(exercise.name).font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.primary)
-                            Text(exercise.trackingType.label)
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundStyle(.tint)
+        List(filtered) { exercise in
+            Button {
+                onSelect(exercise)
+                dismiss()
+            } label: {
+                HStack(spacing: Theme.Spacing.m) {
+                    Image(systemName: exercise.iconSystemName)
+                        .foregroundStyle(.tint)
+                        .frame(width: 32)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(exercise.name).font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text(exercise.trackingType.label)
+                            .font(.caption).foregroundStyle(.secondary)
                     }
-                }
-                .buttonStyle(.plain)
-            }
-            .searchable(text: $search)
-            .navigationTitle("\(originalExercise.name) ersetzen")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
+                    Spacer()
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .foregroundStyle(.tint)
                 }
             }
-            .overlay {
-                if compatible.isEmpty {
-                    ContentUnavailableView(
-                        "Keine kompatiblen Übungen",
-                        systemImage: "exclamationmark.triangle",
-                        description: Text("Es gibt keine Übungen mit dem Tracking-Typ \"\(trackingType.label)\".")
-                    )
-                }
-            }
-            .onAppear(perform: load)
+            .buttonStyle(.plain)
         }
+        .searchable(text: $search)
+        .overlay {
+            if compatible.isEmpty {
+                ContentUnavailableView(
+                    "Keine kompatiblen Übungen",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text("Es gibt keine Übungen mit dem Tracking-Typ \"\(trackingType.label)\".")
+                )
+            }
+        }
+        .onAppear(perform: load)
     }
 
     private func load() {

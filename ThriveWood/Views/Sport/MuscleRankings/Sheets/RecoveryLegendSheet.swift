@@ -8,29 +8,28 @@
 import SwiftUI
 
 struct RecoveryLegendSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.xl) {
-                    VStack(spacing: Theme.Spacing.s) {
-                        Image(systemName: "bed.double.fill")
-                            .font(.system(size: 44))
-                            .foregroundStyle(.red.gradient)
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
+            VStack(spacing: Theme.Spacing.l) {
+                VStack(spacing: Theme.Spacing.s) {
+                    Image(systemName: "bed.double.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(.red.gradient)
 
-                        Text("Erholungs-Analyse")
-                            .font(.title.bold())
+                    Text("Erholungs-Analyse")
+                        .font(.title.bold())
 
-                        Text("Wissenschaftlich fundierte Pausen-Empfehlungen basierend auf deinem Trainingsvolumen.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.top)
+                    Text("Wissenschaftlich fundierte Pausen-Empfehlungen basierend auf deinem Trainingsvolumen.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top)
 
-                    VStack(spacing: Theme.Spacing.m) {
-                        ForEach(ActivityProfile.allCases) { profile in
+                VStack(spacing: Theme.Spacing.m) {
+                    ForEach(ActivityProfile.allCases) { profile in
+                        BentoCard(style: .outlined, padding: .lg) {
                             HStack(spacing: Theme.Spacing.m) {
                                 ZStack {
                                     Circle()
@@ -61,13 +60,11 @@ struct RecoveryLegendSheet: View {
                                         .clipShape(Capsule())
                                 }
                             }
-                            .padding()
-                            .background(Color(.secondarySystemGroupedBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }
-                    .padding(.horizontal)
+                }
 
+                BentoCard(style: .outlined, padding: .lg) {
                     VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                         Label("Farben", systemImage: "paintpalette.fill")
                             .font(.headline)
@@ -114,19 +111,6 @@ struct RecoveryLegendSheet: View {
                             .foregroundStyle(.tertiary)
                             .padding(.top, 4)
                     }
-                    .padding()
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .padding(.horizontal)
-                }
-                .padding(.bottom, Theme.Spacing.xl)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig") { dismiss() }
-                        .fontWeight(.semibold)
                 }
             }
         }
