@@ -51,13 +51,7 @@ struct RecoveryLegendSheet: View {
                                 Spacer()
 
                                 if ActivityProfile.current == profile {
-                                    Text("Aktiv")
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.accentColor)
-                                        .clipShape(Capsule())
+                                    BentoBadge(Text("Aktiv"), tone: .accent)
                                 }
                             }
                         }

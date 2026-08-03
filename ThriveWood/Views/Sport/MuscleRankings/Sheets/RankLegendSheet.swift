@@ -58,43 +58,41 @@ struct RankLegendSheet: View {
 
 struct RankLegendRow: View {
     let rank: MuscleRank
+    @Environment(\.bentoTheme) private var theme
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.m) {
-            ZStack {
-                Circle()
-                    .fill(rank.gradient)
-                    .frame(width: 50, height: 50)
-                    .shadow(color: rank.glowColor.opacity(0.4), radius: 6)
-
-                Image(systemName: rank.icon)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(rank.label)
-                    .font(.headline)
-                    .foregroundStyle(rank.primaryColor)
-
-                Text("Ab \(rank.minVolume) kg")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            // Visual indicator
-            HStack(spacing: 2) {
-                ForEach(0..<min(rank.rawValue + 1, 5), id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 2)
+        BentoCard(style: .outlined, padding: .md) {
+            HStack(spacing: theme.spacing.md) {
+                ZStack {
+                    Circle()
                         .fill(rank.gradient)
-                        .frame(width: 4, height: 16 + CGFloat(i) * 3)
+                        .frame(width: 50, height: 50)
+                        .shadow(color: rank.glowColor.opacity(0.4), radius: 6)
+
+                    Image(systemName: rank.icon)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(rank.label)
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(rank.primaryColor)
+
+                    BentoText(verbatim: "Ab \(rank.minVolume) kg", style: .caption, color: theme.colors.onSurfaceMuted)
+                }
+
+                Spacer()
+
+                // Visual indicator
+                HStack(spacing: 2) {
+                    ForEach(0..<min(rank.rawValue + 1, 5), id: \.self) { i in
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(rank.gradient)
+                            .frame(width: 4, height: 16 + CGFloat(i) * 3)
+                    }
                 }
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }

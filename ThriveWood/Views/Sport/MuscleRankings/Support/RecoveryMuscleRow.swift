@@ -12,6 +12,8 @@ struct RecoveryMuscleRow: View {
     let isSelected: Bool
     let onTap: () -> Void
 
+    @Environment(\.bentoTheme) private var theme
+
     private var stateColor: Color {
         switch data.state {
         case .recovered: .green
@@ -30,40 +32,45 @@ struct RecoveryMuscleRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(stateColor.gradient)
-                        .frame(width: 40, height: 40)
+            BentoCard(
+                background: isSelected ? stateColor.opacity(0.1) : nil,
+                style: isSelected ? .elevated : .outlined,
+                padding: .md
+            ) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(stateColor.gradient)
+                            .frame(width: 40, height: 40)
 
-                    Image(systemName: data.stateIcon)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
-                }
+                        Image(systemName: data.stateIcon)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(data.muscleGroup.label)
-                        .font(.subheadline.weight(.medium))
-                    Text(stateLabel)
+                    VStack(alignment: .leading, spacing: 2) {
+                        BentoText(verbatim: data.muscleGroup.label, style: .bodyStrong)
+                        BentoText(
+                            verbatim: stateLabel,
+                            style: .caption,
+                            color: stateColor
+                        )
+                    }
+
+                    Spacer()
+
+                    BentoText(
+                        verbatim: formatVolume(data.weeklyVolume),
+                        style: .bodyStrong,
+                        color: theme.colors.onSurfaceMuted
+                    )
+                    .monospacedDigit()
+
+                    Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundStyle(stateColor)
+                        .foregroundStyle(.tertiary)
                 }
-
-                Spacer()
-
-                Text(formatVolume(data.weeklyVolume))
-                    .font(.subheadline.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(.secondary)
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? stateColor.opacity(0.1) : Color(.secondarySystemGroupedBackground))
-            )
         }
         .buttonStyle(.plain)
     }

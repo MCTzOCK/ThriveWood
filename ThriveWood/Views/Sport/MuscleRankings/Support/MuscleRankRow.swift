@@ -11,45 +11,51 @@ struct MuscleRankRow: View {
     let data: MuscleRankingData
     let isSelected: Bool
     let onTap: () -> Void
-    
+
+    @Environment(\.bentoTheme) private var theme
+
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(data.rank.gradient)
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: data.rank.icon)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(data.muscleGroup.label)
-                        .font(.subheadline.weight(.medium))
-                    Text(data.rank.label)
-                        .font(.caption)
-                        .foregroundStyle(data.rank.primaryColor)
-                }
-                
-                Spacer()
-                
-                Text("\(Int(data.totalVolume)) kg")
-                    .font(.subheadline.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(.secondary)
+            BentoCard(
+                background: isSelected ? data.rank.primaryColor.opacity(0.1) : nil,
+                style: isSelected ? .elevated : .outlined,
+                padding: .md
+            ) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(data.rank.gradient)
+                            .frame(width: 40, height: 40)
+
+                        Image(systemName: data.rank.icon)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        BentoText(verbatim: data.muscleGroup.label, style: .bodyStrong)
+                        BentoText(
+                            verbatim: data.rank.label,
+                            style: .caption,
+                            color: data.rank.primaryColor
+                        )
+                    }
+
+                    Spacer()
+
+                    BentoText(
+                        verbatim: "\(Int(data.totalVolume)) kg",
+                        style: .bodyStrong,
+                        color: theme.colors.onSurfaceMuted
+                    )
+                    .monospacedDigit()
                     .contentTransition(.numericText())
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? data.rank.primaryColor.opacity(0.1) : Color(.secondarySystemGroupedBackground))
-            )
-            .shadow(color: isSelected ? data.rank.primaryColor.opacity(0.2) : Color.black.opacity(0.04), radius: 8, y: 3)
             .animation(.bouncy, value: isSelected)
         }
         .buttonStyle(.plain)

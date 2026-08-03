@@ -11,7 +11,7 @@ struct RecoveryMuscleCard: View {
     let data: MuscleRecoveryData
     let onClose: () -> Void
 
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.bentoTheme) private var theme
 
     private var stateColor: Color {
         switch data.state {
@@ -29,71 +29,76 @@ struct RecoveryMuscleCard: View {
         }
     }
 
+    private var stateTone: BentoTone {
+        switch data.state {
+        case .recovered: .success
+        case .warning: .warning
+        case .needsRest: .danger
+        }
+    }
+
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(stateColor.gradient)
-                        .frame(width: 56, height: 56)
+        BentoCard(style: .elevated, padding: .lg, radius: .large) {
+            VStack(spacing: 16) {
+                HStack {
+                    ZStack {
+                        Circle()
+                            .fill(stateColor.gradient)
+                            .frame(width: 56, height: 56)
 
-                    Image(systemName: data.stateIcon)
-                        .font(.title2.bold())
-                        .foregroundStyle(.white)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(data.muscleGroup.label)
-                        .font(.title3.bold())
-
-                    Text(stateLabel)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(stateColor)
-                }
-
-                Spacer()
-
-                Button(action: onClose) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            if data.needsRest || data.isWarning {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label(data.restReasonText, systemImage: "info.circle.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(.primary)
-
-                    if data.recommendedRestDays > 0 {
-                        HStack(spacing: 4) {
-                            Image(systemName: "calendar.badge.clock")
-                                .font(.caption)
-                            Text("\(data.recommendedRestDays) Tag\(data.recommendedRestDays == 1 ? "" : "e") Pause empfohlen")
-                                .font(.subheadline.weight(.semibold))
-                        }
-                        .foregroundStyle(stateColor)
+                        Image(systemName: data.stateIcon)
+                            .font(.title2.bold())
+                            .foregroundStyle(.white)
                     }
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(stateColor.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
 
-            HStack(spacing: 24) {
-                StatItem(icon: "scalemass.fill", value: formatVolume(data.weeklyVolume), label: "Volumen / 7d")
-                StatItem(icon: "calendar", value: data.daysSinceLastWorked.map { "\($0)d" } ?? "—", label: "Letzte Pause")
-                StatItem(icon: "flame.fill", value: "\(data.consecutiveTrainingDays)", label: "Tage direkt")
+                    VStack(alignment: .leading, spacing: 4) {
+                        BentoText(verbatim: data.muscleGroup.label, style: .title3)
+                        BentoText(
+                            verbatim: stateLabel,
+                            style: .bodyStrong,
+                            color: stateColor
+                        )
+                    }
+
+                    Spacer()
+
+                    BentoIconButton(
+                        systemImage: "xmark.circle.fill",
+                        accessibilityLabel: Text("Schließen"),
+                        variant: .ghost,
+                        action: onClose
+                    )
+                }
+
+                if data.needsRest || data.isWarning {
+                    BentoCallout(
+                        kind: data.needsRest ? .error : .warning,
+                        title: Text(verbatim: data.restReasonText),
+                        message: data.recommendedRestDays > 0
+                            ? Text(verbatim: "\(data.recommendedRestDays) Tag\(data.recommendedRestDays == 1 ? "" : "e") Pause empfohlen")
+                            : nil
+                    )
+                }
+
+                BentoStatStrip(values: [
+                    BentoStatValue(
+                        id: "volume",
+                        title: Text("Volumen / 7d"),
+                        value: Text(verbatim: formatVolume(data.weeklyVolume))
+                    ),
+                    BentoStatValue(
+                        id: "lastRest",
+                        title: Text("Letzte Pause"),
+                        value: Text(verbatim: data.daysSinceLastWorked.map { "\($0)d" } ?? "—")
+                    ),
+                    BentoStatValue(
+                        id: "streak",
+                        title: Text("Tage direkt"),
+                        value: Text(verbatim: "\(data.consecutiveTrainingDays)")
+                    )
+                ])
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground))
-                .shadow(color: stateColor.opacity(0.15), radius: 20)
-        )
     }
 
     private func formatVolume(_ v: Double) -> String {
