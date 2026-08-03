@@ -63,25 +63,19 @@ struct SportInsightsView: View {
                 .padding(.bottom, 120)
             }
         }
-        .sheet(isPresented: $showingAll1RM) {
-            NavigationStack {
-                AllExercisesList(title: "Geschätztes 1RM") {
-                    computeEstimated1RM(limit: 999)
-                }
+        .bentoSheet(isPresented: $showingAll1RM, title: Text("Geschätztes 1RM"), detents: [.large]) {
+            AllExercisesList(title: "Geschätztes 1RM") {
+                computeEstimated1RM(limit: 999)
             }
         }
-        .sheet(isPresented: $showingAllOverload) {
-            NavigationStack {
-                AllOverloadList(title: "Progressive Overload") {
-                    computeProgressiveOverload()
-                }
+        .bentoSheet(isPresented: $showingAllOverload, title: Text("Progressive Overload"), detents: [.large]) {
+            AllOverloadList(title: "Progressive Overload") {
+                computeProgressiveOverload()
             }
         }
-        .sheet(isPresented: $showingAllTopExercises) {
-            NavigationStack {
-                AllTopExercisesList(title: "Top Übungen") {
-                    computeTopExercises(limit: 999)
-                }
+        .bentoSheet(isPresented: $showingAllTopExercises, title: Text("Top Übungen"), detents: [.large]) {
+            AllTopExercisesList(title: "Top Übungen") {
+                computeTopExercises(limit: 999)
             }
         }
     }
@@ -927,7 +921,6 @@ private struct InsightCard<Content: View>: View {
 private struct AllTopExercisesList: View {
     let title: String
     let items: [TopExercise]
-    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [TopExercise]) {
         self.title = title
@@ -940,21 +933,18 @@ private struct AllTopExercisesList: View {
     }
 
     var body: some View {
-        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
-            BentoPageHeader(
-                eyebrow: Text("VOLUMEN"),
-                title: Text("Top Übungen"),
-                subtitle: Text("\(items.count) Übungen nach Volumen")
-            )
-
+        VStack(spacing: Theme.Spacing.m) {
             if items.isEmpty {
                 BentoEmptyState(
                     systemImage: "trophy",
                     title: Text("Keine Daten"),
                     message: Text("Schließe Workouts ab, um deine Top-Übungen zu sehen.")
                 )
-                .padding(.top, Theme.Spacing.xxl)
+                .padding(.top, Theme.Spacing.xl)
             } else {
+                BentoText("\(items.count) Übungen nach Volumen", style: .caption, color: .secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 LazyVStack(spacing: Theme.Spacing.s) {
                     ForEach(items, id: \.name) { item in
                         RankRow(
@@ -971,13 +961,8 @@ private struct AllTopExercisesList: View {
 
             Spacer(minLength: 40)
         }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Schließen") { dismiss() }
-            }
-        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.top, Theme.Spacing.m)
     }
 }
 
@@ -1009,7 +994,6 @@ private struct QuickStatTile: View {
 private struct AllExercisesList: View {
     let title: String
     let items: [E1RM]
-    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [E1RM]) {
         self.title = title
@@ -1022,13 +1006,7 @@ private struct AllExercisesList: View {
     }
 
     var body: some View {
-        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
-            BentoPageHeader(
-                eyebrow: Text("KRAFT"),
-                title: Text("Geschätztes 1RM"),
-                subtitle: Text("\(items.count) Übungen — Epley-Formel")
-            )
-
+        VStack(spacing: Theme.Spacing.m) {
             BentoCallout(
                 kind: .info,
                 title: Text("Wie wird das berechnet?"),
@@ -1041,8 +1019,11 @@ private struct AllExercisesList: View {
                     title: Text("Keine Daten"),
                     message: Text("Erfasse Sätze mit Gewicht, um dein geschätztes 1RM zu sehen.")
                 )
-                .padding(.top, Theme.Spacing.xxl)
+                .padding(.top, Theme.Spacing.xl)
             } else {
+                BentoText("\(items.count) Übungen — Epley-Formel", style: .caption, color: .secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 LazyVStack(spacing: Theme.Spacing.s) {
                     ForEach(items, id: \.name) { item in
                         RankRow(
@@ -1059,13 +1040,8 @@ private struct AllExercisesList: View {
 
             Spacer(minLength: 40)
         }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Schließen") { dismiss() }
-            }
-        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.top, Theme.Spacing.m)
     }
 }
 
@@ -1074,7 +1050,6 @@ private struct AllExercisesList: View {
 private struct AllOverloadList: View {
     let title: String
     let items: [OverloadItem]
-    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [OverloadItem]) {
         self.title = title
@@ -1087,13 +1062,7 @@ private struct AllOverloadList: View {
     }
 
     var body: some View {
-        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
-            BentoPageHeader(
-                eyebrow: Text("FORTSCHRITT"),
-                title: Text("Progressive Overload"),
-                subtitle: Text("\(items.count) Übungen im Vergleich")
-            )
-
+        VStack(spacing: Theme.Spacing.m) {
             BentoCallout(
                 kind: .info,
                 title: Text("Wie wird verglichen?"),
@@ -1106,8 +1075,11 @@ private struct AllOverloadList: View {
                     title: Text("Noch keine Daten"),
                     message: Text("Schließe mehr Workouts ab, um deine Progression zu sehen.")
                 )
-                .padding(.top, Theme.Spacing.xxl)
+                .padding(.top, Theme.Spacing.xl)
             } else {
+                BentoText("\(items.count) Übungen im Vergleich", style: .caption, color: .secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 LazyVStack(spacing: Theme.Spacing.s) {
                     ForEach(items, id: \.name) { item in
                         OverloadRow(item: item)
@@ -1117,13 +1089,8 @@ private struct AllOverloadList: View {
 
             Spacer(minLength: 40)
         }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Schließen") { dismiss() }
-            }
-        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.top, Theme.Spacing.m)
     }
 }
 
