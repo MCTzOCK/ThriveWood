@@ -28,6 +28,9 @@ struct HomeView: View {
     @State private var editingHabit: Habit?
     @State private var editingGroup: HabitGroup?
     @State private var showingNewGroup = false
+    @State private var showingNewRoutine = false
+    @State private var editingRoutine: HabitRoutine?
+    @State private var presentedRoutine: HabitRoutine?
     @State private var showingReorder = false
     @State private var showingDebug: Bool = false
     @State private var showingPaywall = false
@@ -80,6 +83,35 @@ struct HomeView: View {
             }
             .sheet(item: $editingGroup) { group in
                 HabitGroupEditorView(group: group).onDisappear { vm?.load() }
+            }
+            .bentoSheet(
+                isPresented: $showingNewRoutine,
+                title: Text("Neue Routine"),
+                subtitle: Text("Fasse Habits zu einem Ablauf zusammen"),
+                detents: [.large]
+            ) {
+                RoutineEditorSheet(routine: nil) {
+                    vm?.load()
+                }
+            }
+            .bentoSheet(
+                isPresented: Binding(
+                    get: { editingRoutine != nil },
+                    set: { if !$0 { editingRoutine = nil } }
+                ),
+                title: Text("Routine bearbeiten"),
+                detents: [.large]
+            ) {
+                if let routine = editingRoutine {
+                    RoutineEditorSheet(routine: routine) {
+                        vm?.load()
+                    }
+                }
+            }
+            .fullScreenCover(item: $presentedRoutine) { routine in
+                RoutineRunView(routine: routine) {
+                    vm?.load()
+                }
             }
             .sheet(isPresented: $showingReorder) {
                 if let vm { HabitReorderView(vm: vm) }
@@ -146,9 +178,82 @@ struct HomeView: View {
                 
                 
                 heroProgressCard(vm: vm)
-                
+
+                if !vm.routines.isEmpty {
+                    routinesSection(vm: vm)
+                }
+
                 bentoHabitList(vm: vm)
             }
+        }
+    }
+
+    // MARK: - Routines
+
+    @ViewBuilder
+    private func routinesSection(vm: HomeViewModel) -> some View {
+        VStack(alignment: .leading, spacing: theme.spacing.md) {
+            HStack {
+                BentoSectionHeader(title: Text("Routinen"))
+                Spacer()
+                BentoIconButton(
+                    systemImage: "plus",
+                    accessibilityLabel: Text("Neue Routine"),
+                    variant: .ghost,
+                    size: .small
+                ) {
+                    showingNewRoutine = true
+                }
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: theme.spacing.sm) {
+                    ForEach(vm.routines) { routine in
+                        Button {
+                            presentedRoutine = routine
+                        } label: {
+                            routineCard(routine)
+                        }
+                        .buttonStyle(PressScaleStyle())
+                        .contextMenu {
+                            Button {
+                                editingRoutine = routine
+                            } label: {
+                                Label("Bearbeiten", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) {
+                                vm.deleteRoutine(routine)
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func routineCard(_ routine: HabitRoutine) -> some View {
+        BentoCard(tone: .neutral, style: .outlined, padding: .md, radius: .large) {
+            VStack(alignment: .leading, spacing: theme.spacing.sm) {
+                HStack(spacing: theme.spacing.xs) {
+                    ZStack {
+                        Circle()
+                            .fill(routine.color.color.opacity(0.18))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: routine.iconSystemName)
+                            .foregroundStyle(routine.color.color)
+                    }
+                    BentoText(verbatim: routine.title, style: .bodyStrong)
+                        .lineLimit(1)
+                }
+                BentoBadge(
+                    Text(verbatim: "\(routine.habitIDs.count) Habits"),
+                    tone: .neutral,
+                    systemImage: "list.bullet"
+                )
+            }
+            .frame(width: 180, alignment: .leading)
         }
     }
 

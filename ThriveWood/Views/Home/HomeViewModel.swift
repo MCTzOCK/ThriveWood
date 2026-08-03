@@ -17,6 +17,7 @@ final class HomeViewModel {
     var selectedDate: Date = Calendar.app.startOfDay()
     var habits: [Habit] = []
     var groups: [HabitGroup] = []
+    var routines: [HabitRoutine] = []
     var completedHabitIDs: Set<UUID> = []
     var pointsToday: Int = 0
     var dailyGoal: Int = 5
@@ -69,6 +70,7 @@ final class HomeViewModel {
         do {
             habits = try env.habitService.habitsDue(on: selectedDate)
             groups = try env.groupRepo.fetchAll()
+            routines = (try? env.routineRepo.fetchAll()) ?? []
             completedHabitIDs = try Set(
                 habits.compactMap {
                     try env.habitService.isCompleted($0, on: selectedDate) ? $0.id : nil
@@ -237,6 +239,16 @@ final class HomeViewModel {
         do {
             try env.deleteGroup(group)
             withAnimation { groups.removeAll { $0.id == group.id } }
+        } catch {
+            errors.show(error)
+        }
+    }
+
+    func deleteRoutine(_ routine: HabitRoutine) {
+        do {
+            try env.routineRepo.delete(routine)
+            withAnimation { routines.removeAll { $0.id == routine.id } }
+            Haptics.selection()
         } catch {
             errors.show(error)
         }
