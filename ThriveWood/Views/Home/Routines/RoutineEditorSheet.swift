@@ -20,6 +20,8 @@ struct RoutineEditorSheet: View {
     @State private var icon: String = "sun.max.fill"
     @State private var color: HabitColor = .orange
     @State private var selectedHabitIDs: [UUID] = []
+    /// Routine-Zielwerte pro messbarem Habit (UUID -> Wert).
+    @State private var habitTargets: [UUID: Double] = [:]
     @State private var availableHabits: [Habit] = []
     @State private var errors = ErrorState()
     @State private var didHydrate = false
@@ -163,6 +165,12 @@ struct RoutineEditorSheet: View {
                                         .foregroundStyle(habit.color.color)
                                     BentoText(verbatim: habit.title, style: .body)
                                     Spacer()
+                                    if habit.isMeasurable, let target = habitTargets[habit.id], target > 0 {
+                                        BentoBadge(
+                                            Text(verbatim: "\(formatValue(target)) \(habit.unitLabel)".trimmingCharacters(in: .whitespaces)),
+                                            tone: .neutral
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -175,33 +183,86 @@ struct RoutineEditorSheet: View {
     @ViewBuilder
     private func habitPickerRow(_ habit: Habit) -> some View {
         let isSelected = selectedHabitIDs.contains(habit.id)
-        Button {
-            Haptics.selection()
-            if isSelected {
-                selectedHabitIDs.removeAll { $0 == habit.id }
-            } else {
-                selectedHabitIDs.append(habit.id)
-            }
-        } label: {
-            HStack(spacing: theme.spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? theme.colors.accent : theme.colors.surfaceSecondary)
-                        .frame(width: 28, height: 28)
-                    Image(systemName: isSelected ? "checkmark" : "")
-                        .font(.system(size: 12, weight: .heavy))
-                        .foregroundStyle(theme.colors.onAccent)
+        VStack(spacing: 0) {
+            Button {
+                Haptics.selection()
+                if isSelected {
+                    selectedHabitIDs.removeAll { $0 == habit.id }
+                    habitTargets.removeValue(forKey: habit.id)
+                } else {
+                    selectedHabitIDs.append(habit.id)
+                    // Messbare Habits starten per Default beim Tagesziel als Vorschlag.
+                    if habit.isMeasurable, habitTargets[habit.id] == nil {
+                        habitTargets[habit.id] = habit.targetValue
+                    }
                 }
-                Image(systemName: habit.iconSystemName)
-                    .foregroundStyle(habit.color.color)
-                    .frame(width: 24)
-                BentoText(verbatim: habit.title, style: .body)
-                Spacer()
+            } label: {
+                HStack(spacing: theme.spacing.md) {
+                    ZStack {
+                        Circle()
+                            .fill(isSelected ? theme.colors.accent : theme.colors.surfaceSecondary)
+                            .frame(width: 28, height: 28)
+                        Image(systemName: isSelected ? "checkmark" : "")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundStyle(theme.colors.onAccent)
+                    }
+                    Image(systemName: habit.iconSystemName)
+                        .foregroundStyle(habit.color.color)
+                        .frame(width: 24)
+                    VStack(alignment: .leading, spacing: 2) {
+                        BentoText(verbatim: habit.title, style: .body)
+                        if habit.isMeasurable {
+                            BentoText(
+                                verbatim: "Tagesziel: \(formatValue(habit.targetValue)) \(habit.unitLabel)".trimmingCharacters(in: .whitespaces),
+                                style: .caption,
+                                color: theme.colors.onSurfaceMuted
+                            )
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, theme.spacing.xs)
+                .contentShape(Rectangle())
             }
-            .padding(.vertical, theme.spacing.xs)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+
+            if isSelected && habit.isMeasurable {
+                routineTargetRow(habit: habit)
+                    .padding(.leading, 28 + theme.spacing.md + 24 + theme.spacing.md)
+                    .padding(.trailing, theme.spacing.xs)
+            }
         }
-        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func routineTargetRow(habit: Habit) -> some View {
+        let binding = Binding<Double>(
+            get: { habitTargets[habit.id] ?? habit.targetValue },
+            set: { habitTargets[habit.id] = max(0, $0) }
+        )
+        HStack(spacing: theme.spacing.sm) {
+            BentoText("Ziel in dieser Routine", style: .caption, color: theme.colors.onSurfaceMuted)
+            Spacer()
+            TextField("0", value: binding, format: .number)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 80)
+                .padding(.vertical, 4)
+                .padding(.horizontal, theme.spacing.xs)
+                .background(
+                    RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                        .fill(theme.colors.surfaceSecondary)
+                )
+            BentoText(verbatim: habit.unitLabel, style: .body, color: theme.colors.onSurfaceMuted)
+                .frame(width: 50, alignment: .leading)
+        }
+        .padding(.vertical, theme.spacing.xs)
+    }
+
+    private func formatValue(_ value: Double) -> String {
+        value.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(value))
+            : String(format: "%.1f", value)
     }
 
     // MARK: - Logic
@@ -215,6 +276,7 @@ struct RoutineEditorSheet: View {
             icon = routine.iconSystemName
             color = routine.color
             selectedHabitIDs = routine.habitIDs
+            habitTargets = routine.habitTargets
         }
     }
 
@@ -225,6 +287,7 @@ struct RoutineEditorSheet: View {
                 routine.iconSystemName = icon
                 routine.color = color
                 routine.habitIDs = selectedHabitIDs
+                routine.habitTargets = habitTargets
                 try env.routineRepo.update(routine)
             } else {
                 let count = (try? env.routineRepo.fetchAll().count) ?? 0
@@ -233,6 +296,7 @@ struct RoutineEditorSheet: View {
                     iconSystemName: icon,
                     color: color,
                     habitIDs: selectedHabitIDs,
+                    habitTargets: habitTargets,
                     sortOrder: count
                 )
                 try env.routineRepo.create(new)
