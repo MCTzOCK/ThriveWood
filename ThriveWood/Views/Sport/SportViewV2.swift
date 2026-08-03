@@ -75,7 +75,7 @@ struct SportViewV2: View {
                 }
             }
             .fullScreenCover(item: $presentedSession) { session in
-                ActiveSessionViewV2(session: session).onDisappear { vm?.load() }
+                ActiveSessionViewV3(session: session).onDisappear { vm?.load() }
             }
             .task {
                 if vm == nil { vm = SportViewV2Model(env: env) }
