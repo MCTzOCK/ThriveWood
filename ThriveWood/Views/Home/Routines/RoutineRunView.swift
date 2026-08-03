@@ -193,18 +193,18 @@ struct RoutineRunView: View {
                 HStack(spacing: theme.spacing.lg) {
                     ZStack {
                         Circle()
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 8)
+                            .stroke(theme.colors.onAccent.opacity(0.3), lineWidth: 8)
                         Circle()
                             .trim(from: 0, to: max(0.001, vm.overallProgress))
                             .stroke(
-                                Color.secondary,
+                                theme.colors.onAccent,
                                 style: StrokeStyle(lineWidth: 8, lineCap: .round)
                             )
                             .rotationEffect(.degrees(-90))
                             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: vm.overallProgress)
                         Text(verbatim: "\(Int(vm.overallProgress * 100))%")
-                            .font(.headline)
-                            .foregroundStyle(Color.secondary)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(theme.colors.onAccent)
                             .contentTransition(.numericText())
                     }
                     .frame(width: 76, height: 76)
