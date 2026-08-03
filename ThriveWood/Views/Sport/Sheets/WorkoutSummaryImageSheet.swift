@@ -69,36 +69,23 @@ struct WorkoutSummaryImageSheet: View {
         VStack(spacing: 0) {
             TabView(selection: $selectedDesign) {
                 ForEach(SummaryDesign.allCases) { design in
-                    WorkoutSummaryImage(data: data, design: design)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ScrollView(.vertical, showsIndicators: false) {
+                        WorkoutSummaryImage(data: data, design: design)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 560)
+                            .padding(.vertical, Theme.Spacing.m)
+                    }
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .indexViewStyle(.page(backgroundDisplayMode: .always))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            bottomBar
+            shareButton
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.bottom, Theme.Spacing.m)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var bottomBar: some View {
-        VStack(spacing: Theme.Spacing.s) {
-            shareButton
-
-            HStack(spacing: Theme.Spacing.m) {
-                Text(selectedDesign.label)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                qualityButton(label: "Standard", scale: 2.0, selected: renderScale == 2.0)
-                qualityButton(label: "Hoch", scale: 3.0, selected: renderScale == 3.0)
-            }
-        }
-        .padding(Theme.Spacing.l)
-        .background(Color(.systemGroupedBackground))
     }
 
     @ViewBuilder
@@ -124,19 +111,5 @@ struct WorkoutSummaryImageSheet: View {
         let renderer = ImageRenderer(content: WorkoutSummaryImage(data: data, design: selectedDesign))
         renderer.scale = renderScale
         return renderer.uiImage
-    }
-
-    private func qualityButton(label: String, scale: CGFloat, selected: Bool) -> some View {
-        Button {
-            renderScale = scale
-            Haptics.selection()
-        } label: {
-            Text(label)
-                .font(.caption.weight(selected ? .bold : .regular))
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(Capsule().fill(selected ? Color.accentColor.opacity(0.2) : Color(.tertiarySystemFill)))
-                .foregroundStyle(selected ? Color.accentColor : .secondary)
-        }
-        .buttonStyle(.plain)
     }
 }
