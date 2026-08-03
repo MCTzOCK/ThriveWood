@@ -15,13 +15,14 @@ import FoundationModels
 struct WorkoutSessionDetailView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.bentoTheme) private var theme
 
     @Bindable var session: WorkoutSession
 
-    @State private var isEditing = false
     @State private var showEditSession = false
     @State private var draftNotes: String = ""
     @State private var draftRPE: Int = 7
+    @State private var showEditNotes = false
     @State private var showDeleteConfirm = false
     @State private var errors = ErrorState()
     @State private var successHUDVisible = false
@@ -31,7 +32,7 @@ struct WorkoutSessionDetailView: View {
     @State private var showPhotoShare = false
     @State private var muscleMapShowFront = true
     @State private var selectedMapMuscle: MuscleGroup?
-    
+
     // MARK: - Derived
 
     private var sortedExercises: [(Exercise, [SetEntry])] {
@@ -118,8 +119,8 @@ struct WorkoutSessionDetailView: View {
     private var heaviestSet: (Exercise, SetEntry)? {
         let candidates = session.sets
             .filter { $0.exercise?.trackingType == .repsWeight && $0.isCompleted }
-        guard let max = candidates.max(by: { 
-            ($0.weight ?? 0) * Double($0.reps ?? 0) < ($1.weight ?? 0) * Double($1.reps ?? 0) 
+        guard let max = candidates.max(by: {
+            ($0.weight ?? 0) * Double($0.reps ?? 0) < ($1.weight ?? 0) * Double($1.reps ?? 0)
         }),
               let ex = max.exercise else { return nil }
         return (ex, max)
@@ -128,14 +129,23 @@ struct WorkoutSessionDetailView: View {
     // MARK: - Body
 
     var body: some View {
-        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .sm, verticalPadding: .sm) {
             ZStack {
-                VStack(spacing: Theme.Spacing.l) {
+                VStack(spacing: theme.spacing.lg) {
                     BentoPageHeader(
                         eyebrow: Text("SESSION"),
                         title: Text(session.workout?.name ?? "Freies Training"),
                         subtitle: Text(timeRange)
                     ) {
+                        BentoIconButton(
+                            systemImage: "chevron.left",
+                            accessibilityLabel: Text("Zurück"),
+                            variant: .secondary,
+                            size: .medium
+                        ) {
+                            dismiss()
+                        }
+
                         Menu {
                             Button {
                                 showEditSession = true
@@ -191,8 +201,6 @@ struct WorkoutSessionDetailView: View {
                             ) {}
                         }
                     }
-                    .padding(.horizontal, Theme.Spacing.l)
-                    .padding(.top, Theme.Spacing.m)
 
                     headerCard
                     statsGrid
@@ -201,9 +209,9 @@ struct WorkoutSessionDetailView: View {
                     if !newPRs.isEmpty { prSection }
                     if !muscleVolumes.isEmpty { muscleMapSection }
                     notesCard
+
+                    Spacer(minLength: theme.spacing.xxl)
                 }
-                .padding(.horizontal, Theme.Spacing.l)
-                .padding(.bottom, 120)
 
                 if successHUDVisible {
                     SuccessHUD(message: "Gespeichert!")
@@ -218,15 +226,40 @@ struct WorkoutSessionDetailView: View {
         .toolbar(.hidden, for: .navigationBar)
         .errorAlert(errors)
         .onAppear { loadPRs() }
-        .sheet(isPresented: $showEditSession) {
+        .bentoSheet(
+            isPresented: $showEditSession,
+            title: Text("Session bearbeiten"),
+            detents: [.large]
+        ) {
             EditSessionSheet(session: session)
                 .onDisappear { loadPRs() }
         }
-        .sheet(isPresented: $showShareImage) {
+        .bentoSheet(
+            isPresented: $showShareImage,
+            title: Text("Zusammenfassung"),
+            detents: [.large]
+        ) {
             WorkoutSummaryImageSheet(session: session)
         }
-        .sheet(isPresented: $showPhotoShare) {
+        .bentoSheet(
+            isPresented: $showPhotoShare,
+            title: Text("Keyfacts-Bild"),
+            detents: [.large]
+        ) {
             WorkoutPhotoShareSheet(session: session)
+        }
+        .bentoSheet(
+            isPresented: $showEditNotes,
+            title: Text("Notizen"),
+            subtitle: Text("Notiz & Anstrengung"),
+            detents: [.medium]
+        ) {
+            EditNotesSheet(notes: $draftNotes, rpe: $draftRPE) {
+                session.notes = draftNotes
+                session.perceivedExertion = draftRPE
+                try? env.sessionRepo.update(session)
+                Haptics.success()
+            }
         }
         .bentoDialog(
             isPresented: $showDeleteConfirm,
@@ -240,105 +273,39 @@ struct WorkoutSessionDetailView: View {
         )
     }
 
-    // MARK: - Toolbar
-
-    @ToolbarContentBuilder
-    private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Menu {
-                Button {
-                    showEditSession = true
-                } label: { Label("Workout bearbeiten", systemImage: "pencil.and.list.clipboard") }
-
-                /*Button {
-                    draftNotes = session.notes
-                    draftRPE = session.perceivedExertion ?? 7
-                    isEditing = true
-                } label: { Label("Notizen bearbeiten", systemImage: "pencil") }*/
-
-                Button {
-                    showShareImage = true
-                } label: { Label("Zusammenfassung teilen", systemImage: "photo.on.rectangle.angled") }
-
-                Button {
-                    showPhotoShare = true
-                } label: { Label("Bild mit Keyfacts teilen", systemImage: "photo.badge.plus") }
-
-                ShareLink(item: shareText) {
-                    Label("Als Text teilen", systemImage: "square.and.arrow.up")
-                }
-
-                Button {
-                    Task {
-                        try? await env.healthService.save(session: session)
-                    }
-                    withAnimation(.spring()) {
-                        successHUDVisible = true
-                    }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        withAnimation(.spring()) {
-                            successHUDVisible = false
-                        }
-                    }
-                    
-                } label: {
-                    Label("In Health speichern", systemImage: "heart.text.square")
-                }
-                
-                if aiAvailable == .available{
-                    NavigationLink {
-                        WorkoutAnalysisView(session: session)
-                    } label: {
-                        Label("KI-Analyse", systemImage: "sparkles")
-                    }
-                }
-                
-                Divider()
-
-                Button(role: .destructive) {
-                    showDeleteConfirm = true
-                } label: { Label("Löschen", systemImage: "trash") }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-        }
-    }
-
     // MARK: - Header
 
     private var headerCard: some View {
-        VStack(spacing: Theme.Spacing.m) {
-            HStack(spacing: Theme.Spacing.m) {
-                ZStack {
-                    Circle()
-                        .fill(workoutColor.gradient)
-                        .frame(width: 56, height: 56)
-                    Image(systemName: "dumbbell.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .symbolEffect(.bounce, value: session.id)
+        BentoCard(tone: .accent, style: .elevated, padding: .lg, radius: .extraLarge) {
+            VStack(spacing: theme.spacing.md) {
+                HStack(spacing: theme.spacing.md) {
+                    ZStack {
+                        Circle()
+                            .fill(.white.opacity(0.18))
+                            .frame(width: 56, height: 56)
+                        Image(systemName: "dumbbell.fill")
+                            .font(.title2)
+                            .foregroundStyle(theme.colors.onAccent)
+                            .symbolEffect(.bounce, value: session.id)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        BentoText(
+                            verbatim: session.startedAt.formatted(.dateTime
+                                .weekday(.wide).day().month(.wide).year()),
+                            style: .callout,
+                            color: theme.colors.onAccent.opacity(0.85)
+                        )
+                        BentoText(verbatim: timeRange, style: .title3, color: theme.colors.onAccent)
+                    }
+                    Spacer()
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(session.startedAt.formatted(.dateTime
-                        .weekday(.wide).day().month(.wide).year()))
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text(timeRange)
-                        .font(.title3.bold())
-                }
-                Spacer()
-            }
 
-            if let rpe = session.perceivedExertion {
-                rpeBar(rpe: rpe)
+                if let rpe = session.perceivedExertion {
+                    rpeBar(rpe: rpe)
+                }
             }
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
     }
-
-    private var workoutColor: HabitColor { session.workout?.color ?? .blue }
 
     private var timeRange: String {
         let start = session.startedAt.formatted(.dateTime.hour().minute())
@@ -347,20 +314,19 @@ struct WorkoutSessionDetailView: View {
         return "\(start) – \(end)  ·  \(dur)"
     }
 
+    @ViewBuilder
     private func rpeBar(rpe: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Anstrengung (RPE)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                BentoText(verbatim: "Anstrengung (RPE)", style: .caption, color: theme.colors.onAccent.opacity(0.85))
                 Spacer()
                 Text("\(rpe)/10")
                     .font(.caption.bold().monospacedDigit())
-                    .foregroundStyle(rpeColor(rpe))
+                    .foregroundStyle(theme.colors.onAccent)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.secondary.opacity(0.15))
+                    Capsule().fill(.white.opacity(0.2))
                     Capsule()
                         .fill(LinearGradient(colors: [.green, .yellow, .orange, .red],
                                              startPoint: .leading, endPoint: .trailing))
@@ -371,41 +337,54 @@ struct WorkoutSessionDetailView: View {
         }
     }
 
-    private func rpeColor(_ rpe: Int) -> Color {
-        switch rpe {
-        case 0...4: .green
-        case 5...6: .yellow
-        case 7...8: .orange
-        default:    .red
-        }
-    }
-
     // MARK: - Stats Grid
 
     private var statsGrid: some View {
-        let columns = [GridItem(.flexible(), spacing: 12),
-                       GridItem(.flexible(), spacing: 12)]
-        return LazyVGrid(columns: columns, spacing: 12) {
-            StatTile(icon: "checkmark.circle.fill", tint: .green,
-                     value: "\(completedSets)/\(totalSets)", label: "Sätze")
-            StatTile(icon: "dumbbell.fill", tint: .blue,
-                     value: "\(sortedExercises.count)", label: "Übungen")
+        BentoAdaptiveGrid(minimumItemWidth: 150) {
+            BentoMetricTile(
+                title: Text("Sätze"),
+                value: Text("\(completedSets)/\(totalSets)"),
+                systemImage: "checkmark.circle.fill",
+                tone: .green
+            )
+            BentoMetricTile(
+                title: Text("Übungen"),
+                value: Text("\(sortedExercises.count)"),
+                systemImage: "dumbbell.fill",
+                tone: .blue
+            )
 
             if totalVolumeKg > 0 {
-                StatTile(icon: "scalemass.fill", tint: .purple,
-                         value: "\(Int(totalVolumeKg)) kg", label: "Volumen")
+                BentoMetricTile(
+                    title: Text("Volumen"),
+                    value: Text("\(Int(totalVolumeKg)) kg"),
+                    systemImage: "scalemass.fill",
+                    tone: .blue
+                )
             }
             if totalReps > 0 {
-                StatTile(icon: "number", tint: .orange,
-                         value: "\(totalReps)", label: "Wiederholungen")
+                BentoMetricTile(
+                    title: Text("Wiederholungen"),
+                    value: Text("\(totalReps)"),
+                    systemImage: "number",
+                    tone: .warning
+                )
             }
             if totalDistanceKm > 0 {
-                StatTile(icon: "location.fill", tint: .teal,
-                         value: String(format: "%.2f km", totalDistanceKm), label: "Distanz")
+                BentoMetricTile(
+                    title: Text("Distanz"),
+                    value: Text(String(format: "%.2f km", totalDistanceKm)),
+                    systemImage: "location.fill",
+                    tone: .info
+                )
             }
             if activeDurationSeconds > 0 {
-                StatTile(icon: "timer", tint: .pink,
-                         value: formattedDuration(activeDurationSeconds), label: "Aktive Zeit")
+                BentoMetricTile(
+                    title: Text("Aktive Zeit"),
+                    value: Text(formattedDuration(activeDurationSeconds)),
+                    systemImage: "timer",
+                    tone: .pink
+                )
             }
         }
     }
@@ -413,35 +392,26 @@ struct WorkoutSessionDetailView: View {
     // MARK: - Highlight (PR)
 
     private func highlightCard(_ pr: (Exercise, SetEntry)) -> some View {
-        HStack(spacing: Theme.Spacing.m) {
-            Image(systemName: "trophy.fill")
-                .font(.title2)
-                .foregroundStyle(.yellow)
-                .padding(12)
-                .background(Circle().fill(Color.yellow.opacity(0.15)))
-                .symbolEffect(.bounce, value: pr.0.id)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Schwerster Satz heute")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Text(pr.0.name).font(.subheadline.weight(.semibold))
-                Text(pr.1.summaryText)
-                    .font(.headline)
-                    .foregroundStyle(.yellow)
+        BentoCard(tone: .warning, style: .elevated, padding: .lg, radius: .large) {
+            HStack(spacing: theme.spacing.md) {
+                Image(systemName: "trophy.fill")
+                    .font(.title2)
+                    .symbolEffect(.bounce, value: pr.0.id)
+                VStack(alignment: .leading, spacing: 2) {
+                    BentoText(verbatim: "Schwerster Satz heute", style: .caption)
+                    BentoText(verbatim: pr.0.name, style: .headline)
+                    BentoText(verbatim: pr.1.summaryText, style: .bodyStrong)
+                }
+                Spacer()
             }
-            Spacer()
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
-        .shadow(color: Color.yellow.opacity(0.2), radius: 10, y: 4)
     }
 
     // MARK: - Exercise Breakdown
 
     private var exerciseBreakdown: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Übungen").font(.headline)
-            VStack(spacing: Theme.Spacing.s) {
+        BentoSection(title: Text("Übungen"), subtitle: Text("\(sortedExercises.count) ausgeführt")) {
+            VStack(spacing: theme.spacing.sm) {
                 ForEach(Array(sortedExercises.enumerated()), id: \.offset) { _, pair in
                     ExerciseSummaryCard(exercise: pair.0, sets: pair.1)
                 }
@@ -452,50 +422,36 @@ struct WorkoutSessionDetailView: View {
     // MARK: - Notes
 
     private var notesCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            HStack {
-                Text("Notizen").font(.headline)
-                Spacer()
-                Button {
-                    draftNotes = session.notes
-                    draftRPE = session.perceivedExertion ?? 7
-                    isEditing = true
-                } label: {
-                    Image(systemName: "pencil").foregroundStyle(.tint)
+        BentoSection(title: Text("Notizen")) {
+            BentoCard(style: .outlined, padding: .lg, radius: .large) {
+                HStack(alignment: .top) {
+                    if session.notes.isEmpty {
+                        BentoText("Keine Notizen", style: .callout, color: theme.colors.onSurfaceMuted)
+                    } else {
+                        BentoText(verbatim: session.notes, style: .body)
+                    }
+                    Spacer()
+                    BentoIconButton(
+                        systemImage: "pencil",
+                        accessibilityLabel: Text("Bearbeiten"),
+                        variant: .ghost,
+                        size: .small
+                    ) {
+                        draftNotes = session.notes
+                        draftRPE = session.perceivedExertion ?? 7
+                        showEditNotes = true
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if session.notes.isEmpty {
-                Text("Keine Notizen").font(.subheadline).foregroundStyle(.secondary)
-            } else {
-                Text(session.notes).font(.subheadline)
-            }
-        }
-        .padding(Theme.Spacing.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle()
-        .shadow(color: Color.accentColor.opacity(0.1), radius: 8, y: 3)
-        .sheet(isPresented: $isEditing) {
-            EditNotesSheet(notes: $draftNotes, rpe: $draftRPE) {
-                session.notes = draftNotes
-                session.perceivedExertion = draftRPE
-                try? env.sessionRepo.update(session)
-                Haptics.success()
-            }
-            .presentationDetents([.medium])
         }
     }
 
     // MARK: - PR Section
 
     private var prSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack(spacing: 6) {
-                Image(systemName: "trophy.fill")
-                    .foregroundStyle(.orange)
-                Text("Neue PRs")
-                    .font(.headline)
-            }
-            VStack(spacing: Theme.Spacing.s) {
+        BentoSection(title: Text("Neue PRs"), subtitle: Text("\(newPRs.count) persönliche Rekorde")) {
+            VStack(spacing: theme.spacing.sm) {
                 ForEach(newPRs, id: \.newPR.id) { pr in
                     prCard(pr)
                 }
@@ -504,62 +460,58 @@ struct WorkoutSessionDetailView: View {
     }
 
     private func prCard(_ pr: (exercise: Exercise, newPR: SetEntry, previousPR: SetEntry)) -> some View {
-        HStack(spacing: Theme.Spacing.m) {
-            Image(systemName: pr.exercise.iconSystemName)
-                .font(.title3)
-                .foregroundStyle(.orange)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.orange.opacity(0.12)))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(pr.exercise.name)
-                    .font(.subheadline.weight(.semibold))
-                HStack(spacing: 4) {
-                    Text(pr.previousPR.summaryText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .strikethrough()
-                    Image(systemName: "arrow.right")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(pr.newPR.summaryText)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.orange)
+        BentoCard(tone: .warning, style: .outlined, padding: .md, radius: .large) {
+            HStack(spacing: theme.spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.2))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: pr.exercise.iconSystemName)
+                        .font(.callout)
                 }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    BentoText(verbatim: pr.exercise.name, style: .headline)
+                    HStack(spacing: 4) {
+                        Text(pr.previousPR.summaryText)
+                            .font(.caption)
+                            .strikethrough()
+                            .foregroundStyle(theme.colors.onSurfaceMuted)
+                        Image(systemName: "arrow.right")
+                            .font(.caption2)
+                            .foregroundStyle(theme.colors.onSurfaceMuted)
+                        Text(pr.newPR.summaryText)
+                            .font(.caption.weight(.bold))
+                    }
+                }
+                Spacer()
+                Image(systemName: "flame.fill")
+                    .font(.title3)
             }
-            Spacer()
-            Image(systemName: "flame.fill")
-                .font(.title3)
-                .foregroundStyle(.orange)
         }
-        .padding(Theme.Spacing.m)
-        .cardStyle()
-        .shadow(color: Color.orange.opacity(0.2), radius: 10, y: 4)
     }
 
     // MARK: - Muscle Map
 
     private var muscleMapSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack {
-                Text("Muskeln").font(.headline)
-                Spacer()
-                Picker("", selection: $muscleMapShowFront) {
-                    Text("Vorne").tag(true)
-                    Text("Hinten").tag(false)
+        BentoSection(title: Text("Muskeln")) {
+            BentoCard(style: .outlined, padding: .lg, radius: .large) {
+                VStack(alignment: .leading, spacing: theme.spacing.md) {
+                    HStack {
+                        Spacer()
+                        BentoSegmentedPicker(options: [true, false], selection: $muscleMapShowFront) { front in
+                            Text(front ? "Vorne" : "Hinten")
+                        }
+                        .frame(width: 180)
+                    }
+                    SessionMuscleMapView(
+                        volumes: muscleVolumes,
+                        selectedMuscle: $selectedMapMuscle,
+                        showFront: $muscleMapShowFront
+                    )
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 140)
             }
-            SessionMuscleMapView(
-                volumes: muscleVolumes,
-                selectedMuscle: $selectedMapMuscle,
-                showFront: $muscleMapShowFront
-            )
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
-        .shadow(color: workoutColor.color.opacity(0.15), radius: 10, y: 4)
     }
 
     // MARK: - Actions
