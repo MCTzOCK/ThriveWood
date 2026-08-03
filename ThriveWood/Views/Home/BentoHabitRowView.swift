@@ -36,12 +36,10 @@ struct BentoHabitRowView: View {
                 Spacer(minLength: 0)
                 bottomRow
             }
-            .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
+            // 1:1 Aspect-Ratio: alle Kacheln exakt gleich groß & quadratisch.
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .aspectRatio(1, contentMode: .fit)
         }
-        // Card strikt an die Spaltenbreite der adaptive grid halten — kein
-        // horizontal fixedSize, sodass lange Wörter umbrechen statt die
-        // Nachbar-Karte zu überlappen.
-        .fixedSize(horizontal: false, vertical: true)
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") { onEdit() }
             Button("Archivieren", systemImage: "archivebox", role: .destructive) { onEdit() }
@@ -114,8 +112,10 @@ struct BentoHabitRowView: View {
             .strikethrough(isCompleted && !habit.isMeasurable, color: theme.colors.background.opacity(0.7))
             .lineLimit(2)
             .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Lange Namen werden mit „…" abgeschnitten statt die Kachelbreite
+            // zu überschreiten und Nachbar-Kacheln zu überlappen.
+            .truncationMode(.tail)
 
         if habit.isMeasurable, let p = progress {
             BentoText(
@@ -123,7 +123,8 @@ struct BentoHabitRowView: View {
                 style: .caption,
                 color: theme.colors.background.opacity(0.85)
             )
-            .fixedSize(horizontal: false, vertical: true)
+            .lineLimit(1)
+            .truncationMode(.tail)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
