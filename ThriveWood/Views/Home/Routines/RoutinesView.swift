@@ -254,16 +254,6 @@ struct RoutinesView: View {
 
                 Spacer()
 
-                BentoIconButton(
-                    systemImage: "ellipsis",
-                    accessibilityLabel: Text("Optionen"),
-                    variant: .secondary,
-                    size: .small
-                ) {
-                    menuRoutine = routine
-                }
-                .buttonStyle(.plain)
-
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(theme.colors.onSurfaceMuted)
