@@ -66,22 +66,18 @@ struct WorkoutSummaryImageSheet: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            VStack(spacing: 0) {
-                TabView(selection: $selectedDesign) {
-                    ForEach(SummaryDesign.allCases) { design in
-                        WorkoutSummaryImage(data: data, design: design)
-                            .frame(width: geo.size.width, height: geo.size.height - 140)
-                    }
-                    .tag(selectedDesign)
+        VStack(spacing: 0) {
+            TabView(selection: $selectedDesign) {
+                ForEach(SummaryDesign.allCases) { design in
+                    WorkoutSummaryImage(data: data, design: design)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .indexViewStyle(.page(backgroundDisplayMode: .always))
-                .frame(maxWidth: .infinity)
-
-                bottomBar
             }
-            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+            .tabViewStyle(.page(indexDisplayMode: .always))
+            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            bottomBar
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -113,15 +109,13 @@ struct WorkoutSummaryImageSheet: View {
                 item: Image(uiImage: rendered),
                 preview: SharePreview(session.workout?.name ?? "Workout", image: Image(uiImage: rendered))
             ) {
-                HStack(spacing: Theme.Spacing.s) {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Bild teilen")
-                }
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Theme.Spacing.m)
-                .background(Capsule().fill(Color.accentColor))
-                .foregroundStyle(.white)
+                BentoButton(
+                    Text("Bild teilen"),
+                    systemImage: "square.and.arrow.up",
+                    variant: .primary,
+                    expands: true
+                ) {}
+                    .allowsHitTesting(false)
             }
         }
     }
