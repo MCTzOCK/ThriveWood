@@ -131,10 +131,12 @@ struct SportViewV2: View {
             }
 
             if !vm.recentSessions.isEmpty {
-                recentSessionsCard(vm: vm)
+                RecentSessionsSection(sessions: vm.recentSessions) { selected in
+                    detailSession = selected
+                }
             }
 
-            navigationGrid(vm: vm)
+            exploreSection
 
             Spacer(minLength: theme.spacing.xxl)
         }
@@ -207,42 +209,29 @@ struct SportViewV2: View {
 
     @ViewBuilder
     private func quickStartSection(vm: SportViewV2Model) -> some View {
-        BentoSection(title: Text("Schnellstart"), subtitle: Text("\(vm.workouts.count) Workouts")) {
-            QuickStartGridV2(
-                onFreeTraining: {
-                    if let s = vm.startSession(for: nil) { presentedSession = s }
-                },
-                onRepeatLast: {
-                    if let last = vm.lastSession, let w = last.workout {
-                        if let s = vm.startSession(for: w) { presentedSession = s }
-                    } else {
-                        if let s = vm.startSession(for: nil) { presentedSession = s }
-                    }
-                },
-                onWorkoutSelect: { w in
+        QuickStartGridV2(
+            onFreeTraining: {
+                if let s = vm.startSession(for: nil) { presentedSession = s }
+            },
+            onRepeatLast: {
+                if let last = vm.lastSession, let w = last.workout {
                     if let s = vm.startSession(for: w) { presentedSession = s }
-                },
-                onEdit: { editingWorkout = $0 },
-                onDelete: { vm.delete($0) },
-                workouts: vm.workouts.filter {
-                    searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased())
+                } else {
+                    if let s = vm.startSession(for: nil) { presentedSession = s }
                 }
-            )
-        }
-    }
-
-    // MARK: - Recent Sessions
-
-    @ViewBuilder
-    private func recentSessionsCard(vm: SportViewV2Model) -> some View {
-        BentoSection(title: Text("Zuletzt"), subtitle: Text("Letzte Trainingssessions")) {
-            RecentSessionsSection(sessions: vm.recentSessions) { selected in
-                detailSession = selected
+            },
+            onWorkoutSelect: { w in
+                if let s = vm.startSession(for: w) { presentedSession = s }
+            },
+            onEdit: { editingWorkout = $0 },
+            onDelete: { vm.delete($0) },
+            workouts: vm.workouts.filter {
+                searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased())
             }
-        }
+        )
     }
 
-    // MARK: - Navigation Grid
+    // MARK: - Explore
 
     private func avgDuration(for workout: Workout?, fallback: Int?) -> Int {
         guard let workout else { return fallback ?? 0 }
@@ -251,53 +240,120 @@ struct SportViewV2: View {
     }
 
     @ViewBuilder
-    private func navigationGrid(vm: SportViewV2Model) -> some View {
-        BentoSection(title: Text("Entdecken"), subtitle: Text("Mehr aus dem Sport-Tab")) {
-            BentoAdaptiveGrid(minimumItemWidth: 160) {
-                NavigationLink(destination: { AllSessionsView() }) {
-                    SportNavigationCardV2(title: "Alle Sessions", subtitle: "Verlauf", icon: "clock.fill", tone: .green)
-                }
-                .buttonStyle(BounceButtonStyle())
+    private var exploreSection: some View {
+        BentoSectionHeader(
+            title: Text("Entdecken"),
+            subtitle: Text("Mehr aus dem Sport-Tab")
+        )
+        .padding(.top, theme.spacing.md)
 
-                NavigationLink(destination: { SportInsightsView() }) {
-                    SportNavigationCardV2(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", tone: .info)
-                }
-                .buttonStyle(BounceButtonStyle())
+        exploreHeroRow
 
-                NavigationLink(destination: { MuscleRankingScreen() }) {
-                    SportNavigationCardV2(title: "Muskel-Ranking", subtitle: "Erholung", icon: "trophy.fill", tone: .yellow)
-                }
-                .buttonStyle(BounceButtonStyle())
+        BentoAdaptiveGrid(minimumItemWidth: 160) {
+            exploreTile(
+                title: "Insights", subtitle: "Analysen",
+                icon: "chart.bar.xaxis", tone: .info
+            ) { AnyView(SportInsightsView()) }
 
-                NavigationLink(destination: {
-                    ExerciseLibraryView(onSelect: { exercise in
-                        selectedExercise = exercise
-                    }, asSheet: false, onlyFor: nil)
-                }) {
-                    SportNavigationCardV2(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", tone: .danger)
-                }
-                .buttonStyle(BounceButtonStyle())
+            exploreTile(
+                title: "Muskeln", subtitle: "Ranking & Erholung",
+                icon: "figure.musculature.fill", tone: .warning
+            ) { AnyView(MuscleRankingScreen()) }
 
-                NavigationLink(destination: { TrainingsPlanListView() }) {
-                    SportNavigationCardV2(title: "Trainingspläne", subtitle: "Pläne", icon: "list.bullet.rectangle.portrait", tone: .blue)
-                }
-                .buttonStyle(BounceButtonStyle())
+            exploreTile(
+                title: "Übungen", subtitle: "Bibliothek",
+                icon: "figure.strengthtraining.traditional", tone: .danger
+            ) {
+                AnyView(ExerciseLibraryView(onSelect: { exercise in
+                    selectedExercise = exercise
+                }, asSheet: false, onlyFor: nil))
+            }
 
-                NavigationLink(destination: { PRListView() }) {
-                    SportNavigationCardV2(title: "PRs", subtitle: "Rekorde", icon: "flame.fill", tone: .warning)
-                }
-                .buttonStyle(BounceButtonStyle())
+            exploreTile(
+                title: "Pläne", subtitle: "Trainingspläne",
+                icon: "list.bullet.rectangle.portrait", tone: .blue
+            ) { AnyView(TrainingsPlanListView()) }
 
-                NavigationLink(destination: { BodyProgressView() }) {
-                    SportNavigationCardV2(title: "Körper", subtitle: "Fortschritt", icon: "figure.stand.line.dotted.figure.stand", tone: .pink)
-                }
-                .buttonStyle(BounceButtonStyle())
+            exploreTile(
+                title: "PRs", subtitle: "Rekorde",
+                icon: "flame.fill", tone: .warning
+            ) { AnyView(PRListView()) }
 
-                NavigationLink(destination: { WellnessView() }) {
-                    SportNavigationCardV2(title: "Wellness", subtitle: "Check-in", icon: "heart.fill", tone: .pink)
+            exploreTile(
+                title: "Körper", subtitle: "Fortschritt",
+                icon: "figure.stand.line.dotted.figure.stand", tone: .pink
+            ) { AnyView(BodyProgressView()) }
+
+            exploreTile(
+                title: "Wellness", subtitle: "Check-in",
+                icon: "heart.fill", tone: .pink
+            ) { AnyView(WellnessView()) }
+        }
+    }
+
+    /// Zwei große Hero-Tiles für die häufigsten Ziele.
+    @ViewBuilder
+    private var exploreHeroRow: some View {
+        NavigationLink(destination: { AllSessionsView() }) {
+            exploreHeroTile(
+                title: "Verlauf",
+                subtitle: "Alle Sessions",
+                icon: "clock.fill",
+                tone: .green
+            )
+        }
+        .buttonStyle(BounceButtonStyle())
+
+        NavigationLink(destination: { MuscleRankingScreen() }) {
+            exploreHeroTile(
+                title: "Muskeln",
+                subtitle: "Ranking & Erholung",
+                icon: "figure.musculature.fill",
+                tone: .warning
+            )
+        }
+        .buttonStyle(BounceButtonStyle())
+    }
+
+    private func exploreHeroTile(title: String, subtitle: String, icon: String, tone: BentoTone) -> some View {
+        BentoTile(
+            tone: tone,
+            minimumHeight: 110,
+            alignment: .center
+        ) {
+            HStack(spacing: theme.spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.18))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: icon)
+                        .font(.title3.weight(.semibold))
                 }
-                .buttonStyle(BounceButtonStyle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(Theme.Typography.headline)
+                    if !subtitle.isEmpty {
+                        BentoText(verbatim: subtitle, style: .caption)
+                            .lineLimit(1)
+                    }
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
             }
         }
+    }
+
+    private func exploreTile<Destination: View>(
+        title: String,
+        subtitle: String,
+        icon: String,
+        tone: BentoTone,
+        @ViewBuilder destination: @escaping () -> Destination
+    ) -> some View {
+        NavigationLink(destination: destination) {
+            SportNavigationCardV2(title: title, subtitle: subtitle, icon: icon, tone: tone)
+        }
+        .buttonStyle(BounceButtonStyle())
     }
 }

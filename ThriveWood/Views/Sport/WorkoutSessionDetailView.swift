@@ -410,7 +410,11 @@ struct WorkoutSessionDetailView: View {
     // MARK: - Exercise Breakdown
 
     private var exerciseBreakdown: some View {
-        BentoSection(title: Text("Übungen"), subtitle: Text("\(sortedExercises.count) ausgeführt")) {
+        VStack(alignment: .leading, spacing: theme.spacing.md) {
+            BentoSectionHeader(
+                title: Text("Übungen"),
+                subtitle: Text("\(sortedExercises.count) ausgeführt")
+            )
             VStack(spacing: theme.spacing.sm) {
                 ForEach(Array(sortedExercises.enumerated()), id: \.offset) { _, pair in
                     ExerciseSummaryCard(exercise: pair.0, sets: pair.1)

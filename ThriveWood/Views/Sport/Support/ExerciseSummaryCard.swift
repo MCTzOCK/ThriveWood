@@ -12,9 +12,21 @@ struct ExerciseSummaryCard: View {
     let exercise: Exercise
     let sets: [SetEntry]
 
+    @Environment(\.bentoTheme) private var theme
     @State private var expanded = true
 
     private var type: ExerciseTrackingType { exercise.trackingType }
+
+    private var completedCount: Int { sets.filter(\.isCompleted).count }
+
+    private var tone: BentoTone {
+        switch type {
+        case .repsWeight:       return .blue
+        case .reps:             return .green
+        case .duration:         return .warning
+        case .distanceDuration: return .info
+        }
+    }
 
     private var bestSetText: String? {
         switch type {
@@ -37,57 +49,92 @@ struct ExerciseSummaryCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        BentoDisclosureCard(isExpanded: $expanded, tone: tone) {
             header
-            if expanded {
-                Divider().padding(.horizontal, Theme.Spacing.l)
-                setsTable
-            }
+        } content: {
+            setsList
         }
-        .cardStyle()
     }
+
+    // MARK: - Header
 
     private var header: some View {
-        Button {
-            withAnimation(.snappy) { expanded.toggle() }
-            Haptics.selection()
-        } label: {
-            HStack(spacing: Theme.Spacing.m) {
+        HStack(spacing: theme.spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(.white.opacity(0.18))
+                    .frame(width: 42, height: 42)
                 Image(systemName: exercise.iconSystemName)
-                    .foregroundStyle(.tint)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(Color.blue.opacity(0.12)))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(exercise.name).font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    if let best = bestSetText {
-                        Text(best).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                Spacer()
-                Text("\(sets.filter(\.isCompleted).count)/\(sets.count)")
-                    .font(.caption.weight(.bold).monospacedDigit())
-                    .foregroundStyle(.secondary)
-                Image(systemName: "chevron.down")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .rotationEffect(.degrees(expanded ? 0 : -90))
+                    .font(.callout.weight(.semibold))
             }
-            .padding(Theme.Spacing.l)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(exercise.name)
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(theme.colors.onSurface)
+                    .lineLimit(1)
+
+                if let best = bestSetText {
+                    Text(best)
+                        .font(Theme.Typography.caption.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(theme.colors.onSurfaceMuted)
+                }
+            }
+
+            Spacer()
+
+            BentoBadge(
+                Text("\(completedCount)/\(sets.count)"),
+                tone: completedCount == sets.count ? .success : .neutral,
+                systemImage: completedCount == sets.count ? "checkmark.seal.fill" : nil
+            )
         }
-        .buttonStyle(.plain)
     }
 
-    private var setsTable: some View {
+    // MARK: - Sets List
+
+    private var setsList: some View {
         VStack(spacing: 0) {
             ForEach(Array(sets.enumerated()), id: \.element.id) { idx, set in
-                SetSummaryRow(index: idx + 1, set: set, type: type)
+                setRow(index: idx + 1, set: set)
                 if idx < sets.count - 1 {
-                    Divider().padding(.leading, 56)
+                    BentoDivider()
+                        .padding(.leading, 52)
                 }
             }
         }
-        .padding(.vertical, Theme.Spacing.s)
+        .padding(.top, theme.spacing.sm)
+    }
+
+    @ViewBuilder
+    private func setRow(index: Int, set: SetEntry) -> some View {
+        HStack(spacing: theme.spacing.sm) {
+            Text("\(index)")
+                .font(.caption.weight(.bold).monospacedDigit())
+                .foregroundStyle(theme.colors.onSurfaceMuted)
+                .frame(width: 24)
+
+            ZStack {
+                Circle()
+                    .fill(set.isCompleted ? theme.colors.success : theme.colors.outlineSubtle)
+                    .frame(width: 22, height: 22)
+                Image(systemName: set.isCompleted ? "checkmark" : "")
+                    .font(.system(size: 10, weight: .heavy))
+                    .foregroundStyle(theme.colors.onSuccess)
+            }
+
+            if set.isWarmup {
+                BentoBadge(Text("WU"), tone: .warning)
+            }
+
+            Text(set.summaryText)
+                .font(Theme.Typography.subheadline.monospacedDigit())
+                .foregroundStyle(set.isCompleted ? theme.colors.onSurface : theme.colors.onSurfaceMuted)
+
+            Spacer()
+        }
+        .padding(.horizontal, theme.spacing.xs)
+        .padding(.vertical, 8)
     }
 
     private func formatDuration(_ seconds: Int) -> String {
@@ -97,4 +144,3 @@ struct ExerciseSummaryCard: View {
             : String(format: "%d:%02d", m, s)
     }
 }
-
