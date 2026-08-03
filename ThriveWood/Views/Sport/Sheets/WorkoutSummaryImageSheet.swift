@@ -67,7 +67,7 @@ struct WorkoutSummaryImageSheet: View {
 
     var body: some View {
         GeometryReader { geo in
-            let previewHeight = max(240, geo.size.height - 76)
+            let previewHeight = max(520, geo.size.height - 76)
             VStack(spacing: 0) {
                 TabView(selection: $selectedDesign) {
                     ForEach(SummaryDesign.allCases) { design in
@@ -76,6 +76,7 @@ struct WorkoutSummaryImageSheet: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, Theme.Spacing.m)
                         }
+                        .tag(design)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
