@@ -22,22 +22,30 @@ struct WorkoutListView: View {
     
     
     var body: some View {
-        VStack {
+        Group {
             if let vm {
-                ScrollView {
+                BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
                     VStack(spacing: Theme.Spacing.l) {
+                        BentoPageHeader(
+                            eyebrow: Text("TRAINING"),
+                            title: Text("Workouts"),
+                            subtitle: Text("\(vm.workouts.count) Workouts")
+                        )
+                        .padding(.horizontal, Theme.Spacing.l)
+                        .padding(.top, Theme.Spacing.m)
+
                         if let active = vm.activeSession {
                             ActiveSessionBanner(session: active) {
                                 presentedSession = active
                             }
                             .padding(.horizontal, Theme.Spacing.l)
                         }
-                        
+
                         QuickStartCard {
                             if let s = vm.startSession(for: nil) { presentedSession = s }
                         }
                         .padding(.horizontal, Theme.Spacing.l)
-                        
+
                         WorkoutsSection(
                             workouts: vm.workouts.filter { searchText.lowercased().isEmpty || $0.name.lowercased().contains(searchText.lowercased()) },
                             onStart: { w in
@@ -47,7 +55,7 @@ struct WorkoutListView: View {
                             onDelete: vm.delete
                         )
                         .padding(.horizontal, Theme.Spacing.l)
-                        
+
                         if !vm.recentSessions.isEmpty {
                             RecentSessionsSection(sessions: vm.recentSessions) { selected in
                                 detailSession = selected
@@ -55,63 +63,37 @@ struct WorkoutListView: View {
                             .padding(.horizontal, Theme.Spacing.l)
                         }
                     }
-                    .padding(.vertical, Theme.Spacing.l)
+                    .padding(.bottom, 120)
                 }
-                .background(Color(.systemGroupedBackground))
                 .refreshable { vm.load() }
                 .errorAlert(vm.errors)
                 .navigationDestination(item: $detailSession) { session in
                     WorkoutSessionDetailView(session: session)
                 }
                 .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            }
-        }
-        .navigationTitle("Workouts")
-        .navigationBarTitleDisplayMode(.large)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    if env.entitlements.canCreateWorkout {
-                        showingNewWorkout = true
-                    } else {
-                        showingPaywall = true
-                    }
-                } label: {
-                    Image(systemName: "plus")
+                .navigationTitle("Workouts")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(.hidden, for: .navigationBar)
+                .sheet(isPresented: $showingNewWorkout) {
+                    WorkoutEditorView(workout: nil).onDisappear { vm.load() }
                 }
-            }
-            
-            ToolbarItem(placement: .topBarLeading) {
-                if env.entitlements.isPro {
-                    NavigationLink {
-                        MuscleRankingScreen()
-                    } label: {
-                        Image(systemName: "trophy")
-                    }
-                } else {
-                    Button {
-                        showingPaywall = true
-                    } label: {
-                        Image(systemName: "trophy")
-                    }
+                .sheet(item: $editingWorkout) { w in
+                    WorkoutEditorView(workout: w).onDisappear { vm.load() }
+                }
+                .sheet(isPresented: $showingPaywall) { PaywallView() }
+                .sheet(item: $selectedExercise) { e in
+                    ExerciseDetailsSheet(exercise: e)
+                }
+                .fullScreenCover(item: $presentedSession) { session in
+                    ActiveSessionViewV2(session: session).onDisappear { vm.load() }
+                }
+            } else {
+                BentoScreen(scrolls: false) {
+                    VStack { BentoSpinner(size: 36) }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
         }
-        .sheet(isPresented: $showingNewWorkout) {
-            WorkoutEditorView(workout: nil).onDisappear { vm?.load() }
-        }
-        .sheet(item: $editingWorkout) { w in
-            WorkoutEditorView(workout: w).onDisappear { vm?.load() }
-        }
-        .sheet(isPresented: $showingPaywall) { PaywallView() }
-        
-        .sheet(item: $selectedExercise) { e in
-            ExerciseDetailsSheet(exercise: e)
-        }
-        .fullScreenCover(item: $presentedSession) { session in
-            ActiveSessionViewV2(session: session).onDisappear { vm?.load() }
-        }
-        
         .task {
             if vm == nil { vm = SportViewModel(env: env) }
             vm?.load()

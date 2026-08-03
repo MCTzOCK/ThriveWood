@@ -797,32 +797,25 @@ struct AnalyticsView: View {
             LazyVStack(spacing: Theme.Spacing.l) {
                 premiumHeader
 
-                PremiumSegmentedPicker(selection: $vm.range, options: AnalyticsRange.allCases) { range in
-                    Text(range.rawValue)
-                }
-                .padding(.horizontal, Theme.Spacing.l)
-                .onChange(of: vm.range) { _, newRange in
-                    if newRange != .week && !env.entitlements.canAccessFullAnalytics {
-                        vm.range = .week
-                        showingPaywall = true
+                RangePicker(range: $vm.range)
+                    .onChange(of: vm.range) { _, newRange in
+                        if newRange != .week && !env.entitlements.canAccessFullAnalytics {
+                            vm.range = .week
+                            showingPaywall = true
+                        }
+                        vm.load()
                     }
-                    vm.load()
-                }
 
                 if let summary = vm.summary {
                     SummaryGrid(summary: summary)
-                        .padding(.horizontal, Theme.Spacing.l)
                 }
 
                 PointsTrendCard(samples: vm.dailySamples, goal: vm.dailyGoal)
-                    .padding(.horizontal, Theme.Spacing.l)
 
                 WeekdayDistributionCard(data: vm.weekdayDistribution)
-                    .padding(.horizontal, Theme.Spacing.l)
 
                 if !vm.habitPerformances.isEmpty {
                     HabitLeaderboardCard(performances: vm.habitPerformances)
-                        .padding(.horizontal, Theme.Spacing.l)
 
                     HeatmapCard(
                         performances: vm.habitPerformances,
@@ -830,19 +823,16 @@ struct AnalyticsView: View {
                         heatmap: vm.heatmap,
                         onSelect: vm.selectHabit
                     )
-                    .padding(.horizontal, Theme.Spacing.l)
                 }
 
                 if let totals = vm.workoutTotals,
                    !vm.workoutMetrics.isEmpty,
                    totals.totalSessions > 0 {
                     WorkoutStatsCard(samples: vm.workoutMetrics, totals: totals)
-                        .padding(.horizontal, Theme.Spacing.l)
                 }
 
                 if env.healthService.isAuthorized {
                     StepsCard(range: vm.range.dateRange())
-                        .padding(.horizontal, Theme.Spacing.l)
                 }
             }
             .padding(.vertical, Theme.Spacing.l)

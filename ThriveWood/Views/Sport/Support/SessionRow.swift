@@ -18,33 +18,35 @@ struct SessionRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.m) {
-            ZStack {
-                RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Image(systemName: "calendar")
-                    .font(Theme.Typography.callout)
-                    .foregroundStyle(Color.accentColor)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(session.workout?.name ?? "Freies Training")
-                    .font(Theme.Typography.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                Text(session.startedAt.formatted(.dateTime.weekday(.abbreviated).day().month().hour().minute()))
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(duration)
-                    .font(Theme.Typography.subheadline.weight(.semibold).monospacedDigit())
-                Text("\(Int(totalVolume)) kg")
-                    .font(Theme.Typography.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+        BentoCard(style: .outlined, padding: .md) {
+            HStack(spacing: Theme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "calendar")
+                        .font(Theme.Typography.callout)
+                        .foregroundStyle(Color.accentColor)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(session.workout?.name ?? "Freies Training")
+                        .font(Theme.Typography.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Text(session.startedAt.formatted(.dateTime.weekday(.abbreviated).day().month().hour().minute()))
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(duration)
+                        .font(Theme.Typography.subheadline.weight(.semibold).monospacedDigit())
+                        .contentTransition(.numericText())
+                    Text("\(Int(totalVolume)) kg")
+                        .font(Theme.Typography.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
+                }
             }
         }
-        .padding(Theme.Spacing.m)
-        .cardStyle()
     }
 }

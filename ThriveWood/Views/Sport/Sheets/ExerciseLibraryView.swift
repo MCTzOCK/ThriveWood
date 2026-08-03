@@ -43,80 +43,121 @@ struct ExerciseLibraryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        BentoScreen(scrolls: false, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
             VStack(spacing: 0) {
-                categoryChips
-                List {
-                    ForEach(grouped, id: \.0) { muscle, list in
-                        Section(muscle.label) {
-                            ForEach(list) { e in
-                                Button {
-                                    Haptics.selection()
-                                    onSelect(e)
-                                    if onlyFor == nil {
-                                        dismiss()
-                                    }
-                                } label: {
-                                    HStack(spacing: Theme.Spacing.m) {
-                                        Image(systemName: e.iconSystemName)
-                                            .foregroundStyle(.tint)
-                                            .frame(width: 32)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(e.name).font(.subheadline.weight(.semibold))
-                                                .foregroundStyle(.primary)
-                                            Text(e.category.id.capitalized)
-                                                .font(.caption).foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        if asSheet || e.isBuiltIn {
-                                            Image(systemName: asSheet ? "plus.circle.fill" : "info.circle.fill")
-                                                .foregroundStyle(.tint)
-                                        }
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                            }
+                BentoPageHeader(
+                    eyebrow: Text("BIBLIOTHEK"),
+                    title: Text("Übungen"),
+                    subtitle: Text("\(filtered.count) Übungen gefunden")
+                ) {
+                    if !asSheet {
+                        BentoIconButton(
+                            systemImage: "chevron.left",
+                            accessibilityLabel: Text("Zurück"),
+                            variant: .secondary,
+                            size: .medium
+                        ) {
+                            dismiss()
                         }
                     }
-                }
-                .listStyle(.insetGrouped)
-            }
-            .searchable(text: $search, placement: asSheet ? .navigationBarDrawer(displayMode: .always) : .navigationBarDrawer(displayMode: .always))
-            .navigationTitle("Übungen")
-            .navigationBarTitleDisplayMode(asSheet ? .inline : .large)
-            .toolbar {
-                if asSheet {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Schließen") { dismiss() }
+                    BentoIconButton(
+                        systemImage: "plus",
+                        accessibilityLabel: Text("Neue Übung"),
+                        variant: .primary
+                    ) {
+                        showingNew = true
                     }
                 }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingNew = true } label: {
-                        Image(systemName: "plus")
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.top, Theme.Spacing.m)
+
+                categoryChips
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                        ForEach(grouped, id: \.0) { muscle, list in
+                            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                                BentoText(verbatim: muscle.label.uppercased(), style: .overline, color: .secondary)
+                                    .padding(.horizontal, Theme.Spacing.l)
+
+                                VStack(spacing: Theme.Spacing.xs) {
+                                    ForEach(list) { e in
+                                        Button {
+                                            Haptics.selection()
+                                            onSelect(e)
+                                            if asSheet || onlyFor == nil {
+                                                dismiss()
+                                            }
+                                        } label: {
+                                            BentoCard(style: .outlined, padding: .md) {
+                                                HStack(spacing: Theme.Spacing.m) {
+                                                    ZStack {
+                                                        RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                                                            .fill(Color.accentColor.opacity(0.12))
+                                                            .frame(width: 40, height: 40)
+                                                        Image(systemName: e.iconSystemName)
+                                                            .foregroundStyle(Color.accentColor)
+                                                    }
+                                                    VStack(alignment: .leading, spacing: 2) {
+                                                        Text(e.name)
+                                                            .font(Theme.Typography.subheadline.weight(.semibold))
+                                                            .foregroundStyle(.primary)
+                                                        BentoText(verbatim: e.category.id.capitalized, style: .caption, color: .secondary)
+                                                    }
+                                                    Spacer()
+                                                    Image(systemName: asSheet ? "plus.circle.fill" : "info.circle.fill")
+                                                        .foregroundStyle(Color.accentColor)
+                                                }
+                                            }
+                                        }
+                                        .buttonStyle(PressScaleStyle())
+                                    }
+                                }
+                                .padding(.horizontal, Theme.Spacing.l)
+                            }
+                        }
+                        Spacer(minLength: 100)
                     }
+                    .padding(.bottom, 40)
                 }
             }
-            .sheet(isPresented: $showingNew) {
-                ExerciseEditorView { new in
-                    do { try env.exerciseRepo.create(new); load() }
-                    catch { errors.show(error) }
-                }
-            }
-            .errorAlert(errors)
-            .onAppear(perform: load)
         }
+        .navigationTitle("Übungen")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(asSheet ? .visible : .hidden, for: .navigationBar)
+        .toolbar {
+            if asSheet {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Schließen") { dismiss() }
+                }
+            }
+        }
+        .sheet(isPresented: $showingNew) {
+            ExerciseEditorView { new in
+                do { try env.exerciseRepo.create(new); load() }
+                catch { errors.show(error) }
+            }
+        }
+        .errorAlert(errors)
+        .onAppear(perform: load)
     }
 
     private var categoryChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                Chip(title: "Alle", isSelected: selectedCategory == nil) {
+            HStack(spacing: Theme.Spacing.xs) {
+                BentoChip(
+                    Text("Alle"),
+                    isSelected: selectedCategory == nil
+                ) {
+                    Haptics.selection()
                     selectedCategory = nil
                 }
                 ForEach(ExerciseCategory.allCases) { c in
-                    Chip(title: c.id,
-                         isSelected: selectedCategory == c) {
+                    BentoChip(
+                        Text(c.id),
+                        isSelected: selectedCategory == c
+                    ) {
+                        Haptics.selection()
                         selectedCategory = c
                     }
                 }
@@ -129,26 +170,5 @@ struct ExerciseLibraryView: View {
     private func load() {
         do { exercises = try env.exerciseRepo.fetchAll() }
         catch { errors.show(error) }
-    }
-
-    private struct Chip: View {
-        let title: String
-        let isSelected: Bool
-        let action: () -> Void
-        var body: some View {
-            Button {
-                Haptics.selection(); action()
-            } label: {
-                Text(title)
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule().fill(isSelected ? Color.accentColor : Color(.secondarySystemGroupedBackground))
-                    )
-                    .foregroundStyle(isSelected ? .white : .primary)
-            }
-            .buttonStyle(.plain)
-        }
     }
 }

@@ -14,70 +14,45 @@ struct ForestStatsHeader: View {
     let treeCount: Int
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.m) {
-            HStack(spacing: 0) {
-                StatBlock(icon: "leaf.fill", tint: .accentColor,
-                          value: "\(available)", label: "Verfügbar")
-                VerticalDivider()
-                StatBlock(icon: "tree.fill", tint: .brown,
-                          value: "\(treeCount)", label: "Bäume")
-                VerticalDivider()
-                StatBlock(icon: "sparkles", tint: .orange,
-                          value: "\(total)", label: "Gesamt")
-            }
+        BentoCard(tone: .green, style: .elevated, padding: .lg, radius: .large) {
+            VStack(spacing: Theme.Spacing.m) {
+                BentoStatStrip(values: [
+                    BentoStatValue(
+                        id: "available",
+                        title: Text("Verfügbar"),
+                        value: Text(verbatim: "\(available)"),
+                        detail: Text("Punkte")
+                    ),
+                    BentoStatValue(
+                        id: "trees",
+                        title: Text("Bäume"),
+                        value: Text(verbatim: "\(treeCount)"),
+                        detail: Text("gepflanzt")
+                    ),
+                    BentoStatValue(
+                        id: "total",
+                        title: Text("Gesamt"),
+                        value: Text(verbatim: "\(total)"),
+                        detail: Text("verdient")
+                    )
+                ])
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Bewachsung")
-                        .font(Theme.Typography.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("\(Int(coverage * 100))%")
-                        .font(Theme.Typography.caption.weight(.bold))
-                        .foregroundStyle(.tint)
-                }
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.accentColor.opacity(0.15))
-                        Capsule()
-                            .fill(Color.accentColor)
-                            .frame(width: geo.size.width * coverage)
-                            .animation(Theme.Animation.spring, value: coverage)
+                BentoDivider()
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    HStack {
+                        BentoText(verbatim: "Bewachsung", style: .caption, color: .secondary)
+                        Spacer()
+                        Text(verbatim: "\(Int(coverage * 100))%")
+                            .bentoTextStyle(.bodyStrong, color: .accentColor)
                     }
+                    BentoProgressBar(
+                        progress: coverage,
+                        tone: .green,
+                        height: 10
+                    )
                 }
-                .frame(height: 8)
             }
-        }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
-    }
-
-    private struct StatBlock: View {
-        let icon: String
-        let tint: Color
-        let value: String
-        let label: String
-
-        var body: some View {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(Theme.Typography.body)
-                    .foregroundStyle(tint)
-                Text(value)
-                    .font(Theme.Typography.headline.monospacedDigit())
-                Text(label)
-                    .font(Theme.Typography.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private struct VerticalDivider: View {
-        var body: some View {
-            Rectangle()
-                .fill(Color.primary.opacity(0.06))
-                .frame(width: 0.5, height: 40)
         }
     }
 }

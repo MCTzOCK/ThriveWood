@@ -40,7 +40,7 @@ struct ProfileHubView: View {
                         }
 
                         NavigationLink {
-                            SettingsView()
+                            BentoSettingsView()
                         } label: {
                             hubCard(
                                 icon: "gearshape.fill",

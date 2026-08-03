@@ -5,7 +5,6 @@
 //  Created by Ben Siebert on 23.04.26.
 //
 
-
 import SwiftUI
 
 struct HeatmapCard: View {
@@ -13,46 +12,62 @@ struct HeatmapCard: View {
     let selectedHabitID: UUID?
     let heatmap: [HabitHeatmapCell]
     let onSelect: (UUID) -> Void
+    @Environment(\.bentoTheme) private var theme
 
-    private let rows = 7        // Wochentage
+    private let rows = 7
     private let cellSize: CGFloat = 14
     private let spacing: CGFloat = 3
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Aktivität (90 Tage)").font(.headline)
-                Text("Je dunkler, desto mehr Punkte")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(performances) { p in
-                        HabitChip(
-                            performance: p,
-                            isSelected: p.habitID == selectedHabitID,
-                            action: { onSelect(p.habitID) }
-                        )
+        BentoSection(title: Text("Aktivität"), subtitle: Text("90 Tage Verlauf")) {
+            BentoCard(style: .outlined, padding: .md, radius: .large) {
+                VStack(alignment: .leading, spacing: theme.spacing.md) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: theme.spacing.xs) {
+                            ForEach(performances) { p in
+                                Button {
+                                    Haptics.selection()
+                                    onSelect(p.habitID)
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: p.iconSystemName)
+                                            .font(.caption.weight(.semibold))
+                                        Text(p.title)
+                                            .font(.caption.weight(.semibold))
+                                            .lineLimit(1)
+                                    }
+                                    .padding(.horizontal, theme.spacing.sm)
+                                    .padding(.vertical, theme.spacing.xxs)
+                                    .background(
+                                        Capsule().fill(
+                                            p.habitID == selectedHabitID
+                                            ? p.color.color
+                                            : p.color.color.opacity(0.12)
+                                        )
+                                    )
+                                    .foregroundStyle(
+                                        p.habitID == selectedHabitID
+                                        ? .white
+                                        : p.color.color
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.vertical, 2)
                     }
+
+                    grid
+                    legend
                 }
-                .padding(.vertical, 2)
             }
-
-            grid
-            legend
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
     }
-
-    // MARK: Grid
 
     private var columns: [[HabitHeatmapCell?]] {
         guard let first = heatmap.first else { return [] }
         let cal = Calendar.app
         let weekday = cal.component(.weekday, from: first.date)
-        // Offset relativ zum Wochenstart
         let offset = (weekday - cal.firstWeekday + 7) % 7
         var cells: [HabitHeatmapCell?] = Array(repeating: nil, count: offset)
         cells.append(contentsOf: heatmap.map { Optional($0) })
@@ -83,13 +98,16 @@ struct HeatmapCard: View {
             .frame(width: cellSize, height: cellSize)
             .overlay(
                 RoundedRectangle(cornerRadius: 3)
-                    .strokeBorder(Color.accentColor.opacity(cell == nil ? 0 : 0.04), lineWidth: 1)
+                    .strokeBorder(
+                        theme.colors.accent.opacity(cell == nil ? 0 : 0.04),
+                        lineWidth: 1
+                    )
             )
     }
 
     private func color(for cell: HabitHeatmapCell?) -> Color {
         guard let cell, cell.points > 0 else {
-            return Color.secondary.opacity(0.12)
+            return theme.colors.onSurface.opacity(0.08)
         }
         let intensity: Double = switch cell.points {
         case 1: 0.25
@@ -98,46 +116,25 @@ struct HeatmapCard: View {
         case 4...5: 0.8
         default: 1.0
         }
-        return Color.accentColor.opacity(intensity)
+        return theme.colors.accent.opacity(intensity)
     }
 
     private var legend: some View {
         HStack(spacing: 4) {
-            Text("Weniger").font(.caption2).foregroundStyle(.secondary)
+            Text("Weniger")
+                .font(.caption2)
+                .foregroundStyle(theme.colors.onSurfaceMuted)
             ForEach([0.12, 0.25, 0.45, 0.65, 0.85, 1.0], id: \.self) { op in
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(op <= 0.12 ? Color.secondary.opacity(0.12) : Color.accentColor.opacity(op))
+                    .fill(op <= 0.12
+                          ? theme.colors.onSurface.opacity(0.08)
+                          : theme.colors.accent.opacity(op))
                     .frame(width: 12, height: 12)
             }
-            Text("Mehr").font(.caption2).foregroundStyle(.secondary)
+            Text("Mehr")
+                .font(.caption2)
+                .foregroundStyle(theme.colors.onSurfaceMuted)
             Spacer()
-        }
-    }
-
-    // MARK: Chip
-    private struct HabitChip: View {
-        let performance: HabitPerformance
-        let isSelected: Bool
-        let action: () -> Void
-        var body: some View {
-            Button(action: { Haptics.selection(); action() }) {
-                HStack(spacing: 6) {
-                    Image(systemName: performance.iconSystemName)
-                        .font(.caption.weight(.semibold))
-                    Text(performance.title)
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(1)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule().fill(isSelected
-                                   ? performance.color.color
-                                   : performance.color.color.opacity(0.15))
-                )
-                .foregroundStyle(isSelected ? .white : performance.color.color)
-            }
-            .buttonStyle(.plain)
         }
     }
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MuscleRankingScreen: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(\.dismiss) private var dismiss
     
     @State private var rankings: [MuscleRankingData] = []
     @State private var recoveryData: [MuscleRecoveryData] = []
@@ -90,6 +91,15 @@ struct MuscleRankingScreen: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle(mapMode == .ranking ? "Muskel-Ranking" : "Erholung")
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button { showLegend = true } label: {
                     Image(systemName: "info.circle")

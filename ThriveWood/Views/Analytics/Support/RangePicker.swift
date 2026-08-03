@@ -5,19 +5,18 @@
 //  Created by Ben Siebert on 23.04.26.
 //
 
-
 import SwiftUI
 
 struct RangePicker: View {
     @Binding var range: AnalyticsRange
+    @Environment(\.bentoTheme) private var theme
 
     var body: some View {
-        Picker("Zeitraum", selection: $range) {
-            ForEach(AnalyticsRange.allCases) { r in
-                Text(r.rawValue).tag(r)
+        BentoCard(style: .outlined, padding: .xs, radius: .large) {
+            BentoSegmentedPicker(options: AnalyticsRange.allCases, selection: $range) { range in
+                Text(range.rawValue)
             }
         }
-        .pickerStyle(.segmented)
         .onChange(of: range) { _, _ in Haptics.selection() }
     }
 }

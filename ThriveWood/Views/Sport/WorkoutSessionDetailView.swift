@@ -128,9 +128,72 @@ struct WorkoutSessionDetailView: View {
     // MARK: - Body
 
     var body: some View {
-        ScrollView {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
             ZStack {
                 VStack(spacing: Theme.Spacing.l) {
+                    BentoPageHeader(
+                        eyebrow: Text("SESSION"),
+                        title: Text(session.workout?.name ?? "Freies Training"),
+                        subtitle: Text(timeRange)
+                    ) {
+                        Menu {
+                            Button {
+                                showEditSession = true
+                            } label: { Label("Workout bearbeiten", systemImage: "pencil.and.list.clipboard") }
+
+                            Button {
+                                showShareImage = true
+                            } label: { Label("Zusammenfassung teilen", systemImage: "photo.on.rectangle.angled") }
+
+                            Button {
+                                showPhotoShare = true
+                            } label: { Label("Bild mit Keyfacts teilen", systemImage: "photo.badge.plus") }
+
+                            ShareLink(item: shareText) {
+                                Label("Als Text teilen", systemImage: "square.and.arrow.up")
+                            }
+
+                            Button {
+                                Task {
+                                    try? await env.healthService.save(session: session)
+                                }
+                                withAnimation(.spring()) {
+                                    successHUDVisible = true
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    withAnimation(.spring()) {
+                                        successHUDVisible = false
+                                    }
+                                }
+                            } label: {
+                                Label("In Health speichern", systemImage: "heart.text.square")
+                            }
+
+                            if aiAvailable == .available {
+                                NavigationLink {
+                                    WorkoutAnalysisView(session: session)
+                                } label: {
+                                    Label("KI-Analyse", systemImage: "sparkles")
+                                }
+                            }
+
+                            Divider()
+
+                            Button(role: .destructive) {
+                                showDeleteConfirm = true
+                            } label: { Label("Löschen", systemImage: "trash") }
+                        } label: {
+                            BentoIconButton(
+                                systemImage: "ellipsis.circle",
+                                accessibilityLabel: Text("Menü"),
+                                variant: .ghost,
+                                size: .medium
+                            ) {}
+                        }
+                    }
+                    .padding(.horizontal, Theme.Spacing.l)
+                    .padding(.top, Theme.Spacing.m)
+
                     headerCard
                     statsGrid
                     if !sortedExercises.isEmpty { exerciseBreakdown }
@@ -138,12 +201,10 @@ struct WorkoutSessionDetailView: View {
                     if !newPRs.isEmpty { prSection }
                     if !muscleVolumes.isEmpty { muscleMapSection }
                     notesCard
-                    Spacer(minLength: 40)
                 }
-                .padding(.vertical, Theme.Spacing.l)
                 .padding(.horizontal, Theme.Spacing.l)
-                .padding(.bottom, 100)
-                
+                .padding(.bottom, 120)
+
                 if successHUDVisible {
                     SuccessHUD(message: "Gespeichert!")
                         .allowsHitTesting(false)
@@ -152,10 +213,9 @@ struct WorkoutSessionDetailView: View {
                 }
             }
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle(session.workout?.name ?? "Freies Training")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { toolbar }
+        .toolbar(.hidden, for: .navigationBar)
         .errorAlert(errors)
         .onAppear { loadPRs() }
         .sheet(isPresented: $showEditSession) {
@@ -168,16 +228,16 @@ struct WorkoutSessionDetailView: View {
         .sheet(isPresented: $showPhotoShare) {
             WorkoutPhotoShareSheet(session: session)
         }
-        .confirmationDialog(
-            "Workout löschen?",
+        .bentoDialog(
             isPresented: $showDeleteConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Löschen", role: .destructive) { delete() }
-            Button("Abbrechen", role: .cancel) {}
-        } message: {
-            Text("Diese Trainingseinheit wird unwiderruflich entfernt.")
-        }
+            systemImage: "trash.fill",
+            title: Text("Workout löschen?"),
+            message: Text("Diese Trainingseinheit wird unwiderruflich entfernt."),
+            actions: [
+                BentoDialogAction(title: Text("Löschen"), variant: .destructive, role: .destructive) { delete() },
+                BentoDialogAction(title: Text("Abbrechen"), role: .cancel) {}
+            ]
+        )
     }
 
     // MARK: - Toolbar
@@ -257,6 +317,7 @@ struct WorkoutSessionDetailView: View {
                     Image(systemName: "dumbbell.fill")
                         .font(.title2)
                         .foregroundStyle(.white)
+                        .symbolEffect(.bounce, value: session.id)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(session.startedAt.formatted(.dateTime
@@ -358,6 +419,7 @@ struct WorkoutSessionDetailView: View {
                 .foregroundStyle(.yellow)
                 .padding(12)
                 .background(Circle().fill(Color.yellow.opacity(0.15)))
+                .symbolEffect(.bounce, value: pr.0.id)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Schwerster Satz heute")
                     .font(.caption.weight(.semibold))
@@ -371,6 +433,7 @@ struct WorkoutSessionDetailView: View {
         }
         .padding(Theme.Spacing.l)
         .cardStyle()
+        .shadow(color: Color.yellow.opacity(0.2), radius: 10, y: 4)
     }
 
     // MARK: - Exercise Breakdown
@@ -410,6 +473,7 @@ struct WorkoutSessionDetailView: View {
         .padding(Theme.Spacing.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
+        .shadow(color: Color.accentColor.opacity(0.1), radius: 8, y: 3)
         .sheet(isPresented: $isEditing) {
             EditNotesSheet(notes: $draftNotes, rpe: $draftRPE) {
                 session.notes = draftNotes
@@ -470,6 +534,7 @@ struct WorkoutSessionDetailView: View {
         }
         .padding(Theme.Spacing.m)
         .cardStyle()
+        .shadow(color: Color.orange.opacity(0.2), radius: 10, y: 4)
     }
 
     // MARK: - Muscle Map
@@ -494,6 +559,7 @@ struct WorkoutSessionDetailView: View {
         }
         .padding(Theme.Spacing.l)
         .cardStyle()
+        .shadow(color: workoutColor.color.opacity(0.15), radius: 10, y: 4)
     }
 
     // MARK: - Actions

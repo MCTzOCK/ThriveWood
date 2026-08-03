@@ -10,6 +10,7 @@ import Charts
 
 struct SportInsightsView: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(\.dismiss) private var dismiss
     @State private var showingAll1RM = false
     @State private var showingAllOverload = false
     @State private var showingAllTopExercises = false
@@ -27,16 +28,33 @@ struct SportInsightsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.l) {
-                if completedSessions.isEmpty {
-                    PremiumEmptyState(
-                        icon: "chart.bar.xaxis",
-                        title: "Noch keine Daten",
-                        message: "Schließe ein paar Workouts ab, um detaillierte Insights zu sehen."
-                    )
-                    .padding(.top, Theme.Spacing.xxl)
-                } else {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            if completedSessions.isEmpty {
+                BentoEmptyState(
+                    systemImage: "chart.bar.xaxis",
+                    title: Text("Noch keine Daten"),
+                    message: Text("Schließe ein paar Workouts ab, um detaillierte Insights zu sehen.")
+                )
+                .padding(.top, Theme.Spacing.xxl)
+            } else {
+                VStack(spacing: Theme.Spacing.l) {
+                    BentoPageHeader(
+                        eyebrow: Text("ANALYSEN"),
+                        title: Text("Sport Insights"),
+                        subtitle: Text("\(completedSessions.count) Sessions analysiert")
+                    ) {
+                        BentoIconButton(
+                            systemImage: "chevron.left",
+                            accessibilityLabel: Text("Zurück"),
+                            variant: .secondary,
+                            size: .medium
+                        ) {
+                            dismiss()
+                        }
+                    }
+                    .padding(.horizontal, Theme.Spacing.l)
+                    .padding(.top, Theme.Spacing.m)
+
                     quickStatsRow
                     gymStatsRow
                     trainingTimeCard
@@ -52,13 +70,12 @@ struct SportInsightsView: View {
                     consistencyCard
                     activityLevelCard
                 }
+                .padding(.bottom, 120)
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Sport Insights")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingAll1RM) {
             NavigationStack {
                 AllExercisesList(title: "Geschätztes 1RM — Alle Übungen") {
@@ -900,19 +917,16 @@ private struct InsightCard<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack {
-                Image(systemName: icon)
-                    .font(Theme.Typography.body)
-                    .foregroundStyle(Color.accentColor)
-                Text(title)
-                    .font(Theme.Typography.headline)
-                Spacer()
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text(title)) {
+                    Image(systemName: icon)
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(Color.accentColor)
+                }
+                content()
             }
-            content()
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
         .padding(.horizontal, Theme.Spacing.l)
     }
 }
@@ -977,19 +991,19 @@ private struct QuickStatTile: View {
     let color: Color
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.s) {
-            Image(systemName: icon)
-                .font(Theme.Typography.body)
-                .foregroundStyle(color)
-            Text(value)
-                .font(Theme.Typography.headline.monospacedDigit())
-            Text(label)
-                .font(Theme.Typography.caption2)
-                .foregroundStyle(.secondary)
+        BentoCard(style: .elevated, padding: .md) {
+            VStack(spacing: Theme.Spacing.s) {
+                Image(systemName: icon)
+                    .font(Theme.Typography.body)
+                    .foregroundStyle(color)
+                    .symbolEffect(.bounce, value: value)
+                Text(value)
+                    .font(Theme.Typography.headline.monospacedDigit())
+                    .contentTransition(.numericText())
+                BentoText(verbatim: label, style: .caption, color: .secondary)
+            }
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
-        .padding(Theme.Spacing.m)
-        .cardStyle()
     }
 }
 

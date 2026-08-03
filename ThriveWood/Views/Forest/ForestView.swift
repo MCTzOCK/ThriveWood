@@ -14,10 +14,19 @@ struct ForestView: View {
     var body: some View {
         Group {
             if let vm { content(vm: vm) }
-            else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
+            else {
+                BentoScreen(scrolls: false) {
+                    VStack(spacing: Theme.Spacing.m) {
+                        BentoSpinner(size: 40)
+                        BentoText(verbatim: "Wald wird geladen…", style: .callout, color: .secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
         }
         .navigationTitle("Mein Wald")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             if vm == nil { vm = ForestViewModel(env: env) }
             vm?.load()
@@ -27,8 +36,17 @@ struct ForestView: View {
     @ViewBuilder
     private func content(vm: ForestViewModel) -> some View {
         @Bindable var vm = vm
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.l) {
+
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoPageHeader(
+                    eyebrow: Text("DEIN WALD"),
+                    title: Text("Mein Wald"),
+                    subtitle: Text("Pflanze Bäume und sieh sie wachsen")
+                )
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.top, Theme.Spacing.m)
+
                 ForestStatsHeader(
                     available: vm.availablePoints,
                     total: vm.totalEarned,
@@ -43,19 +61,28 @@ struct ForestView: View {
                 HintCard()
                     .padding(.horizontal, Theme.Spacing.l)
             }
-            .padding(.vertical, Theme.Spacing.l)
             .padding(.bottom, 120)
         }
-        .background(Color(.systemGroupedBackground))
-        .sheet(isPresented: $vm.showingSpeciesPicker) {
+        .bentoSheet(
+            isPresented: $vm.showingSpeciesPicker,
+            title: Text("Baum pflanzen"),
+            subtitle: Text("Wähle eine Spezies für dein Feld"),
+            detents: [.medium, .large]
+        ) {
             SpeciesPickerSheet(vm: vm)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
         }
-        .sheet(item: $vm.selectedTree) { tree in
-            TreeDetailSheet(tree: tree, vm: vm)
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+        .bentoSheet(
+            isPresented: Binding(
+                get: { vm.selectedTree != nil },
+                set: { if !$0 { vm.selectedTree = nil } }
+            ),
+            title: Text("Baum"),
+            subtitle: Text("Gießen oder entfernen"),
+            detents: [.medium, .large]
+        ) {
+            if let tree = vm.selectedTree {
+                TreeDetailSheet(tree: tree, vm: vm)
+            }
         }
         .errorAlert(vm.errors)
     }

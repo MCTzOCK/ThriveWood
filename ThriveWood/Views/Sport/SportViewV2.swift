@@ -25,31 +25,36 @@ struct SportViewV2: View {
             Group {
                 if let vm {
                     content(vm: vm)
+                        .transition(.opacity)
                 } else {
-                    ProgressView()
+                    BentoScreen(scrolls: false) {
+                        VStack(spacing: Theme.Spacing.m) {
+                            BentoSpinner(size: 36)
+                            BentoText(verbatim: "Sport wird geladen…", style: .callout, color: .secondary)
+                        }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(.systemGroupedBackground))
+                    }
+                    .transition(.opacity)
                 }
             }
-            .navigationBarHidden(true)
             .toolbar(.hidden, for: .navigationBar)
-            .sheet(isPresented: $showingNewWorkout) {
-                WorkoutEditorView(workout: nil).onDisappear { vm?.load() }
-            }
-            .sheet(item: $editingWorkout) { w in
-                WorkoutEditorView(workout: w).onDisappear { vm?.load() }
-            }
-            .sheet(isPresented: $showingPaywall) { PaywallView() }
-            .sheet(item: $selectedExercise) { e in
-                ExerciseDetailsSheet(exercise: e)
-            }
-            .fullScreenCover(item: $presentedSession) { session in
-                ActiveSessionViewV2(session: session).onDisappear { vm?.load() }
-            }
+        .sheet(isPresented: $showingNewWorkout) {
+            WorkoutEditorView(workout: nil).onDisappear { vm?.load() }
+        }
+        .sheet(item: $editingWorkout) { w in
+            WorkoutEditorView(workout: w).onDisappear { vm?.load() }
+        }
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
+        .sheet(item: $selectedExercise) { e in
+            ExerciseDetailsSheet(exercise: e)
+        }
+        .fullScreenCover(item: $presentedSession) { session in
+            ActiveSessionViewV2(session: session).onDisappear { vm?.load() }
         }
         .task {
             if vm == nil { vm = SportViewV2Model(env: env) }
             vm?.load()
+        }
         }
     }
 
@@ -57,15 +62,34 @@ struct SportViewV2: View {
 
     @ViewBuilder
     private func content(vm: SportViewV2Model) -> some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.l) {
-                header
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoPageHeader(
+                    eyebrow: Text("TRAINING"),
+                    title: Text("Sport"),
+                    subtitle: Text("\(vm.weeklySessionCount) Sessions diese Woche")
+                ) {
+                    BentoIconButton(
+                        systemImage: "plus",
+                        accessibilityLabel: Text("Neues Workout"),
+                        variant: .primary
+                    ) {
+                        if env.entitlements.canCreateWorkout {
+                            showingNewWorkout = true
+                        } else {
+                            showingPaywall = true
+                        }
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.top, Theme.Spacing.m)
 
                 if let active = vm.activeSession {
                     ActiveSessionBanner(session: active) {
                         presentedSession = active
                     }
                     .padding(.horizontal, Theme.Spacing.l)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 todaySection(vm: vm)
@@ -74,10 +98,8 @@ struct SportViewV2: View {
 
                 navigationGrid(vm: vm)
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
+            .padding(.bottom, 120)
         }
-        .background(Color(.systemGroupedBackground))
         .refreshable { vm.load() }
         .errorAlert(vm.errors)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
@@ -86,61 +108,15 @@ struct SportViewV2: View {
         }
     }
 
-    // MARK: - Header
-
-    private var header: some View {
-        HStack(alignment: .center, spacing: Theme.Spacing.m) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Training")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
-                Text("Sport")
-                    .font(Theme.Typography.largeTitle)
-                    .foregroundStyle(.primary)
-            }
-            Spacer(minLength: 0)
-
-            if vm != nil, let vm {
-                HStack(spacing: Theme.Spacing.s) {
-                    Label("\(vm.weeklySessionCount)", systemImage: "flame.fill")
-                        .font(Theme.Typography.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, Theme.Spacing.s + 2)
-                        .padding(.vertical, Theme.Spacing.xs + 2)
-                        .background(Capsule().fill(Color(.tertiarySystemFill)))
-                }
-            }
-
-            Button {
-                if env.entitlements.canCreateWorkout {
-                    showingNewWorkout = true
-                } else {
-                    showingPaywall = true
-                }
-            } label: {
-                Image(systemName: "plus")
-                    .font(Theme.Typography.body.weight(.bold))
-                    .frame(width: 38, height: 38)
-                    .foregroundStyle(.white)
-                    .background(
-                        Circle()
-                            .fill(Color.accentColor)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
-                    )
-            }
-            .buttonStyle(BounceButtonStyle())
-        }
-        .padding(.horizontal, Theme.Spacing.l)
-    }
-
     // MARK: - Today Section
 
     @ViewBuilder
     private func todaySection(vm: SportViewV2Model) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Heute")
-                .font(Theme.Typography.headline)
-                .padding(.horizontal, Theme.Spacing.l)
+            BentoSectionHeader(title: Text("Heute")) {
+                EmptyView()
+            }
+            .padding(.horizontal, Theme.Spacing.l)
 
             if vm.todayIsRestDay {
                 RestDayCardV2()
@@ -193,7 +169,6 @@ struct SportViewV2: View {
     @ViewBuilder
     private func trainingSection(vm: SportViewV2Model) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-
             QuickStartGridV2(
                 onFreeTraining: {
                     if let s = vm.startSession(for: nil) { presentedSession = s }
@@ -234,7 +209,6 @@ struct SportViewV2: View {
 
     // MARK: - Navigation Grid
 
-    /// Ø-Dauer [Minuten] aus vergangenen Sessions, sonst Fallback.
     private func avgDuration(for workout: Workout, fallback: Int) -> Int {
         let avg = env.workoutService.getAverageDuration(workout: workout)
         return avg > 0 ? Int(avg) : fallback
@@ -243,10 +217,12 @@ struct SportViewV2: View {
     @ViewBuilder
     private func navigationGrid(vm: SportViewV2Model) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Entdecken")
-                .font(Theme.Typography.headline)
+            BentoSectionHeader(title: Text("Entdecken")) {
+                EmptyView()
+            }
+            .padding(.horizontal, Theme.Spacing.l)
 
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.Spacing.m), GridItem(.flexible(), spacing: Theme.Spacing.m)], spacing: Theme.Spacing.m) {
+            BentoAdaptiveGrid(minimumItemWidth: 150) {
                 NavigationLink(destination: { AllSessionsView() }) {
                     SportNavigationCardV2(title: "Alle Sessions", subtitle: "Verlauf", icon: "clock.fill", iconColor: .green)
                 }
@@ -291,7 +267,7 @@ struct SportViewV2: View {
                 }
                 .buttonStyle(BounceButtonStyle())
             }
+            .padding(.horizontal, Theme.Spacing.l)
         }
-        .padding(.horizontal, Theme.Spacing.l)
     }
 }

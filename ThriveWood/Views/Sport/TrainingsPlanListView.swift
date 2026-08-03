@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TrainingsPlanListView: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(\.dismiss) private var dismiss
 
     @State private var plans: [TrainingsPlan] = []
     @State private var showCreateSheet = false
@@ -22,14 +23,35 @@ struct TrainingsPlanListView: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.l) {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoPageHeader(
+                    eyebrow: Text("PLÄNE"),
+                    title: Text("Trainingspläne"),
+                    subtitle: Text(filteredPlans.count > 0 ? "\(filteredPlans.count) Pläne" : "Erstelle deinen ersten Plan")
+                ) {
+                    BentoIconButton(
+                        systemImage: "chevron.left",
+                        accessibilityLabel: Text("Zurück"),
+                        variant: .secondary,
+                        size: .medium
+                    ) {
+                        dismiss()
+                    }
+                    BentoIconButton(
+                        systemImage: "plus",
+                        accessibilityLabel: Text("Plan erstellen"),
+                        variant: .primary
+                    ) {
+                        showCreateSheet = true
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.top, Theme.Spacing.m)
+
                 if let activePlan = plans.first(where: \.isActive) {
                     VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                        Text("Aktiver Plan")
-                            .font(Theme.Typography.footnote.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .textCase(.uppercase)
+                        BentoText(verbatim: "AKTIVER PLAN", style: .overline, color: .secondary)
                             .padding(.horizontal, Theme.Spacing.l)
 
                         Button {
@@ -43,21 +65,17 @@ struct TrainingsPlanListView: View {
                 }
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                    Text("Alle Pläne")
-                        .font(Theme.Typography.footnote.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
+                    BentoText(verbatim: "ALLE PLÄNE", style: .overline, color: .secondary)
                         .padding(.horizontal, Theme.Spacing.l)
 
                     if filteredPlans.isEmpty {
-                        PremiumEmptyState(
-                            icon: "calendar.badge.plus",
-                            title: "Keine Trainingspläne",
-                            message: "Erstelle deinen ersten Trainingsplan über das Plus-Symbol.",
-                            actionTitle: "Plan erstellen"
-                        ) {
-                            showCreateSheet = true
-                        }
+                        BentoEmptyState(
+                            systemImage: "calendar.badge.plus",
+                            title: Text("Keine Trainingspläne"),
+                            message: Text("Erstelle deinen ersten Trainingsplan über das Plus-Symbol."),
+                            actionTitle: Text("Plan erstellen"),
+                            action: { showCreateSheet = true }
+                        )
                         .padding(.horizontal, Theme.Spacing.l)
                         .padding(.top, Theme.Spacing.xl)
                     } else {
@@ -88,12 +106,12 @@ struct TrainingsPlanListView: View {
                         .padding(.horizontal, Theme.Spacing.l)
                     }
                 }
+                .padding(.bottom, 120)
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Trainingspläne")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack(spacing: 4) {

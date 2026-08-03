@@ -5,7 +5,6 @@
 //  Created by Ben Siebert on 27.04.26.
 //
 
-
 import SwiftUI
 import Charts
 
@@ -14,8 +13,8 @@ struct WorkoutStatsCard: View {
     let totals: WorkoutTotals
 
     @State private var selected: WorkoutMetric = .volume
+    @Environment(\.bentoTheme) private var theme
 
-    /// Nur die Metriken zeigen, für die es auch Daten gibt.
     private var availableMetrics: [WorkoutMetric] {
         var result: [WorkoutMetric] = []
         if totals.hasStrength { result.append(.volume) }
@@ -58,114 +57,133 @@ struct WorkoutStatsCard: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            header
-            metricChips
-            chart
-            footer
-        }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
-        .onAppear {
-            // Wähle die erste verfügbare Metrik, falls die aktuelle nichts hergibt
-            if !availableMetrics.contains(selected) {
-                selected = availableMetrics.first ?? .volume
-            }
-        }
-    }
-
-    // MARK: Header
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Training").font(.headline)
-                Text("\(totals.totalSessions) Einheit\(totals.totalSessions == 1 ? "" : "en") im Zeitraum")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(totalText(for: selected))
-                    .font(.title3.bold().monospacedDigit())
-                    .foregroundStyle(selected.color)
-                Text(selected.label)
-                    .font(.caption2).foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    // MARK: Chips
-
-    private var metricChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(availableMetrics) { metric in
-                    Button {
-                        Haptics.selection()
-                        withAnimation(.snappy) { selected = metric }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: metric.icon).font(.caption.weight(.bold))
-                            Text(metric.label).font(.caption.weight(.semibold))
+        BentoSection(
+            title: Text("Training"),
+            subtitle: Text("\(totals.totalSessions) Einheit\(totals.totalSessions == 1 ? "" : "en")")
+        ) {
+            BentoCard(style: .outlined, padding: .md, radius: .large) {
+                VStack(alignment: .leading, spacing: theme.spacing.md) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: theme.spacing.xxs) {
+                            Text(totalText(for: selected))
+                                .font(.title2.bold().monospacedDigit())
+                                .foregroundStyle(selected.color)
+                            Text(selected.label)
+                                .font(.caption)
+                                .foregroundStyle(theme.colors.onSurfaceMuted)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(
-                            Capsule().fill(
-                                selected == metric
-                                ? metric.color
-                                : metric.color.opacity(0.15)
+                        Spacer()
+                    }
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: theme.spacing.xs) {
+                            ForEach(availableMetrics) { metric in
+                                Button {
+                                    Haptics.selection()
+                                    withAnimation(theme.motion.snappy) {
+                                        selected = metric
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: metric.icon)
+                                            .font(.caption.weight(.bold))
+                                        Text(metric.label)
+                                            .font(.caption.weight(.semibold))
+                                    }
+                                    .padding(.horizontal, theme.spacing.sm)
+                                    .padding(.vertical, theme.spacing.xxs)
+                                    .background(
+                                        Capsule().fill(
+                                            selected == metric
+                                            ? metric.color
+                                            : metric.color.opacity(0.12)
+                                        )
+                                    )
+                                    .foregroundStyle(
+                                        selected == metric
+                                        ? .white
+                                        : metric.color
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+
+                    Chart(samples) { sample in
+                        BarMark(
+                            x: .value("Tag", sample.date, unit: .day),
+                            y: .value(selected.label, value(for: selected, in: sample)),
+                            width: .ratio(0.7)
+                        )
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    selected.color,
+                                    selected.color.opacity(0.55)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
                             )
                         )
-                        .foregroundStyle(selected == metric ? .white : metric.color)
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 4,
+                                topTrailingRadius: 4
+                            )
+                        )
                     }
-                    .buttonStyle(.plain)
+                    .chartYAxis {
+                        AxisMarks(position: .leading) { value in
+                            AxisGridLine().foregroundStyle(theme.colors.outlineSubtle)
+                            AxisValueLabel {
+                                if let v = value.as(Double.self) {
+                                    Text(format(v, for: selected))
+                                        .font(.caption2)
+                                        .foregroundStyle(theme.colors.onSurfaceMuted)
+                                }
+                            }
+                        }
+                    }
+                    .chartXAxis {
+                        AxisMarks(values: .stride(by: xAxisStride)) { _ in
+                            AxisGridLine().foregroundStyle(theme.colors.outlineSubtle)
+                            AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                                .foregroundStyle(theme.colors.onSurfaceMuted)
+                        }
+                    }
+                    .frame(height: 170)
+                    .animation(theme.motion.snappy, value: selected)
+
+                    BentoDivider()
+
+                    HStack(spacing: 0) {
+                        ForEach(Array(availableMetrics.enumerated()), id: \.element) { idx, metric in
+                            if idx > 0 {
+                                BentoDivider(orientation: .vertical)
+                                    .frame(height: 32)
+                            }
+                            VStack(spacing: theme.spacing.xxs) {
+                                Image(systemName: metric.icon)
+                                    .font(.caption)
+                                    .foregroundStyle(metric.color)
+                                Text(totalText(for: metric))
+                                    .font(.caption.weight(.bold).monospacedDigit())
+                                Text(metric.label)
+                                    .font(.caption2)
+                                    .foregroundStyle(theme.colors.onSurfaceMuted)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+            }
+            .onAppear {
+                if !availableMetrics.contains(selected) {
+                    selected = availableMetrics.first ?? .volume
                 }
             }
         }
-    }
-
-    // MARK: Chart
-
-    private var chart: some View {
-        Chart(samples) { sample in
-            BarMark(
-                x: .value("Tag", sample.date, unit: .day),
-                y: .value(selected.label, value(for: selected, in: sample)),
-                width: .ratio(0.7)
-            )
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [selected.color, selected.color.opacity(0.55)],
-                    startPoint: .top, endPoint: .bottom
-                )
-            )
-            .clipShape(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 4,
-                    topTrailingRadius: 4
-                )
-            )
-        }
-        .chartYAxis {
-            AxisMarks(position: .leading) { value in
-                AxisGridLine().foregroundStyle(.secondary.opacity(0.15))
-                AxisValueLabel {
-                    if let v = value.as(Double.self) {
-                        Text(format(v, for: selected))
-                            .font(.caption2)
-                    }
-                }
-            }
-        }
-        .chartXAxis {
-            AxisMarks(values: .stride(by: xAxisStride)) { _ in
-                AxisGridLine().foregroundStyle(.secondary.opacity(0.10))
-                AxisValueLabel(format: .dateTime.day().month(.abbreviated))
-            }
-        }
-        .frame(height: 170)
-        .animation(.snappy, value: selected)
     }
 
     private var xAxisStride: Calendar.Component {
@@ -182,35 +200,6 @@ struct WorkoutStatsCard: View {
         case .reps:     "\(Int(v))"
         case .duration: "\(Int(v))"
         case .distance: String(format: "%.1f", v)
-        }
-    }
-
-    // MARK: Footer (Mini-KPIs)
-
-    private var footer: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(availableMetrics.enumerated()), id: \.element) { idx, metric in
-                if idx > 0 { Divider().frame(height: 28) }
-                MiniKPI(
-                    icon: metric.icon,
-                    value: totalText(for: metric),
-                    label: metric.label,
-                    tint: metric.color
-                )
-            }
-        }
-        .padding(.top, Theme.Spacing.s)
-    }
-
-    private struct MiniKPI: View {
-        let icon: String; let value: String; let label: String; let tint: Color
-        var body: some View {
-            VStack(spacing: 2) {
-                Image(systemName: icon).font(.caption).foregroundStyle(tint)
-                Text(value).font(.caption.weight(.bold).monospacedDigit())
-                Text(label).font(.caption2).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
         }
     }
 }

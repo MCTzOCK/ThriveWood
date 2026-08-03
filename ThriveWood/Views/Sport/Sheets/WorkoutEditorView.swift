@@ -27,57 +27,37 @@ struct WorkoutEditorView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Details") {
-                    TextField("Name", text: $name)
-                    TextField("Notiz (optional)", text: $details, axis: .vertical).lineLimit(1...3)
-                    ColorGrid(selection: $color)
-                    Stepper("Dauer: \(duration) min",
-                            value: $duration, in: 5...240, step: 5)
-                    if let w = workout {
-                        if let url = PDFService.shared.createPDF(for: w) {
-                            ShareLink(item: url) { Label("PDF teilen", systemImage: "square.and.arrow.up") }
-                        }
-                    }
-                }
+            BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+                VStack(spacing: Theme.Spacing.l) {
+                    BentoPageHeader(
+                        eyebrow: Text(isEditing ? "BEARBEITEN" : "NEU"),
+                        title: Text(isEditing ? "Workout bearbeiten" : "Neues Workout"),
+                        subtitle: Text(isValid ? name : "Gib einen Namen ein")
+                    )
+                    .padding(.horizontal, Theme.Spacing.l)
+                    .padding(.top, Theme.Spacing.m)
 
-                Section {
-                    if slots.isEmpty {
-                        Text("Noch keine Übungen").foregroundStyle(.secondary)
-                    } else {
-                        ForEach(slots.sorted(by: { $0.order < $1.order })) { slot in
-                            SlotRow(slot: slot) {
-                                toggleSuperset(for: slot)
-                            }
-                        }
-                        .onDelete(perform: deleteSlots)
-                        .onMove(perform: moveSlots)
-                    }
-                    Button {
-                        showingLibrary = true
-                    } label: {
-                        Label("Übung hinzufügen", systemImage: "plus.circle.fill")
-                    }
-                } header: {
-                    HStack {
-                        Text("Übungen")
-                        Spacer()
-                        if !slots.isEmpty { EditButton().font(.caption) }
-                    }
-                }
+                    detailsCard
+                    exercisesCard
 
-                if isEditing {
-                    Section {
-                        Button(role: .destructive) {
+                    if isEditing {
+                        BentoButton(
+                            Text("Workout archivieren"),
+                            systemImage: "archivebox",
+                            variant: .destructive,
+                            expands: true
+                        ) {
                             guard let workout else { return }
                             do { try env.workoutRepo.archive(workout); dismiss() }
                             catch { errors.show(error) }
-                        } label: { Label("Archivieren", systemImage: "archivebox") }
+                        }
+                        .padding(.horizontal, Theme.Spacing.l)
                     }
+
+                    Spacer(minLength: 40)
                 }
+                .padding(.bottom, 120)
             }
-            .navigationTitle(isEditing ? "Workout bearbeiten" : "Neues Workout")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
@@ -95,6 +75,102 @@ struct WorkoutEditorView: View {
             .errorAlert(errors)
             .onAppear(perform: hydrate)
         }
+    }
+
+    // MARK: - Details Card
+
+    private var detailsCard: some View {
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Details")) { EmptyView() }
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    BentoText(verbatim: "Name", style: .caption, color: .secondary)
+                    TextField("Workout-Name", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    BentoText(verbatim: "Notiz (optional)", style: .caption, color: .secondary)
+                    TextField("Notiz", text: $details, axis: .vertical)
+                        .textFieldStyle(.roundedBorder)
+                        .lineLimit(1...3)
+                }
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    BentoText(verbatim: "Farbe", style: .caption, color: .secondary)
+                    ColorGrid(selection: $color)
+                }
+
+                HStack {
+                    BentoText(verbatim: "Dauer", style: .caption, color: .secondary)
+                    Spacer()
+                    Stepper("\(duration) min", value: $duration, in: 5...240, step: 5)
+                }
+
+                if let w = workout {
+                    if let url = PDFService.shared.createPDF(for: w) {
+                        BentoButton(
+                            Text("PDF teilen"),
+                            systemImage: "square.and.arrow.up",
+                            variant: .secondary,
+                            expands: true
+                        ) {}
+                        .overlay {
+                            ShareLink(item: url) {
+                                Color.clear
+                                    .contentShape(Rectangle())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.l)
+    }
+
+    // MARK: - Exercises Card
+
+    private var exercisesCard: some View {
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Übungen (\(slots.count))")) {
+                    if !slots.isEmpty {
+                        EditButton().font(.caption)
+                    }
+                }
+
+                if slots.isEmpty {
+                    BentoText(
+                        verbatim: "Noch keine Übungen hinzugefügt",
+                        style: .callout,
+                        color: .secondary
+                    )
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.m)
+                } else {
+                    VStack(spacing: Theme.Spacing.s) {
+                        ForEach(slots.sorted(by: { $0.order < $1.order })) { slot in
+                            SlotRow(slot: slot) {
+                                toggleSuperset(for: slot)
+                            }
+                        }
+                        .onDelete(perform: deleteSlots)
+                        .onMove(perform: moveSlots)
+                    }
+                }
+
+                BentoButton(
+                    Text("Übung hinzufügen"),
+                    systemImage: "plus.circle.fill",
+                    variant: .tonal(.accent),
+                    expands: true
+                ) {
+                    showingLibrary = true
+                }
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.l)
     }
 
     // MARK: - Actions

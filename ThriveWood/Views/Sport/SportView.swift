@@ -23,9 +23,11 @@ struct SportView: View {
                 if let vm {
                     content(vm: vm)
                 } else {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(.systemGroupedBackground))
+                    VStack {
+                        BentoSpinner()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.systemGroupedBackground))
                 }
             }
             .navigationBarHidden(true)
@@ -110,24 +112,18 @@ struct SportView: View {
             }
             Spacer(minLength: 0)
 
-            Button {
+            BentoIconButton(
+                systemImage: "plus",
+                accessibilityLabel: Text("Neues Workout"),
+                variant: .primary,
+                size: .medium
+            ) {
                 if env.entitlements.canCreateWorkout {
                     showingNewWorkout = true
                 } else {
                     showingPaywall = true
                 }
-            } label: {
-                Image(systemName: "plus")
-                    .font(Theme.Typography.body.weight(.bold))
-                    .frame(width: 38, height: 38)
-                    .foregroundStyle(.white)
-                    .background(
-                        Circle()
-                            .fill(Color.accentColor)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
-                    )
             }
-            .buttonStyle(BounceButtonStyle())
         }
         .padding(.horizontal, Theme.Spacing.l)
     }

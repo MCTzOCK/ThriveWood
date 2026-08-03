@@ -26,19 +26,14 @@ struct ForestGridView: View {
         }
         .padding(Theme.Spacing.m)
         .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.l)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.brown,
-                            Color.brown.opacity(0.8),
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
+            LinearGradient(
+                colors: [Color.brown, Color.brown.opacity(0.8)],
+                startPoint: .top, endPoint: .bottom
+            )
         )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.l)
+            RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.1), radius: 10, y: 4)

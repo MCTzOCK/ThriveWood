@@ -10,25 +10,30 @@ import SwiftUI
 struct RecentSessionsSection: View {
     let sessions: [WorkoutSession]
     let onSelect: (WorkoutSession) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack {
-                Text("Letzte Trainings").font(.headline)
-                Spacer()
+            BentoSectionHeader(title: Text("Letzte Trainings")) {
                 if sessions.count > 5 {
-                    NavigationLink("Alle") {
+                    NavigationLink {
                         AllSessionsView()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Alle")
+                            Image(systemName: "chevron.right")
+                        }
+                        .font(Theme.Typography.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
                     }
-                    .font(.subheadline.weight(.semibold))
                 }
             }
+
             VStack(spacing: Theme.Spacing.s) {
                 ForEach(sessions.prefix(5)) { s in
                     Button { onSelect(s) } label: {
                         SessionRow(session: s)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressScaleStyle())
                 }
             }
         }

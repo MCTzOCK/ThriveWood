@@ -100,13 +100,19 @@ struct ActiveSessionViewV2: View {
             .sheet(isPresented: $showingFinish) { finishSheet }
             .sheet(isPresented: $showingAddSheet) { addSheet }
             .sheet(item: $currentExercise) { ex in ExerciseDetailsSheet(exercise: ex) }
-            .confirmationDialog("Workout abbrechen?", isPresented: $showingCancel, titleVisibility: .visible) {
-                Button("Ja, abbrechen", role: .destructive) {
-                    try? env.workoutService.cancelSession()
-                    dismiss()
-                }
-                Button("Weiter", role: .cancel) {}
-            } message: { Text("Alle Sätze gehen verloren.") }
+            .bentoDialog(
+                isPresented: $showingCancel,
+                systemImage: "exclamationmark.triangle.fill",
+                title: Text("Workout abbrechen?"),
+                message: Text("Alle Sätze gehen verloren."),
+                actions: [
+                    BentoDialogAction(title: Text("Ja, abbrechen"), variant: .destructive, role: .destructive) {
+                        try? env.workoutService.cancelSession()
+                        dismiss()
+                    },
+                    BentoDialogAction(title: Text("Weiter"), role: .cancel) {}
+                ]
+            )
             .errorAlert(errors)
             .fullScreenCover(item: $trackingExercise) { ex in trackerCover(ex) }
             .fullScreenCover(isPresented: $showingPlayMode) {
@@ -190,15 +196,17 @@ struct ActiveSessionViewV2: View {
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.06), radius: 12, y: 4)
+                .shadow(color: workoutColor.opacity(0.15), radius: 12, y: 4)
         )
     }
 
     private func statTile(icon: String, value: String, label: String, tint: Color) -> some View {
         VStack(spacing: 5) {
             Image(systemName: icon).font(.caption).foregroundStyle(tint)
+                .symbolEffect(.bounce, value: value)
             Text(value)
                 .font(.title2.bold().monospacedDigit())
+                .animation(.snappy, value: value)
                 .foregroundStyle(tint)
                 .contentTransition(.numericText(value: Double(completedCount)))
             Text(label)
@@ -628,7 +636,7 @@ private struct ExerciseCardV2: View {
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 10, y: 3)
+                .shadow(color: accentColor.opacity(0.12), radius: 10, y: 3)
         )
         .overlay(alignment: .leading) {
             if let sc = supersetColor {

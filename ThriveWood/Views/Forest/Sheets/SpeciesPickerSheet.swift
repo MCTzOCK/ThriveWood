@@ -13,42 +13,27 @@ struct SpeciesPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingPaywall = false
 
-    private let columns = [GridItem(.adaptive(minimum: 140), spacing: 12)]
-
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(TreeSpecies.allCases) { species in
-                        SpeciesCard(
-                            species: species,
-                            cost: vm.cost(for: species),
-                            unlocked: vm.isUnlocked(species),
-                            affordable: vm.availablePoints >= vm.cost(for: species),
-                            vm: vm
-                        ) {
-                            if !vm.env.entitlements.canPlant(species: species) {
-                                showingPaywall = true
-                                return
-                            }
-                            
-                            guard vm.isUnlocked(species) else { return }
-                            vm.plant(species)
-                            dismiss()
-                        }
+        BentoAdaptiveGrid(minimumItemWidth: 140) {
+            ForEach(TreeSpecies.allCases) { species in
+                SpeciesCard(
+                    species: species,
+                    cost: vm.cost(for: species),
+                    unlocked: vm.isUnlocked(species),
+                    affordable: vm.availablePoints >= vm.cost(for: species),
+                    vm: vm
+                ) {
+                    if !vm.env.entitlements.canPlant(species: species) {
+                        showingPaywall = true
+                        return
                     }
-                }
-                .padding()
-            }
-            .navigationTitle("Baum pflanzen")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Schließen") { dismiss() }
+                    guard vm.isUnlocked(species) else { return }
+                    vm.plant(species)
+                    dismiss()
                 }
             }
-            .sheet(isPresented: $showingPaywall) { PaywallView() }
         }
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
     }
 
     private struct SpeciesCard: View {
@@ -70,7 +55,7 @@ struct SpeciesPickerSheet: View {
                                     startPoint: .top, endPoint: .bottom
                                 )
                             )
-                        
+
                         if vm.env.entitlements.canPlant(species: species) {
                             TreeShapeView(species: species, stage: .mature)
                                 .padding(12)
@@ -79,8 +64,7 @@ struct SpeciesPickerSheet: View {
                                 .padding(12)
                                 .proBadge()
                         }
-                        
-                            
+
                         if !unlocked {
                             RoundedRectangle(cornerRadius: Theme.Radius.m)
                                 .fill(.ultraThinMaterial)
@@ -91,21 +75,20 @@ struct SpeciesPickerSheet: View {
                     }
                     .frame(height: 120)
 
-                    Text(species.displayName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                    BentoText(verbatim: species.displayName, style: .headline)
 
                     if unlocked {
-                        HStack(spacing: 4) {
-                            Image(systemName: "leaf.fill")
-                            Text("\(cost)")
-                        }
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(affordable ? .green : .red)
+                        BentoBadge(
+                            Text(verbatim: "\(cost)"),
+                            tone: affordable ? .success : .danger,
+                            systemImage: "leaf.fill"
+                        )
                     } else {
-                        Text("Ab \(species.unlockThreshold) Punkten")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        BentoText(
+                            verbatim: "Ab \(species.unlockThreshold) Punkten",
+                            style: .caption,
+                            color: .secondary
+                        )
                     }
                 }
                 .padding(Theme.Spacing.m)

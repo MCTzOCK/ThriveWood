@@ -21,6 +21,7 @@ struct OrganisationCard: View {
                 Image(systemName: icon)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(iconColor)
+                    .symbolEffect(.bounce, value: title)
             }
 
             VStack(spacing: 2) {
@@ -41,5 +42,6 @@ struct OrganisationCard: View {
         .frame(maxWidth: .infinity)
         .padding(Theme.Spacing.l)
         .cardStyle()
+        .shadow(color: iconColor.opacity(0.15), radius: 8, y: 4)
     }
 }

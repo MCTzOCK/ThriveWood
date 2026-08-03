@@ -5,27 +5,19 @@
 //  Created by Ben Siebert on 23.04.26.
 //
 
-
 import SwiftUI
 
 struct HabitLeaderboardCard: View {
     let performances: [HabitPerformance]
+    @Environment(\.bentoTheme) private var theme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Top Habits").font(.headline)
-                Text("Sortiert nach Erfüllungsgrad")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            VStack(spacing: Theme.Spacing.s) {
+        BentoSection(title: Text("Top Habits"), subtitle: Text("Sortiert nach Erfüllungsgrad")) {
+            VStack(spacing: theme.spacing.xs) {
                 ForEach(Array(performances.prefix(5).enumerated()), id: \.element.id) { idx, p in
                     HabitPerformanceRow(rank: idx + 1, performance: p)
                 }
             }
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
     }
 }

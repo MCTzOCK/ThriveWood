@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AllSessionsView: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(\.dismiss) private var dismiss
     @State private var refreshID = UUID()
 
     private var sessions: [WorkoutSession] {
@@ -25,22 +26,36 @@ struct AllSessionsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.l) {
-                if grouped.isEmpty {
-                    PremiumEmptyState(
-                        icon: "calendar.badge.exclamationmark",
-                        title: "Keine Sessions",
-                        message: "Starte dein erstes Workout, um deine Trainings-Historie zu sehen."
-                    )
-                    .padding(.top, Theme.Spacing.xxl)
-                } else {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            if grouped.isEmpty {
+                BentoEmptyState(
+                    systemImage: "calendar.badge.exclamationmark",
+                    title: Text("Keine Sessions"),
+                    message: Text("Starte dein erstes Workout, um deine Trainings-Historie zu sehen.")
+                )
+                .padding(.top, Theme.Spacing.xxl)
+            } else {
+                VStack(spacing: Theme.Spacing.l) {
+                    BentoPageHeader(
+                        eyebrow: Text("VERLAUF"),
+                        title: Text("Trainings-Historie"),
+                        subtitle: Text("\(sessions.count) Sessions insgesamt")
+                    ) {
+                        BentoIconButton(
+                            systemImage: "chevron.left",
+                            accessibilityLabel: Text("Zurück"),
+                            variant: .secondary,
+                            size: .medium
+                        ) {
+                            dismiss()
+                        }
+                    }
+                    .padding(.horizontal, Theme.Spacing.l)
+                    .padding(.top, Theme.Spacing.m)
+
                     ForEach(grouped, id: \.0) { month, list in
                         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                            Text(month)
-                                .font(Theme.Typography.footnote.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .textCase(.uppercase)
+                            BentoText(verbatim: month.uppercased(), style: .overline, color: .secondary)
                                 .padding(.horizontal, Theme.Spacing.l)
 
                             VStack(spacing: Theme.Spacing.s) {
@@ -57,13 +72,12 @@ struct AllSessionsView: View {
                         }
                     }
                 }
+                .padding(.bottom, 120)
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground))
         .refreshable { refreshID = UUID() }
         .navigationTitle("Trainings-Historie")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }

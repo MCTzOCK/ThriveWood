@@ -10,6 +10,7 @@ import SwiftUI
 
 struct PRListView: View {
     @Environment(AppEnvironment.self) private var env
+    @Environment(\.dismiss) private var dismiss
     @State private var entries: [(exercise: Exercise, topSet: SetEntry)] = []
     @State private var searchText = ""
     @State private var selectedPR: PRSelection?
@@ -35,10 +36,10 @@ struct PRListView: View {
     var body: some View {
         Group {
             if entries.isEmpty {
-                PremiumEmptyState(
-                    icon: "trophy",
-                    title: "Noch keine PRs",
-                    message: "Schließe dein erstes Workout ab, um hier deine persönlichen Rekorde zu sehen."
+                BentoEmptyState(
+                    systemImage: "trophy",
+                    title: Text("Noch keine PRs"),
+                    message: Text("Schließe dein erstes Workout ab, um hier deine persönlichen Rekorde zu sehen.")
                 )
             } else {
                 prContent
@@ -46,6 +47,7 @@ struct PRListView: View {
         }
         .navigationTitle("PRs")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Übung suchen")
         .onAppear { load() }
         .sheet(item: $selectedPR) { selection in
@@ -54,14 +56,28 @@ struct PRListView: View {
     }
 
     private var prContent: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.l) {
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            VStack(spacing: Theme.Spacing.l) {
+                BentoPageHeader(
+                    eyebrow: Text("REKORDE"),
+                    title: Text("Persönliche PRs"),
+                    subtitle: Text("\(entries.count) Übungen mit PR")
+                ) {
+                    BentoIconButton(
+                        systemImage: "chevron.left",
+                        accessibilityLabel: Text("Zurück"),
+                        variant: .secondary,
+                        size: .medium
+                    ) {
+                        dismiss()
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.top, Theme.Spacing.m)
+
                 ForEach(sections, id: \.letter) { letter, items in
                     VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                        Text(letter)
-                            .font(Theme.Typography.footnote.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .textCase(.uppercase)
+                        BentoText(verbatim: letter, style: .overline, color: .secondary)
                             .padding(.horizontal, Theme.Spacing.l)
 
                         VStack(spacing: Theme.Spacing.s) {
@@ -77,11 +93,9 @@ struct PRListView: View {
                         .padding(.horizontal, Theme.Spacing.l)
                     }
                 }
+                .padding(.bottom, 120)
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground))
     }
 
     private func load() {

@@ -10,57 +10,32 @@ import SwiftUI
 struct SummaryGrid: View {
     let summary: AnalyticsSummary
 
-    private let columns = [GridItem(.flexible(), spacing: Theme.Spacing.m),
-                           GridItem(.flexible(), spacing: Theme.Spacing.m)]
-
     var body: some View {
-        LazyVGrid(columns: columns, spacing: Theme.Spacing.m) {
-            SummaryTile(
-                icon: "leaf.fill", tint: .green,
-                value: "\(summary.totalPoints)", label: "Punkte gesamt"
+        BentoAdaptiveGrid(minimumItemWidth: 155) {
+            BentoMetricTile(
+                title: Text("Punkte gesamt"),
+                value: Text("\(summary.totalPoints)"),
+                systemImage: "leaf.fill",
+                tone: .green
             )
-            SummaryTile(
-                icon: "checkmark.circle.fill", tint: .blue,
-                value: "\(summary.totalCompletions)", label: "Abhakungen"
+            BentoMetricTile(
+                title: Text("Abhakungen"),
+                value: Text("\(summary.totalCompletions)"),
+                systemImage: "checkmark.circle.fill",
+                tone: .blue
             )
-            SummaryTile(
-                icon: "calendar", tint: .orange,
-                value: "\(summary.activeDays)", label: "Aktive Tage"
+            BentoMetricTile(
+                title: Text("Aktive Tage"),
+                value: Text("\(summary.activeDays)"),
+                systemImage: "calendar",
+                tone: .warning
             )
-            SummaryTile(
-                icon: "chart.line.uptrend.xyaxis", tint: .purple,
-                value: String(format: "%.1f", summary.averagePointsPerActiveDay),
-                label: "Ø pro Tag"
+            BentoMetricTile(
+                title: Text("Ø pro Tag"),
+                value: Text(String(format: "%.1f", summary.averagePointsPerActiveDay)),
+                systemImage: "chart.line.uptrend.xyaxis",
+                tone: .info
             )
-        }
-    }
-
-    private struct SummaryTile: View {
-        let icon: String
-        let tint: Color
-        let value: String
-        let label: String
-
-        var body: some View {
-            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                ZStack {
-                    Circle()
-                        .fill(tint.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: icon)
-                        .font(Theme.Typography.body)
-                        .foregroundStyle(tint)
-                }
-                Text(value)
-                    .font(Theme.Typography.title2.weight(.bold))
-                    .contentTransition(.numericText())
-                Text(label)
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Theme.Spacing.m)
-            .cardStyle()
         }
     }
 }

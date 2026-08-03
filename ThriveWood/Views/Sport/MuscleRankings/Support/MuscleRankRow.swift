@@ -38,6 +38,7 @@ struct MuscleRankRow: View {
                 Text("\(Int(data.totalVolume)) kg")
                     .font(.subheadline.weight(.semibold).monospacedDigit())
                     .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
@@ -48,6 +49,8 @@ struct MuscleRankRow: View {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(isSelected ? data.rank.primaryColor.opacity(0.1) : Color(.secondarySystemGroupedBackground))
             )
+            .shadow(color: isSelected ? data.rank.primaryColor.opacity(0.2) : Color.black.opacity(0.04), radius: 8, y: 3)
+            .animation(.bouncy, value: isSelected)
         }
         .buttonStyle(.plain)
     }

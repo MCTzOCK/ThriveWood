@@ -18,95 +18,146 @@ struct ProfileStep: View {
     @State private var appear = false
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            Spacer()
-
-            VStack(spacing: Theme.Spacing.s) {
-                Text("Dein Profil")
-                    .font(.title2.bold())
-                Text("Sag uns, wie du heißt und was dein Tagesziel sein soll.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .opacity(appear ? 1 : 0)
-
+        ScrollView(showsIndicators: false) {
             VStack(spacing: Theme.Spacing.l) {
-                // Name
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Name").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                    TextField("Dein Name", text: $displayName)
-                        .font(.title3)
-                        .padding(Theme.Spacing.m)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.Radius.m)
-                                .fill(Color(.secondarySystemGroupedBackground))
+                Spacer().frame(height: Theme.Spacing.m)
+
+                // Header
+                VStack(spacing: Theme.Spacing.xs) {
+                    BentoBadge(Text("PROFIL"), tone: .accent, systemImage: "person.crop.circle.fill")
+                    BentoText("Mach's zu deinem", style: .title1)
+                    BentoText(
+                        "Wie heißt du und was möchtest du täglich erreichen?",
+                        style: .callout,
+                        color: .secondary
+                    )
+                    .multilineTextAlignment(.center)
+                }
+                .opacity(appear ? 1 : 0)
+                .animation(.easeOut.delay(0.1), value: appear)
+
+                // Avatar-Preview
+                BentoCard(style: .elevated, padding: .xl, radius: .extraLarge) {
+                    VStack(spacing: Theme.Spacing.m) {
+                        BentoAvatar(
+                            source: .initials(avatarInitials),
+                            size: 80,
+                            tone: bentoToneForAccent
                         )
-                }
-
-                // Tagesziel
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Tagesziel").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                        Spacer()
-                        Text("\(dailyGoal) Punkte")
-                            .font(.headline.monospacedDigit())
-                            .foregroundStyle(accentTheme.color)
-                    }
-                    Slider(value: Binding(
-                        get: { Double(dailyGoal) },
-                        set: { dailyGoal = Int($0) }
-                    ), in: 1...20, step: 1)
-                    .tint(accentTheme.color)
-                }
-
-                // Akzentfarbe
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Farbe wählen").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                    HStack(spacing: 10) {
-                        ForEach(AccentTheme.allCases) { theme in
-                            Button {
-                                Haptics.selection()
-                                withAnimation(.easeInOut) { accentTheme = theme }
-                            } label: {
-                                ZStack {
-                                    Circle()
-                                        .fill(theme.color)
-                                        .frame(width: 38, height: 38)
-                                    if theme == accentTheme {
-                                        Circle()
-                                            .strokeBorder(.white, lineWidth: 2.5)
-                                            .frame(width: 46, height: 46)
-                                        Image(systemName: "checkmark")
-                                            .font(.caption.bold())
-                                            .foregroundStyle(.white)
-                                    }
-                                }
-                            }
-                            .buttonStyle(.plain)
+                        if !displayName.trimmingCharacters(in: .whitespaces).isEmpty {
+                            BentoText(verbatim: displayName, style: .title2)
                         }
                     }
                     .frame(maxWidth: .infinity)
                 }
+                .opacity(appear ? 1 : 0)
+                .scaleEffect(appear ? 1 : 0.9)
+                .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.2), value: appear)
+
+                // Form-Card
+                BentoCard(padding: .lg, radius: .large) {
+                    VStack(spacing: Theme.Spacing.l) {
+                        // Name
+                        BentoTextField(
+                            label: Text("Name"),
+                            text: $displayName,
+                            prompt: Text("Dein Name"),
+                            showsClearButton: true
+                        )
+
+                        BentoDivider()
+
+                        // Tagesziel
+                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                            HStack {
+                                BentoText(verbatim: "Tagesziel", style: .callout, color: .secondary)
+                                Spacer()
+                                Text(verbatim: "\(dailyGoal) Punkte")
+                                    .bentoTextStyle(.bodyStrong, color: accentTheme.color)
+                            }
+                            BentoSlider(
+                                Text("Tagesziel"),
+                                value: Binding(
+                                    get: { Double(dailyGoal) },
+                                    set: { dailyGoal = Int($0) }
+                                ),
+                                in: 1...20,
+                                step: 1
+                            )
+                            .tint(accentTheme.color)
+                        }
+
+                        BentoDivider()
+
+                        // Akzentfarbe
+                        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                            BentoText(verbatim: "Akzentfarbe wählen", style: .callout, color: .secondary)
+
+                            HStack(spacing: Theme.Spacing.s) {
+                                ForEach(AccentTheme.allCases) { theme in
+                                    Button {
+                                        Haptics.selection()
+                                        withAnimation(.bouncy) { accentTheme = theme }
+                                    } label: {
+                                        ZStack {
+                                            Circle()
+                                                .fill(theme.color)
+                                                .frame(width: 44, height: 44)
+                                                .shadow(color: theme.color.opacity(0.3), radius: 4, y: 2)
+
+                                            if theme == accentTheme {
+                                                Circle()
+                                                    .strokeBorder(.white, lineWidth: 3)
+                                                    .frame(width: 52, height: 52)
+                                                Image(systemName: "checkmark")
+                                                    .font(.caption.weight(.bold))
+                                                    .foregroundStyle(.white)
+                                            }
+                                        }
+                                        .scaleEffect(theme == accentTheme ? 1.1 : 1)
+                                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: accentTheme)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+                .opacity(appear ? 1 : 0)
+                .offset(y: appear ? 0 : 30)
+                .animation(.easeOut(duration: 0.4).delay(0.3), value: appear)
+
+                Spacer().frame(height: Theme.Spacing.m)
+
+                HStack(spacing: Theme.Spacing.m) {
+                    OnboardingBackButton(action: onBack)
+                    OnboardingButton(title: "Weiter", accent: accentTheme, icon: "arrow.right", action: onNext)
+                }
+
+                Spacer().frame(height: Theme.Spacing.xxl)
             }
-            .padding(Theme.Spacing.l)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.Radius.l)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
-            .opacity(appear ? 1 : 0)
-            .offset(y: appear ? 0 : 30)
-            .animation(.easeOut(duration: 0.4).delay(0.2), value: appear)
-
-            Spacer()
-
-            HStack(spacing: Theme.Spacing.m) {
-                OnboardingBackButton(action: onBack)
-                OnboardingButton(title: "Weiter", accent: accentTheme, action: onNext)
-            }
-
-            Spacer().frame(height: Theme.Spacing.xl)
+            .padding(.horizontal, Theme.Spacing.xl)
         }
-        .padding(.horizontal, Theme.Spacing.xl)
         .onAppear { appear = true }
+    }
+
+    private var avatarInitials: String {
+        let trimmed = displayName.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return "🌱" }
+        let parts = trimmed.split(separator: " ")
+        let first = parts.first?.first.map(String.init) ?? ""
+        let last = parts.dropFirst().first?.first.map(String.init) ?? ""
+        return (first + last).uppercased()
+    }
+
+    private var bentoToneForAccent: BentoTone {
+        switch accentTheme {
+        case .forest: .green
+        case .ocean: .blue
+        case .sunset: .warning
+        case .lavender: .info
+        case .rose: .pink
+        }
     }
 }

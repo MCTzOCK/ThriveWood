@@ -101,7 +101,7 @@ struct RootTabView: View {
             case .home: HomeView()
             case .analytics: AnalyticsView()
             case .sport: SportViewV2()
-            case .settings: SettingsView()
+            case .settings: BentoSettingsView()
             }
         }
         .preferredColorScheme(.light)

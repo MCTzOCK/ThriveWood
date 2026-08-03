@@ -19,92 +19,76 @@ struct TreeDetailSheet: View {
     private var waterCost: Int { waterAmount * ForestService.wateringCostPerGrowth }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: Theme.Spacing.l) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: Theme.Radius.l)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.mint.opacity(0.25), Color.green.opacity(0.15)],
-                                startPoint: .top, endPoint: .bottom
-                            )
-                        )
-                    TreeShapeView(
-                        species: tree.species,
-                        stage: tree.stage,
-                        animate: vm.wateringTreeID == tree.id
-                    )
-                    .padding(Theme.Spacing.l)
-                }
-                .frame(height: 220)
-                .padding(.horizontal, Theme.Spacing.l)
-
-                VStack(spacing: 6) {
-                    Text(tree.nickname ?? tree.species.displayName)
-                        .font(.title2.bold())
-                    Text("\(tree.stage.label) • \(tree.growthPoints) Wachstumspunkte")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                GrowthProgressBar(points: tree.growthPoints)
-                    .padding(.horizontal, Theme.Spacing.l)
-
-                HStack(spacing: Theme.Spacing.m) {
-                    Button {
-                        vm.water(tree, amount: waterAmount)
-                    } label: {
-                        Label("Gießen (\(waterCost) P)", systemImage: "drop.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Theme.Spacing.m)
-                            .background(
-                                Capsule().fill(
-                                    vm.availablePoints >= waterCost
-                                    ? Color.accentColor
-                                    : Color.gray.opacity(0.4)
-                                )
-                            )
-                            .foregroundStyle(.white)
-                    }
-                    .disabled(vm.availablePoints < waterCost || tree.stage == .ancient)
-
-                    Button(role: .destructive) {
-                        showDeleteConfirm = true
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.headline)
-                            .frame(width: 54, height: 52)
-                            .background(Capsule().fill(Color.red.opacity(0.15)))
-                            .foregroundStyle(.red)
-                    }
-                }
-                .padding(.horizontal, Theme.Spacing.l)
-
-                Spacer(minLength: 0)
+        VStack(spacing: Theme.Spacing.l) {
+            // Hero Tree Display
+            BentoOverlayTile(minimumHeight: 200, alignment: .center) {
+                LinearGradient(
+                    colors: [Color.mint.opacity(0.25), Color.green.opacity(0.15)],
+                    startPoint: .top, endPoint: .bottom
+                )
+            } content: {
+                TreeShapeView(
+                    species: tree.species,
+                    stage: tree.stage,
+                    animate: vm.wateringTreeID == tree.id
+                )
+                .padding(Theme.Spacing.l)
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .navigationTitle("Baum")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fertig") { dismiss() }
+
+            // Title & Stage
+            VStack(spacing: Theme.Spacing.xs) {
+                BentoText(verbatim: tree.nickname ?? tree.species.displayName, style: .title2)
+                BentoText(
+                    verbatim: "\(tree.stage.label) • \(tree.growthPoints) Wachstumspunkte",
+                    style: .callout,
+                    color: .secondary
+                )
+            }
+
+            GrowthProgressBar(points: tree.growthPoints)
+
+            // Actions
+            HStack(spacing: Theme.Spacing.m) {
+                BentoButton(
+                    Text(verbatim: "Gießen (\(waterCost) P)"),
+                    systemImage: "drop.fill",
+                    variant: vm.availablePoints >= waterCost ? .primary : .secondary,
+                    size: .medium,
+                    expands: true
+                ) {
+                    vm.water(tree, amount: waterAmount)
+                }
+                .disabled(vm.availablePoints < waterCost || tree.stage == .ancient)
+
+                BentoIconButton(
+                    systemImage: "trash",
+                    accessibilityLabel: Text("Entfernen"),
+                    variant: .tonal(.danger),
+                    size: .medium
+                ) {
+                    showDeleteConfirm = true
                 }
             }
-            .confirmationDialog(
-                "Baum wirklich entfernen?",
-                isPresented: $showDeleteConfirm,
-                titleVisibility: .visible
-            ) {
-                Button("Entfernen", role: .destructive) {
+
+            Spacer(minLength: 0)
+        }
+        .bentoDialog(
+            isPresented: $showDeleteConfirm,
+            systemImage: "exclamationmark.triangle.fill",
+            title: Text("Baum wirklich entfernen?"),
+            message: Text("Die investierten Punkte werden nicht erstattet."),
+            actions: [
+                BentoDialogAction(title: Text("Abbrechen"), role: .cancel) { },
+                BentoDialogAction(
+                    title: Text("Entfernen"),
+                    variant: .destructive,
+                    role: .destructive
+                ) {
                     vm.remove(tree)
                     dismiss()
                 }
-                Button("Abbrechen", role: .cancel) {}
-            } message: {
-                Text("Die investierten Punkte werden nicht erstattet.")
-            }
-        }
+            ]
+        )
     }
 }
 
@@ -141,32 +125,25 @@ struct GrowthProgressBar: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             HStack {
-                Text(currentStage.label)
-                    .font(.caption.weight(.semibold))
+                BentoBadge(Text(verbatim: currentStage.label), tone: .green)
                 Spacer()
                 if let next = nextThreshold {
-                    Text("→ \(next - points) bis nächste Stufe")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    BentoText(
+                        verbatim: "→ \(next - points) bis nächste Stufe",
+                        style: .caption,
+                        color: .secondary
+                    )
                 } else {
-                    Text("Maximale Stufe erreicht 🎉")
-                        .font(.caption)
-                        .foregroundStyle(.tint)
+                    BentoBadge(Text(verbatim: "Maximal! 🎉"), tone: .success, systemImage: "sparkles")
                 }
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.accentColor.opacity(0.15))
-                    Capsule()
-                        .fill(LinearGradient(colors: [.accentColor, .mint],
-                                             startPoint: .leading, endPoint: .trailing))
-                        .frame(width: geo.size.width * progress)
-                        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: progress)
-                }
-            }
-            .frame(height: 8)
+            BentoProgressBar(
+                progress: progress,
+                tone: .green,
+                height: 10
+            )
         }
     }
 }

@@ -43,6 +43,7 @@ struct QuickStartCard: View {
                 )
             )
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
+            .shadow(color: Color.accentColor.opacity(0.25), radius: 12, y: 6)
         }
         .buttonStyle(BounceButtonStyle())
     }

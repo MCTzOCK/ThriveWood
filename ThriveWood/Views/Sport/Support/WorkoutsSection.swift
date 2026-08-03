@@ -19,20 +19,11 @@ struct WorkoutsSection: View {
                 .font(Theme.Typography.headline)
 
             if workouts.isEmpty {
-                VStack(spacing: Theme.Spacing.m) {
-                    Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 40, weight: .light))
-                        .foregroundStyle(.tertiary)
-                    Text("Noch keine Workouts")
-                        .font(Theme.Typography.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text("Erstelle deinen ersten Plan über das Plus-Symbol.")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(Theme.Spacing.xl)
+                BentoEmptyState(
+                    systemImage: "dumbbell.fill",
+                    title: Text("Noch keine Workouts"),
+                    message: Text("Erstelle deinen ersten Plan über das Plus-Symbol.")
+                )
                 .cardStyle()
             } else {
                 VStack(spacing: Theme.Spacing.s) {

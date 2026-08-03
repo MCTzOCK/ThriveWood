@@ -25,6 +25,8 @@ struct ElapsedTimer: View {
         Text(elapsed)
             .font(.headline.monospacedDigit())
             .foregroundStyle(.tint)
+            .contentTransition(.numericText())
+            .animation(.snappy, value: elapsed)
             .onReceive(timer) { now = $0 }
     }
 }

@@ -40,31 +40,36 @@ struct FirstHabitStep: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: Theme.Spacing.xl) {
-                Spacer().frame(height: Theme.Spacing.l)
+            VStack(spacing: Theme.Spacing.l) {
+                Spacer().frame(height: Theme.Spacing.m)
 
-                VStack(spacing: Theme.Spacing.s) {
-                    Text("Dein erster Habit")
-                        .font(.title2.bold())
-                    Text("Womit möchtest du starten?")
-                        .font(.subheadline).foregroundStyle(.secondary)
+                // Header
+                VStack(spacing: Theme.Spacing.xs) {
+                    BentoBadge(Text("ERSTER HABIT"), tone: .accent, systemImage: "checklist")
+                    BentoText("Womit möchtest du starten?", style: .title1)
                 }
                 .opacity(appear ? 1 : 0)
+                .animation(.easeOut.delay(0.1), value: appear)
 
-                // Quick-Suggestions
-                FlowLayout(spacing: 8) {
+                // Quick-Suggestions als BentoFlowLayout
+                BentoFlowLayout(spacing: Theme.Spacing.xs) {
                     ForEach(quickSuggestions, id: \.0) { name, iconName, c in
                         Button {
                             Haptics.selection()
-                            title = name; icon = iconName; color = c
+                            withAnimation(.bouncy) {
+                                title = name; icon = iconName; color = c
+                            }
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: iconName).font(.caption)
-                                Text(name).font(.caption.weight(.semibold))
+                                Text(verbatim: name).font(.caption.weight(.semibold))
                             }
-                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .padding(.horizontal, Theme.Spacing.s)
+                            .padding(.vertical, Theme.Spacing.xs)
                             .background(
-                                Capsule().fill(title == name ? c.color : c.color.opacity(0.12))
+                                Capsule().fill(
+                                    title == name ? AnyShapeStyle(c.color) : AnyShapeStyle(c.color.opacity(0.12))
+                                )
                             )
                             .foregroundStyle(title == name ? .white : c.color)
                         }
@@ -74,85 +79,91 @@ struct FirstHabitStep: View {
                 .opacity(appear ? 1 : 0)
                 .animation(.easeOut.delay(0.2), value: appear)
 
-                // Custom-Eingabe
-                VStack(spacing: Theme.Spacing.m) {
-                    TextField("Oder eigener Name…", text: $title)
-                        .font(.title3.weight(.semibold))
-                        .padding(Theme.Spacing.m)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.Radius.m)
-                                .fill(Color(.secondarySystemGroupedBackground))
+                // Eingabe-Card
+                BentoCard(padding: .lg, radius: .large) {
+                    VStack(spacing: Theme.Spacing.l) {
+                        BentoTextField(
+                            label: Text("Name"),
+                            text: $title,
+                            prompt: Text("Oder eigener Name…"),
+                            showsClearButton: true
                         )
 
-                    // Icon-Auswahl
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(iconOptions, id: \.self) { name in
-                                Button {
-                                    Haptics.selection(); icon = name
-                                } label: {
-                                    Image(systemName: name)
-                                        .font(.title3)
-                                        .frame(width: 42, height: 42)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(icon == name
-                                                      ? color.color.opacity(0.2)
-                                                      : Color(.tertiarySystemFill))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .strokeBorder(icon == name ? color.color : .clear, lineWidth: 2)
-                                        )
-                                        .foregroundStyle(icon == name ? color.color : .primary)
+                        // Icon-Auswahl
+                        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                            BentoText(verbatim: "Symbol", style: .callout, color: .secondary)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: Theme.Spacing.xs) {
+                                    ForEach(iconOptions, id: \.self) { name in
+                                        Button {
+                                            Haptics.selection()
+                                            withAnimation(.bouncy) { icon = name }
+                                        } label: {
+                                            Image(systemName: name)
+                                                .font(.title3)
+                                                .frame(width: 44, height: 44)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .fill(icon == name
+                                                              ? color.color.opacity(0.2)
+                                                              : Color(.tertiarySystemFill))
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .strokeBorder(icon == name ? color.color : .clear, lineWidth: 2)
+                                                )
+                                                .foregroundStyle(icon == name ? color.color : .primary)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
-                    }
 
-                    // Schwierigkeit
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Schwierigkeit").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                        Picker("Punkte", selection: $points) {
-                            ForEach(HabitPoints.allCases) { p in
-                                Text(p.label).tag(p)
+                        BentoDivider()
+
+                        // Schwierigkeit
+                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                            BentoText(verbatim: "Schwierigkeit", style: .callout, color: .secondary)
+                            BentoSegmentedPicker(options: HabitPoints.allCases, selection: $points) { p in
+                                Text(verbatim: p.label)
                             }
+                            .tint(accent.color)
                         }
-                        .pickerStyle(.segmented)
                     }
                 }
-                .padding(Theme.Spacing.l)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Radius.l)
-                        .fill(Color(.secondarySystemGroupedBackground))
-                )
                 .opacity(appear ? 1 : 0)
+                .offset(y: appear ? 0 : 30)
                 .animation(.easeOut.delay(0.3), value: appear)
 
-                // Vorschau
+                // Live-Vorschau
                 if !title.trimmingCharacters(in: .whitespaces).isEmpty {
-                    HStack(spacing: Theme.Spacing.m) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: Theme.Radius.s)
-                                .fill(color.gradient)
-                                .frame(width: 44, height: 44)
-                            Image(systemName: icon)
-                                .foregroundStyle(.white)
+                    BentoCard(tone: habitBentoTone, style: .elevated, padding: .md, radius: .large) {
+                        HStack(spacing: Theme.Spacing.m) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: Theme.Radius.s)
+                                    .fill(color.gradient)
+                                    .frame(width: 48, height: 48)
+                                Image(systemName: icon)
+                                    .font(.title3)
+                                    .foregroundStyle(.white)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                BentoText(verbatim: title, style: .headline)
+                                BentoText(
+                                    verbatim: "\(points.rawValue) Punkt\(points.rawValue > 1 ? "e" : "") pro Tag",
+                                    style: .caption,
+                                    color: .secondary
+                                )
+                            }
+                            Spacer()
+                            BentoBadge(Text(verbatim: "+\(points.rawValue)"), tone: .success)
                         }
-                        VStack(alignment: .leading) {
-                            Text(title).font(.headline)
-                            Text("\(points.rawValue) Punkt\(points.rawValue > 1 ? "e" : "") pro Tag")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Image(systemName: "checkmark.circle")
-                            .foregroundStyle(.green)
                     }
-                    .padding(Theme.Spacing.m)
-                    .cardStyle()
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
                 }
+
+                Spacer().frame(height: Theme.Spacing.m)
 
                 HStack(spacing: Theme.Spacing.m) {
                     OnboardingBackButton(action: onBack)
@@ -160,61 +171,33 @@ struct FirstHabitStep: View {
                         title: title.trimmingCharacters(in: .whitespaces).isEmpty
                             ? "Überspringen" : "Weiter",
                         accent: accent,
+                        icon: title.trimmingCharacters(in: .whitespaces).isEmpty ? nil : "arrow.right",
                         action: onNext,
                         isSecondary: title.trimmingCharacters(in: .whitespaces).isEmpty
                     )
                 }
 
-                Spacer().frame(height: Theme.Spacing.xl)
+                Spacer().frame(height: Theme.Spacing.xxl)
             }
             .padding(.horizontal, Theme.Spacing.xl)
         }
         .onAppear { appear = true }
     }
-}
 
-/// Einfaches FlowLayout für die Suggestion-Chips.
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var h: CGFloat = 0
-        for row in rows {
-            h += row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-            h += spacing
+    private var habitBentoTone: BentoTone {
+        switch color {
+        case .green: .green
+        case .mint: .green
+        case .teal: .info
+        case .blue: .blue
+        case .indigo: .info
+        case .purple: .info
+        case .pink: .pink
+        case .red: .danger
+        case .orange: .warning
+        case .yellow: .yellow
+        case .brown: .neutral
+        case .gray: .neutral
         }
-        return CGSize(width: proposal.width ?? 0, height: max(0, h - spacing))
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var y = bounds.minY
-        for row in rows {
-            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-            var x = bounds.minX
-            for view in row {
-                let size = view.sizeThatFits(.unspecified)
-                view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-                x += size.width + spacing
-            }
-            y += rowHeight + spacing
-        }
-    }
-
-    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [[LayoutSubviews.Element]] {
-        let maxW = proposal.width ?? .infinity
-        var rows: [[LayoutSubviews.Element]] = [[]]
-        var x: CGFloat = 0
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-            if x + size.width > maxW && !rows[rows.count - 1].isEmpty {
-                rows.append([])
-                x = 0
-            }
-            rows[rows.count - 1].append(view)
-            x += size.width + spacing
-        }
-        return rows
     }
 }

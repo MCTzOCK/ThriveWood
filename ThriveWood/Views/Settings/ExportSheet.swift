@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 
 struct ExportSheet: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.bentoTheme) private var theme
 
     @State private var phase: Phase = .ready
     @State private var url: URL?
@@ -34,41 +34,40 @@ struct ExportSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: Theme.Spacing.xl) {
-                Spacer()
-                icon
-                title
-                if let summary, phase == .done { summaryCard(summary) }
-                if let error, phase == .failed { errorBanner(error) }
-                actions
-                Spacer()
+        VStack(spacing: Theme.Spacing.xl) {
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Image(systemName: iconName)
+                    .font(.system(size: 48))
+                    .foregroundStyle(iconColor.gradient)
+                    .symbolEffect(.bounce, value: phase == .done)
             }
-            .padding(Theme.Spacing.xl)
-            .navigationTitle("Export")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Schließen") { dismiss() }
-                }
+            .padding(.top, Theme.Spacing.m)
+
+            phaseHeader
+
+            if let summary, phase == .done {
+                summaryCard(summary)
             }
+
+            if let error, phase == .failed {
+                BentoCallout(
+                    kind: .error,
+                    title: Text("Export fehlgeschlagen"),
+                    message: Text(error.localizedDescription)
+                )
+            }
+
+            actions
         }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.bottom, Theme.Spacing.xl)
+        .frame(maxWidth: .infinity)
     }
 
-    // MARK: Icon
-
-    @ViewBuilder
-    private var icon: some View {
-        ZStack {
-            Circle()
-                .fill(iconColor.opacity(0.12))
-                .frame(width: 120, height: 120)
-            Image(systemName: iconName)
-                .font(.system(size: 48))
-                .foregroundStyle(iconColor.gradient)
-                .symbolEffect(.bounce, value: phase == .done)
-        }
-    }
+    // MARK: - Icon
 
     private var iconName: String {
         switch phase {
@@ -88,114 +87,101 @@ struct ExportSheet: View {
         }
     }
 
-    // MARK: Title
+    // MARK: - Phase Header
 
     @ViewBuilder
-    private var title: some View {
+    private var phaseHeader: some View {
         VStack(spacing: Theme.Spacing.s) {
             switch phase {
             case .ready:
-                Text("Daten exportieren").font(.title2.bold())
-                Text("Erstelle ein vollständiges JSON-Backup aller deiner Daten.")
-                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                BentoText("Daten exportieren", style: .title2)
+                BentoText(
+                    "Erstelle ein vollständiges JSON-Backup aller deiner Daten.",
+                    style: .callout,
+                    color: theme.colors.onBackground
+                )
+                .multilineTextAlignment(.center)
             case .exporting:
-                Text("Exportiere…").font(.title2.bold())
-                ProgressView().padding(.top, 4)
+                BentoText("Exportiere…", style: .title2)
+                BentoSpinner(size: 28)
             case .done:
-                Text("Export fertig!").font(.title2.bold())
-                Text(fileSize).font(.subheadline).foregroundStyle(.secondary)
+                BentoText("Export fertig!", style: .title2)
+                BentoText(verbatim: fileSize, style: .callout, color: .secondary)
             case .failed:
-                Text("Export fehlgeschlagen").font(.title2.bold()).foregroundStyle(.red)
+                BentoText("Export fehlgeschlagen", style: .title2, color: .red)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Summary
+
+    private func summaryCard(_ s: ExportSummary) -> some View {
+        BentoCard(padding: .lg, radius: .large) {
+            VStack(spacing: Theme.Spacing.s) {
+                summaryRow("Habits", count: s.habits, icon: "checklist")
+                summaryRow("Abhakungen", count: s.completions, icon: "checkmark.circle")
+                summaryRow("Bäume", count: s.trees, icon: "tree.fill")
+                summaryRow("Übungen", count: s.exercises, icon: "dumbbell.fill")
+                summaryRow("Workouts", count: s.workouts, icon: "figure.strengthtraining.traditional")
+                summaryRow("Sessions", count: s.sessions, icon: "calendar")
+                summaryRow("Sätze", count: s.sets, icon: "number")
+                summaryRow("Supplements", count: s.supplements, icon: "pills.fill")
+                summaryRow("Supplement-Einträge", count: s.supplementEntries, icon: "pills")
             }
         }
     }
 
-    // MARK: Summary
-
-    private func summaryCard(_ s: ExportSummary) -> some View {
-        VStack(spacing: Theme.Spacing.s) {
-            summaryRow("Habits", count: s.habits, icon: "checklist")
-            summaryRow("Abhakungen", count: s.completions, icon: "checkmark.circle")
-            summaryRow("Bäume", count: s.trees, icon: "tree.fill")
-            summaryRow("Übungen", count: s.exercises, icon: "dumbbell.fill")
-            summaryRow("Workouts", count: s.workouts, icon: "figure.strengthtraining.traditional")
-            summaryRow("Sessions", count: s.sessions, icon: "calendar")
-            summaryRow("Sätze", count: s.sets, icon: "number")
-            summaryRow("Supplements", count: s.supplements, icon: "pills.fill")
-            summaryRow("Supplement-Einträge", count: s.supplementEntries, icon: "pills")
-        }
-        .padding(Theme.Spacing.l)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.m)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
-    }
-
     private func summaryRow(_ label: String, count: Int, icon: String) -> some View {
         HStack {
-            Image(systemName: icon).frame(width: 24).foregroundStyle(.secondary)
-            Text(label).font(.subheadline)
+            Image(systemName: icon)
+                .frame(width: 24)
+                .foregroundStyle(.secondary)
+            BentoText(verbatim: label, style: .body)
             Spacer()
-            Text("\(count)").font(.subheadline.monospacedDigit().weight(.semibold))
+            Text(verbatim: "\(count)")
+                .monospacedDigit()
+                .bentoTextStyle(.body)
         }
     }
 
-    private func errorBanner(_ error: Error) -> some View {
-        HStack(spacing: Theme.Spacing.m) {
-            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
-            Text(error.localizedDescription).font(.caption)
-        }
-        .padding(Theme.Spacing.m)
-        .background(RoundedRectangle(cornerRadius: Theme.Radius.s).fill(Color.red.opacity(0.1)))
-    }
-
-    // MARK: Actions
+    // MARK: - Actions
 
     @ViewBuilder
     private var actions: some View {
         switch phase {
         case .ready:
-            Button { Task { await generate() } } label: {
-                Label("Export starten", systemImage: "arrow.down.doc.fill")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Capsule().fill(Color.blue.gradient))
-                    .foregroundStyle(.white)
-            }
-            .buttonStyle(.plain)
+            BentoButton(
+                Text("Export starten"),
+                systemImage: "arrow.down.doc.fill",
+                variant: .primary,
+                expands: true
+            ) { Task { await generate() } }
 
         case .exporting:
             EmptyView()
 
         case .done:
-            if let url {
-                ShareLink(item: url) {
-                    Label("Backup teilen", systemImage: "square.and.arrow.up")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Capsule().fill(Color.green.gradient))
-                        .foregroundStyle(.white)
+            VStack(spacing: Theme.Spacing.s) {
+                if let url {
+                    ShareLink(item: url) {
+                        Label("Backup teilen", systemImage: "square.and.arrow.up")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Theme.Spacing.m)
+                            .background(Capsule().fill(Color.green))
+                            .foregroundStyle(.white)
+                    }
                 }
-                .buttonStyle(.plain)
-            }
-            Button { phase = .ready; url = nil; summary = nil } label: {
-                Text("Neuen Export erstellen")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
             }
 
         case .failed:
-            Button { Task { await generate() } } label: {
-                Label("Erneut versuchen", systemImage: "arrow.clockwise")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Capsule().fill(Color.blue.gradient))
-                    .foregroundStyle(.white)
-            }
-            .buttonStyle(.plain)
+            BentoButton(
+                Text("Erneut versuchen"),
+                systemImage: "arrow.clockwise",
+                variant: .primary,
+                expands: true
+            ) { Task { await generate() } }
         }
     }
 

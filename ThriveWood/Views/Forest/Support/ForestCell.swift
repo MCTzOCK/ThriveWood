@@ -14,7 +14,7 @@ struct ForestCell: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                .fill(Color.white.opacity(0.08))
+                .fill(Color.white.opacity(tree == nil ? 0.06 : 0.10))
                 .aspectRatio(1, contentMode: .fit)
 
             if let tree {
@@ -24,7 +24,7 @@ struct ForestCell: View {
             } else {
                 Image(systemName: "plus")
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.4))
             }
         }
         .contentShape(Rectangle())

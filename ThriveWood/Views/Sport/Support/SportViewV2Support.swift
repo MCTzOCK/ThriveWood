@@ -32,16 +32,11 @@ struct TodayWorkoutCardV2: View {
                 HStack(spacing: Theme.Spacing.s) {
                     Image(systemName: isCompleted ? "checkmark.seal.fill" : "calendar.circle.fill")
                         .font(.title2)
-                    Text("Heutiges Training")
-                        .font(Theme.Typography.caption.weight(.semibold))
+                        .symbolEffect(.bounce, value: isCompleted)
+                    BentoText(verbatim: "Heutiges Training", style: .caption, color: .white.opacity(0.85))
                     Spacer()
-                    PillBadge(
-                        text: isCompleted ? "Erledigt" : "Geplant",
-                        icon: isCompleted ? "checkmark" : "clock",
-                        color: .white
-                    )
+                    BentoBadge(Text(isCompleted ? "Erledigt" : "Geplant"), tone: .neutral)
                 }
-                .foregroundStyle(.white.opacity(0.9))
 
                 if let workout {
                     Text(workout.name)
@@ -59,30 +54,31 @@ struct TodayWorkoutCardV2: View {
                     Text("Freies Training")
                         .font(Theme.Typography.title2)
                         .foregroundStyle(.white)
-                    Text(isCompleted ? "Heute schon aktiv gewesen" : "Kein Workout geplant – starte frei")
-                        .font(Theme.Typography.subheadline)
-                        .foregroundStyle(.white.opacity(0.8))
+                    BentoText(
+                        verbatim: isCompleted ? "Heute schon aktiv gewesen" : "Kein Workout geplant – starte frei",
+                        style: .callout,
+                        color: .white.opacity(0.8)
+                    )
                 }
 
                 HStack {
                     Spacer()
-                    HStack(spacing: Theme.Spacing.xs) {
-                        Text(isCompleted ? "Wiederholen" : "Starten")
-                            .font(Theme.Typography.headline)
-                        Image(systemName: isCompleted ? "arrow.clockwise" : "play.fill")
+                    BentoButton(
+                        Text(isCompleted ? "Wiederholen" : "Starten"),
+                        systemImage: isCompleted ? "arrow.clockwise" : "play.fill",
+                        iconPlacement: .trailing,
+                        variant: .chrome,
+                        size: .medium
+                    ) {
+                        onStart()
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, Theme.Spacing.l)
-                    .padding(.vertical, Theme.Spacing.s + 2)
-                    .background(
-                        Capsule().fill(Color.white.opacity(0.2))
-                    )
                 }
             }
             .padding(Theme.Spacing.l)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(bgGradient)
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
+            .shadow(color: (isCompleted ? Color.green : Color.accentColor).opacity(0.3), radius: 12, y: 6)
         }
         .buttonStyle(BounceButtonStyle())
     }
@@ -96,20 +92,20 @@ struct RestDayCardV2: View {
             HStack(spacing: Theme.Spacing.s) {
                 Image(systemName: "moon.circle.fill")
                     .font(.title2)
-                Text("Ruhetag")
-                    .font(Theme.Typography.caption.weight(.semibold))
+                    .symbolEffect(.pulse, options: .repeating)
+                BentoText(verbatim: "Ruhetag", style: .caption, color: .white.opacity(0.85))
                 Spacer()
             }
-            .foregroundStyle(.white.opacity(0.9))
 
             Text("Heute steht Erholung an")
                 .font(Theme.Typography.title2)
                 .foregroundStyle(.white)
 
-            Text("Dein Plan sieht heute Pause vor. Nutze den Tag für Mobilität, Spaziergänge oder Schlaf.")
-                .font(Theme.Typography.subheadline)
-                .foregroundStyle(.white.opacity(0.8))
-                .fixedSize(horizontal: false, vertical: true)
+            BentoText(
+                verbatim: "Dein Plan sieht heute Pause vor. Nutze den Tag für Mobilität, Spaziergänge oder Schlaf.",
+                style: .callout,
+                color: .white.opacity(0.8)
+            )
 
             HStack(spacing: Theme.Spacing.m) {
                 Label("Mobilität", systemImage: "figure.flexibility")
@@ -129,6 +125,7 @@ struct RestDayCardV2: View {
             )
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous))
+        .shadow(color: Color.indigo.opacity(0.25), radius: 12, y: 6)
     }
 }
 
@@ -136,51 +133,54 @@ struct RestDayCardV2: View {
 
 struct SportWeekStripCard: View {
     let model: SportViewV2Model
-
     private let calendar = Calendar.app
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack {
-                Text("Diese Woche")
-                    .font(Theme.Typography.headline)
-                Spacer()
-                Text("\(model.weeklySessionCount) Sessions")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
-            }
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Diese Woche")) {
+                    BentoText(
+                        verbatim: "\(model.weeklySessionCount) Sessions",
+                        style: .caption,
+                        color: .secondary
+                    )
+                }
 
-            HStack(spacing: 0) {
-                ForEach(model.weekDays, id: \.self) { date in
-                    VStack(spacing: Theme.Spacing.xs) {
-                        Text(weekdayLabel(date))
-                            .font(Theme.Typography.caption2)
-                            .foregroundStyle(.secondary)
+                HStack(spacing: 0) {
+                    ForEach(model.weekDays, id: \.self) { date in
+                        VStack(spacing: Theme.Spacing.xs) {
+                            BentoText(
+                                verbatim: weekdayLabel(date),
+                                style: .caption,
+                                color: model.isToday(date) ? .accentColor : .secondary
+                            )
 
-                        ZStack {
-                            Circle()
-                                .fill(dayColor(date))
-                                .frame(width: 28, height: 28)
-
-                            if model.isToday(date) {
+                            ZStack {
                                 Circle()
-                                    .stroke(Color.accentColor, lineWidth: 2)
-                                    .frame(width: 32, height: 32)
-                            }
+                                    .fill(dayColor(date))
+                                    .frame(width: 28, height: 28)
+                                    .scaleEffect(model.isToday(date) ? 1.1 : 1.0)
+                                    .animation(.bouncy(duration: 0.4), value: model.isToday(date))
 
-                            if model.sessionCompleted(on: date) {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(.white)
+                                if model.isToday(date) {
+                                    Circle()
+                                        .stroke(Color.accentColor, lineWidth: 2)
+                                        .frame(width: 32, height: 32)
+                                }
+
+                                if model.sessionCompleted(on: date) {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .symbolEffect(.bounce, value: model.sessionCompleted(on: date))
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(maxWidth: .infinity)
                 }
             }
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
     }
 
     private func weekdayLabel(_ date: Date) -> String {
@@ -191,15 +191,9 @@ struct SportWeekStripCard: View {
     }
 
     private func dayColor(_ date: Date) -> Color {
-        if model.sessionCompleted(on: date) {
-            return .green
-        }
-        if model.isRestDay(date) {
-            return Color(.tertiarySystemFill)
-        }
-        if model.plannedWorkout(for: date) != nil {
-            return Color.accentColor.opacity(0.4)
-        }
+        if model.sessionCompleted(on: date) { return .green }
+        if model.isRestDay(date) { return Color(.tertiarySystemFill) }
+        if model.plannedWorkout(for: date) != nil { return Color.accentColor.opacity(0.4) }
         return Color(.tertiarySystemFill).opacity(0.5)
     }
 }
@@ -210,68 +204,69 @@ struct RecoveryMiniCard: View {
     let dashboard: MuscleRecoveryService.RecoveryDashboard?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack {
-                Text("Erholung")
-                    .font(Theme.Typography.headline)
-                Spacer()
-                NavigationLink {
-                    MuscleRankingScreen()
-                } label: {
-                    Image(systemName: "arrow.right")
-                        .font(Theme.Typography.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            if let dash = dashboard {
-                VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                    HStack(spacing: Theme.Spacing.m) {
-                        ZStack {
-                            Circle()
-                                .stroke(Color(.tertiarySystemFill), lineWidth: 6)
-                                .frame(width: 52, height: 52)
-                            Circle()
-                                .trim(from: 0, to: dash.readinessScore / 100)
-                                .stroke(readinessColor(dash.readinessScore), style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                                .frame(width: 52, height: 52)
-                                .rotationEffect(.degrees(-90))
-                            Text("\(Int(dash.readinessScore))")
-                                .font(Theme.Typography.subheadline.weight(.bold).monospacedDigit())
-                        }
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Bereitschaft")
-                                .font(Theme.Typography.subheadline.weight(.semibold))
-                            Text(dash.recommendedFocus)
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
-                        Spacer()
-                    }
-
-                    HStack(spacing: Theme.Spacing.l) {
-                        Label("\(dash.sessionCount7d)", systemImage: "figure.strengthtraining.traditional")
-                            .font(Theme.Typography.caption)
-                        Label("\(dash.recoveredMuscles.count) erholt", systemImage: "checkmark.circle.fill")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(.green)
-                        if !dash.needsRestMuscles.isEmpty {
-                            Label("\(dash.needsRestMuscles.count) Pause", systemImage: "exclamationmark.triangle.fill")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(.orange)
-                        }
+        BentoCard(style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Erholung")) {
+                    NavigationLink {
+                        MuscleRankingScreen()
+                    } label: {
+                        Image(systemName: "arrow.right")
+                            .font(Theme.Typography.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
                     }
                 }
-            } else {
-                Text("Noch keine Trainingsdaten")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
+
+                if let dash = dashboard {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                        HStack(spacing: Theme.Spacing.m) {
+                            ZStack {
+                                Circle()
+                                    .stroke(Color(.tertiarySystemFill), lineWidth: 6)
+                                    .frame(width: 52, height: 52)
+                                Circle()
+                                    .trim(from: 0, to: dash.readinessScore / 100)
+                                    .stroke(readinessColor(dash.readinessScore), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                    .frame(width: 52, height: 52)
+                                    .rotationEffect(.degrees(-90))
+                                    .animation(.bouncy(duration: 0.6), value: dash.readinessScore)
+                                Text(verbatim: "\(Int(dash.readinessScore))")
+                                    .font(Theme.Typography.subheadline.weight(.bold).monospacedDigit())
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Bereitschaft")
+                                    .font(Theme.Typography.subheadline.weight(.semibold))
+                                BentoText(
+                                    verbatim: dash.recommendedFocus,
+                                    style: .caption,
+                                    color: .secondary
+                                )
+                            }
+                            Spacer()
+                        }
+
+                        HStack(spacing: Theme.Spacing.l) {
+                            Label("\(dash.sessionCount7d)", systemImage: "figure.strengthtraining.traditional")
+                                .font(Theme.Typography.caption)
+                            Label("\(dash.recoveredMuscles.count) erholt", systemImage: "checkmark.circle.fill")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(.green)
+                            if !dash.needsRestMuscles.isEmpty {
+                                Label("\(dash.needsRestMuscles.count) Pause", systemImage: "exclamationmark.triangle.fill")
+                                    .font(Theme.Typography.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    }
+                } else {
+                    BentoEmptyState(
+                        systemImage: "heart.text.square",
+                        title: Text("Noch keine Trainingsdaten"),
+                        message: Text("Schließe ein Workout ab, um deine Erholung zu sehen.")
+                    )
+                }
             }
         }
-        .padding(Theme.Spacing.l)
-        .cardStyle()
     }
 
     private func readinessColor(_ score: Double) -> Color {
@@ -295,13 +290,8 @@ struct QuickStartGridV2: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            HStack {
-                Text("Schnellstart")
-                    .font(Theme.Typography.headline)
-                Spacer()
-                Text("\(workouts.count) Workouts")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
+            BentoSectionHeader(title: Text("Schnellstart")) {
+                BentoText(verbatim: "\(workouts.count) Workouts", style: .caption, color: .secondary)
             }
 
             HStack(spacing: Theme.Spacing.m) {
@@ -322,16 +312,19 @@ struct QuickStartGridV2: View {
             }
 
             if workouts.isEmpty {
-                Text("Noch keine Workouts erstellt.")
-                    .font(Theme.Typography.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, Theme.Spacing.xl)
-                    .cardStyle()
+                BentoCallout(
+                    kind: .info,
+                    title: Text("Noch keine Workouts"),
+                    message: Text("Erstelle deinen ersten Trainingsplan über das Plus-Symbol.")
+                )
             } else {
                 VStack(spacing: Theme.Spacing.s) {
                     ForEach(workouts) { w in
                         workoutRow(w)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.9).combined(with: .opacity),
+                                removal: .scale(scale: 0.9).combined(with: .opacity)
+                            ))
                     }
                 }
             }
@@ -342,48 +335,51 @@ struct QuickStartGridV2: View {
     private func workoutRow(_ w: Workout) -> some View {
         let avg = env.workoutService.getAverageDuration(workout: w)
         Button { onWorkoutSelect(w) } label: {
-            HStack(spacing: Theme.Spacing.m) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
-                        .fill(w.color.color.opacity(0.15))
-                        .frame(width: 46, height: 46)
-                    Image(systemName: "dumbbell.fill")
-                        .font(Theme.Typography.callout)
-                        .foregroundStyle(w.color.color)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(w.name)
-                        .font(Theme.Typography.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                    HStack(spacing: Theme.Spacing.m) {
-                        Label("\(w.exercises.count)", systemImage: "list.bullet")
-                            .font(Theme.Typography.caption2)
-                        Label("\(avg > 0 ? "\(avg.clean) min" : "\(w.estimatedDurationMinutes) min")", systemImage: "clock")
-                            .font(Theme.Typography.caption2)
+            BentoCard(style: .outlined, padding: .md) {
+                HStack(spacing: Theme.Spacing.m) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: Theme.Radius.s, style: .continuous)
+                            .fill(w.color.color.opacity(0.15))
+                            .frame(width: 46, height: 46)
+                        Image(systemName: "dumbbell.fill")
+                            .font(Theme.Typography.callout)
+                            .foregroundStyle(w.color.color)
+                            .symbolEffect(.bounce, value: w.id)
                     }
-                    .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if let onEdit {
-                    Button {
-                        Haptics.impact()
-                        onEdit(w)
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(Theme.Typography.callout.weight(.bold))
-                            .frame(width: 36, height: 36)
-                            .background(Circle().fill(Color(.tertiarySystemFill)))
-                            .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(w.name)
+                            .font(Theme.Typography.subheadline.weight(.semibold))
+                            .lineLimit(1)
+                        HStack(spacing: Theme.Spacing.m) {
+                            Label("\(w.exercises.count)", systemImage: "list.bullet")
+                                .font(Theme.Typography.caption2)
+                            Label("\(avg > 0 ? "\(avg.clean) min" : "\(w.estimatedDurationMinutes) min")", systemImage: "clock")
+                                .font(Theme.Typography.caption2)
+                        }
+                        .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(BounceButtonStyle())
+                    Spacer()
+                    if let onEdit {
+                        BentoIconButton(
+                            systemImage: "ellipsis",
+                            accessibilityLabel: Text("Bearbeiten"),
+                            variant: .ghost,
+                            size: .small
+                        ) {
+                            Haptics.impact()
+                            onEdit(w)
+                        }
+                    }
+                    BentoIconButton(
+                        systemImage: "play.fill",
+                        accessibilityLabel: Text("Starten"),
+                        variant: .primary,
+                        size: .small
+                    ) {
+                        onWorkoutSelect(w)
+                    }
                 }
-                Image(systemName: "play.fill")
-                    .font(Theme.Typography.caption.weight(.bold))
-                    .foregroundStyle(w.color.color)
-                    .padding(.horizontal, Theme.Spacing.s)
             }
-            .padding(Theme.Spacing.m)
-            .cardStyle()
         }
         .buttonStyle(PressScaleStyle())
         .contextMenu {
@@ -398,28 +394,24 @@ struct QuickStartGridV2: View {
 
     private func quickStartItem(title: String, subtitle: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: Theme.Spacing.s) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.12))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: icon)
-                        .font(Theme.Typography.body.weight(.bold))
-                        .foregroundStyle(color)
+            BentoCard(tone: .neutral, style: .outlined, padding: .md) {
+                VStack(spacing: Theme.Spacing.s) {
+                    ZStack {
+                        Circle()
+                            .fill(color.opacity(0.12))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: icon)
+                            .font(Theme.Typography.body.weight(.bold))
+                            .foregroundStyle(color)
+                    }
+                    BentoText(verbatim: title, style: .caption, color: .primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    BentoText(verbatim: subtitle, style: .caption, color: .secondary)
+                        .lineLimit(1)
                 }
-                Text(title)
-                    .font(Theme.Typography.caption.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Text(subtitle)
-                    .font(Theme.Typography.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
-            .padding(Theme.Spacing.m)
-            .cardStyle()
         }
         .buttonStyle(BounceButtonStyle())
     }
@@ -433,14 +425,29 @@ struct WeeklyStatsCardV2: View {
     let durationMinutes: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Wochenstatistik")
-                .font(Theme.Typography.headline)
+        BentoCard(tone: .accent, style: .elevated, padding: .lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                BentoSectionHeader(title: Text("Wochenstatistik")) {
+                    EmptyView()
+                }
 
-            HStack(spacing: Theme.Spacing.m) {
-                StatPill(icon: "figure.strengthtraining.traditional", value: "\(sessionCount)", label: "Sessions", color: .accentColor)
-                StatPill(icon: "scalemass.fill", value: formatVolume, label: "Volumen", color: .blue)
-                StatPill(icon: "clock.fill", value: "\(durationMinutes)", label: "Minuten", color: .orange)
+                BentoStatStrip(values: [
+                    BentoStatValue(
+                        id: "sessions",
+                        title: Text("Sessions"),
+                        value: Text(verbatim: "\(sessionCount)")
+                    ),
+                    BentoStatValue(
+                        id: "volume",
+                        title: Text("Volumen"),
+                        value: Text(verbatim: formatVolume)
+                    ),
+                    BentoStatValue(
+                        id: "duration",
+                        title: Text("Minuten"),
+                        value: Text(verbatim: "\(durationMinutes)")
+                    ),
+                ])
             }
         }
     }
@@ -462,33 +469,34 @@ struct SportNavigationCardV2: View {
     let iconColor: Color
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.m) {
-            ZStack {
-                RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 52, height: 52)
-                Image(systemName: icon)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(iconColor)
-            }
+        BentoCard(
+            tone: .neutral,
+            style: .elevated,
+            padding: .lg
+        ) {
+            VStack(spacing: Theme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: Theme.Radius.m, style: .continuous)
+                        .fill(iconColor.opacity(0.15))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: icon)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(iconColor)
+                        .symbolEffect(.bounce, value: title)
+                }
 
-            VStack(spacing: 2) {
-                Text(title)
-                    .font(Theme.Typography.subheadline.weight(.semibold))
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.primary)
-
-                if !subtitle.isEmpty {
-                    Text(subtitle)
-                        .font(Theme.Typography.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                VStack(spacing: 2) {
+                    Text(title)
+                        .font(Theme.Typography.subheadline.weight(.semibold))
                         .multilineTextAlignment(.center)
+                    if !subtitle.isEmpty {
+                        BentoText(verbatim: subtitle, style: .caption, color: .secondary)
+                            .lineLimit(1)
+                            .multilineTextAlignment(.center)
+                    }
                 }
             }
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
-        .padding(Theme.Spacing.l)
-        .cardStyle()
     }
 }

@@ -31,6 +31,7 @@ struct ActivePlanCard: View {
                     Image(systemName: plan.isRotationPlan ? "arrow.triangle.2.circlepath" : "checkmark.seal.fill")
                         .foregroundStyle(plan.isRotationPlan ? planColor : .green)
                         .font(Theme.Typography.body)
+                        .symbolEffect(.pulse, options: .repeating)
                 }
 
                 if !plan.details.isEmpty {
@@ -66,6 +67,7 @@ struct ActivePlanCard: View {
                 RoundedRectangle(cornerRadius: Theme.Radius.l, style: .continuous)
                     .fill(planColor.opacity(0.06))
             )
+            .shadow(color: planColor.opacity(0.15), radius: 10, y: 4)
         }
         .buttonStyle(PressScaleStyle())
     }

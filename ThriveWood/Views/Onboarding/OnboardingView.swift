@@ -22,6 +22,7 @@ struct OnboardingView: View {
 
     @State private var step: OnboardingStep = .welcome
     @State private var direction: Edge = .trailing
+    @State private var currentPage: Int = 0
 
     // Shared Form-State über alle Schritte
     @State private var displayName: String = ""
@@ -39,7 +40,10 @@ struct OnboardingView: View {
         ZStack {
             background
             VStack(spacing: 0) {
-                progressBar.padding(.horizontal, Theme.Spacing.xl)
+                progressBar
+                    .padding(.horizontal, Theme.Spacing.xl)
+                    .padding(.top, Theme.Spacing.l)
+
                 stepContent
                     .transition(
                         .asymmetric(
@@ -51,8 +55,11 @@ struct OnboardingView: View {
                     .id(step)
             }
         }
-        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: step)
+        .animation(.bouncy, value: step)
         .interactiveDismissDisabled(!isRerun)
+        .onChange(of: step) { _, newStep in
+            currentPage = newStep.rawValue
+        }
     }
 
     // MARK: - Background
@@ -60,29 +67,25 @@ struct OnboardingView: View {
     private var background: some View {
         LinearGradient(
             colors: [
-                accentTheme.color.opacity(0.12),
+                accentTheme.color.opacity(0.10),
                 Color(.systemBackground)
             ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+            startPoint: .top,
+            endPoint: .bottom
         )
         .ignoresSafeArea()
-        .animation(.easeInOut, value: accentTheme)
+        .animation(.bouncy, value: accentTheme)
     }
 
     // MARK: - Progress
 
     private var progressBar: some View {
-        HStack(spacing: 6) {
-            ForEach(OnboardingStep.allCases, id: \.rawValue) { s in
-                Capsule()
-                    .fill(s.rawValue <= step.rawValue
-                          ? accentTheme.color
-                          : Color.secondary.opacity(0.2))
-                    .frame(height: 4)
-            }
-        }
-        .padding(.top, Theme.Spacing.l)
+        BentoPageIndicator(
+            count: OnboardingStep.allCases.count,
+            current: $currentPage,
+            allowsDirectSelection: false
+        )
+        .tint(accentTheme.color)
     }
 
     // MARK: - Step Content

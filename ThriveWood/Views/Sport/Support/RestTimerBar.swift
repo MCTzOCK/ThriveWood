@@ -48,7 +48,7 @@ struct RestTimerBar: View {
                            startPoint: .leading, endPoint: .trailing)
         )
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.m))
-        .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+        .shadow(color: Color.blue.opacity(0.25), radius: 12, y: 6)
         .padding(.horizontal, Theme.Spacing.l)
         .padding(.bottom, Theme.Spacing.s)
         .transition(.move(edge: .bottom).combined(with: .opacity))

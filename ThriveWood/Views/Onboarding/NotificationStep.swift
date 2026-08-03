@@ -20,58 +20,84 @@ struct NotificationStep: View {
     @State private var requesting = false
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.xl) {
+        VStack(spacing: 0) {
             Spacer()
 
+            // Hero Icon
             ZStack {
+                ForEach(0..<2, id: \.self) { i in
+                    Circle()
+                        .fill(Color.orange.opacity(0.10 - Double(i) * 0.03))
+                        .frame(width: 160 - CGFloat(i) * 40,
+                               height: 160 - CGFloat(i) * 40)
+                        .scaleEffect(appear ? 1 : 0.4)
+                        .animation(
+                            .spring(response: 0.7, dampingFraction: 0.5)
+                            .delay(Double(i) * 0.15 + 0.2),
+                            value: appear
+                        )
+                }
+
                 Circle()
-                    .fill(Color.orange.opacity(0.12))
-                    .frame(width: 140, height: 140)
-                Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 60))
+                    .fill(Color.orange.opacity(0.15))
+                    .frame(width: 120, height: 120)
+
+                Image(systemName: granted ? "checkmark.circle.fill" : "bell.badge.fill")
+                    .font(.system(size: 56))
                     .symbolRenderingMode(.palette)
-                    .foregroundStyle(.red, .orange)
+                    .foregroundStyle(granted ? .green : .red, .orange)
                     .scaleEffect(appear ? 1 : 0.6)
                     .animation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.3), value: appear)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: granted)
             }
 
-            VStack(spacing: Theme.Spacing.m) {
-                Text("Erinnerungen")
-                    .font(.title2.bold())
-                Text("Damit du keinen Habit vergisst, können wir dich täglich sanft erinnern.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+            VStack(spacing: Theme.Spacing.s) {
+                BentoText(granted ? "Erledigt!" : "Erinnerungen", style: .title1)
+                BentoText(
+                    granted
+                        ? "Du wirst keine Gewohnheit mehr vergessen."
+                        : "Damit du keinen Habit vergisst, können wir dich täglich sanft erinnern.",
+                    style: .callout,
+                    color: .secondary
+                )
+                .multilineTextAlignment(.center)
             }
+            .padding(.top, Theme.Spacing.l)
             .opacity(appear ? 1 : 0)
+            .offset(y: appear ? 0 : 20)
+            .animation(.easeOut(duration: 0.5).delay(0.4), value: appear)
 
-            VStack(spacing: Theme.Spacing.m) {
-                HStack(spacing: Theme.Spacing.m) {
-                    Image(systemName: "hand.raised.fill").foregroundStyle(.blue)
-                    Text("Kein Spam – nur Erinnerungen für deine Habits, die du selbst festlegst.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                HStack(spacing: Theme.Spacing.m) {
-                    Image(systemName: "gear").foregroundStyle(.gray)
-                    Text("Du kannst Erinnerungen jederzeit in den Einstellungen anpassen.")
-                        .font(.caption).foregroundStyle(.secondary)
+            // Info-Card
+            BentoCard(padding: .lg, radius: .large) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                    infoRow(
+                        icon: "hand.raised.fill",
+                        tone: .blue,
+                        text: "Kein Spam – nur Erinnerungen für deine Habits, die du selbst festlegst."
+                    )
+                    BentoDivider()
+                    infoRow(
+                        icon: "gearshape.fill",
+                        tone: .neutral,
+                        text: "Du kannst Erinnerungen jederzeit in den Einstellungen anpassen."
+                    )
                 }
             }
-            .padding(Theme.Spacing.l)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.Radius.m)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
+            .padding(.top, Theme.Spacing.l)
             .opacity(appear ? 1 : 0)
-            .animation(.easeOut.delay(0.3), value: appear)
+            .offset(y: appear ? 0 : 30)
+            .animation(.easeOut(duration: 0.4).delay(0.5), value: appear)
 
             Spacer()
 
+            // Actions
             VStack(spacing: Theme.Spacing.m) {
                 if granted {
-                    HStack(spacing: Theme.Spacing.s) {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                        Text("Aktiviert!").font(.headline).foregroundStyle(.green)
-                    }
+                    BentoCallout(
+                        kind: .success,
+                        title: Text("Mitteilungen aktiviert!"),
+                        message: nil
+                    )
                     .transition(.scale.combined(with: .opacity))
                 }
 
@@ -79,26 +105,41 @@ struct NotificationStep: View {
                     OnboardingBackButton(action: onBack)
 
                     if granted {
-                        OnboardingButton(title: "Weiter", accent: accent, action: onNext)
+                        OnboardingButton(title: "Weiter", accent: accent, icon: "arrow.right", action: onNext)
                     } else {
-                        OnboardingButton(title: "Aktivieren", accent: accent) {
+                        OnboardingButton(title: "Aktivieren", accent: accent, icon: "bell.fill") {
                             requestPermission()
                         }
                     }
                 }
 
                 if !granted {
-                    Button("Später", action: onSkip)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                    BentoButton(
+                        Text("Später"),
+                        variant: .ghost,
+                        size: .medium,
+                        action: onSkip
+                    )
                 }
             }
+            .animation(.bouncy, value: granted)
 
-            Spacer().frame(height: Theme.Spacing.xl)
+            Spacer().frame(height: Theme.Spacing.xxl)
         }
         .padding(.horizontal, Theme.Spacing.xl)
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: granted)
         .onAppear { appear = true }
+    }
+
+    private func infoRow(icon: String, tone: BentoTone, text: String) -> some View {
+        HStack(spacing: Theme.Spacing.m) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(Color.gray.opacity(0.12)))
+            BentoText(verbatim: text, style: .caption, color: .secondary)
+            Spacer(minLength: 0)
+        }
     }
 
     private func requestPermission() {
