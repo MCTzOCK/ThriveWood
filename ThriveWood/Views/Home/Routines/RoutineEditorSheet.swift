@@ -154,6 +154,11 @@ struct RoutineEditorSheet: View {
                     BentoDivider()
                     VStack(alignment: .leading, spacing: theme.spacing.xs) {
                         BentoText(verbatim: "REIHENFOLGE", style: .overline, color: theme.colors.onSurfaceMuted)
+                        BentoText(
+                            "In der Reihenfolge, in der du Habits auswählst.",
+                            style: .caption,
+                            color: theme.colors.onSurfaceMuted
+                        )
                         ForEach(Array(selectedHabitIDs.enumerated()), id: \.element) { index, id in
                             if let habit = availableHabits.first(where: { $0.id == id }) {
                                 HStack(spacing: theme.spacing.sm) {
@@ -171,7 +176,6 @@ struct RoutineEditorSheet: View {
                                             tone: .neutral
                                         )
                                     }
-                                    reorderButtons(for: index, total: selectedHabitIDs.count)
                                 }
                             }
                         }
@@ -264,49 +268,6 @@ struct RoutineEditorSheet: View {
         value.truncatingRemainder(dividingBy: 1) == 0
             ? String(Int(value))
             : String(format: "%.1f", value)
-    }
-
-    @ViewBuilder
-    private func reorderButtons(for index: Int, total: Int) -> some View {
-        HStack(spacing: 2) {
-            BentoIconButton(
-                systemImage: "chevron.up",
-                accessibilityLabel: Text("Nach oben"),
-                variant: .secondary,
-                size: .small
-            ) {
-                move(from: index, to: index - 1)
-            }
-            .disabled(index == 0)
-            .opacity(index == 0 ? 0.35 : 1)
-
-            BentoIconButton(
-                systemImage: "chevron.down",
-                accessibilityLabel: Text("Nach unten"),
-                variant: .secondary,
-                size: .small
-            ) {
-                move(from: index, to: index + 1)
-            }
-            .disabled(index == total - 1)
-            .opacity(index == total - 1 ? 0.35 : 1)
-        }
-    }
-
-    /// Verschiebt den Eintrag an `from` an Position `to` in `selectedHabitIDs`.
-    private func move(from: Int, to: Int) {
-        guard selectedHabitIDs.indices.contains(from),
-              to >= 0, to <= selectedHabitIDs.count else { return }
-        var arr = selectedHabitIDs
-        let item = arr.remove(at: from)
-        // Beim Remove rutscht alles nach; bei to > from ist die Zielposition
-        // um 1 niedriger als gedacht.
-        let insertIndex = to > from ? to - 1 : to
-        arr.insert(item, at: max(0, min(insertIndex, arr.count)))
-        Haptics.selection()
-        withAnimation(.easeInOut(duration: 0.2)) {
-            selectedHabitIDs = arr
-        }
     }
 
     // MARK: - Logic
