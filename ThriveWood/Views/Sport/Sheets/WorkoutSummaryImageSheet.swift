@@ -66,24 +66,27 @@ struct WorkoutSummaryImageSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            TabView(selection: $selectedDesign) {
-                ForEach(SummaryDesign.allCases) { design in
-                    ScrollView(.vertical, showsIndicators: false) {
-                        WorkoutSummaryImage(data: data, design: design)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 560)
-                            .padding(.vertical, Theme.Spacing.m)
+        GeometryReader { geo in
+            let previewHeight = max(240, geo.size.height - 76)
+            VStack(spacing: 0) {
+                TabView(selection: $selectedDesign) {
+                    ForEach(SummaryDesign.allCases) { design in
+                        ScrollView(.vertical, showsIndicators: false) {
+                            WorkoutSummaryImage(data: data, design: design)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, Theme.Spacing.m)
+                        }
                     }
                 }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .indexViewStyle(.page(backgroundDisplayMode: .always))
+                .frame(width: geo.size.width, height: previewHeight)
 
-            shareButton
-                .padding(.horizontal, Theme.Spacing.l)
-                .padding(.bottom, Theme.Spacing.m)
+                shareButton
+                    .padding(.horizontal, Theme.Spacing.l)
+                    .padding(.vertical, Theme.Spacing.m)
+            }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
