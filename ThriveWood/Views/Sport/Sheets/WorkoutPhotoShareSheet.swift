@@ -266,8 +266,17 @@ struct WorkoutPhotoShareSheet: View {
                     .disabled(backgroundImage == nil)
                 }
             }
-            .sheet(item: $shareItem) { item in
-                WorkoutSummaryShareSheet(image: item.image)
+            .bentoSheet(
+                isPresented: Binding(
+                    get: { shareItem != nil },
+                    set: { if !$0 { shareItem = nil } }
+                ),
+                title: Text("Teilen"),
+                detents: [.medium]
+            ) {
+                if let item = shareItem {
+                    WorkoutSummaryShareSheet(image: item.image)
+                }
             }
             .onChange(of: photoItem) { _, item in
                 Task {

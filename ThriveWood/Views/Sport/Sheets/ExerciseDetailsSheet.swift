@@ -61,10 +61,10 @@ struct ExerciseDetailsSheet: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingEditDetails) {
+            .bentoSheet(isPresented: $showingEditDetails, title: Text("Details"), detents: [.large]) {
                 ExerciseEditDetailsSheet(exercise: exercise)
             }
-            .sheet(isPresented: $showingEditMuscleGroups) {
+            .bentoSheet(isPresented: $showingEditMuscleGroups, title: Text("Muskelgruppen"), detents: [.large]) {
                 ExerciseEditMuscleGroupsSheet(exercise: exercise)
             }
         }

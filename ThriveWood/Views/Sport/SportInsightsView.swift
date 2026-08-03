@@ -76,21 +76,21 @@ struct SportInsightsView: View {
         .navigationTitle("Sport Insights")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $showingAll1RM) {
+        .bentoSheet(isPresented: $showingAll1RM, title: Text("Geschätztes 1RM"), detents: [.large]) {
             NavigationStack {
                 AllExercisesList(title: "Geschätztes 1RM — Alle Übungen") {
                     computeEstimated1RM(limit: 999)
                 }
             }
         }
-        .sheet(isPresented: $showingAllOverload) {
+        .bentoSheet(isPresented: $showingAllOverload, title: Text("Progressive Overload"), detents: [.large]) {
             NavigationStack {
                 AllOverloadList(title: "Progressive Overload — Alle Übungen") {
                     computeProgressiveOverload()
                 }
             }
         }
-        .sheet(isPresented: $showingAllTopExercises) {
+        .bentoSheet(isPresented: $showingAllTopExercises, title: Text("Top Übungen"), detents: [.large]) {
             NavigationStack {
                 AllTopExercisesList(title: "Top Übungen — Alle") {
                     computeTopExercises(limit: 999)

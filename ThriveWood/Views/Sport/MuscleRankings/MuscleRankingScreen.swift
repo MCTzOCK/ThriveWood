@@ -106,11 +106,15 @@ struct MuscleRankingScreen: View {
                 }
             }
         }
-        .sheet(isPresented: $showLegend) {
+        .bentoSheet(
+            isPresented: $showLegend,
+            title: Text("Legende"),
+            detents: [.medium]
+        ) {
             if mapMode == .ranking {
-                RankLegendSheet().presentationDetents([.medium])
+                RankLegendSheet()
             } else {
-                RecoveryLegendSheet().presentationDetents([.medium])
+                RecoveryLegendSheet()
             }
         }
         .task { await load() }

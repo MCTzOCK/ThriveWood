@@ -163,15 +163,28 @@ struct TrainingsPlanDetailView: View {
                 Button("Fertig") { dismiss() }
             }
         }
-        .sheet(isPresented: $showEditSheet) {
+        .bentoSheet(
+            isPresented: $showEditSheet,
+            title: Text("Plan bearbeiten"),
+            detents: [.large]
+        ) {
             EditTrainingsPlanSheet(plan: plan)
         }
-        .sheet(item: $selectedDay) { day in
+        .bentoSheet(
+            isPresented: Binding(
+                get: { selectedDay != nil },
+                set: { if !$0 { selectedDay = nil } }
+            ),
+            title: Text("Tag bearbeiten"),
+            detents: [.large]
+        ) {
             NavigationStack {
-                if plan.isRotationPlan {
-                    EditRotationSlotSheet(day: day, plan: plan)
-                } else {
-                    EditDaySheet(day: day, plan: plan)
+                if let day = selectedDay {
+                    if plan.isRotationPlan {
+                        EditRotationSlotSheet(day: day, plan: plan)
+                    } else {
+                        EditDaySheet(day: day, plan: plan)
+                    }
                 }
             }
         }

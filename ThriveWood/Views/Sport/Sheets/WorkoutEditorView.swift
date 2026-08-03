@@ -67,10 +67,14 @@ struct WorkoutEditorView: View {
                         .disabled(!isValid).fontWeight(.semibold)
                 }
             }
-            .sheet(isPresented: $showingLibrary) {
+            .bentoSheet(
+                isPresented: $showingLibrary,
+                title: Text("Übungen"),
+                detents: [.large]
+            ) {
                 ExerciseLibraryView(onSelect: { exercise in
                     addExercise(exercise)
-                }, asSheet: true, onlyFor: nil)
+                }, asSheet: false, onlyFor: nil)
             }
             .errorAlert(errors)
             .onAppear(perform: hydrate)

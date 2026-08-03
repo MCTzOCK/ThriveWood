@@ -132,7 +132,11 @@ struct ExerciseLibraryView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingNew) {
+        .bentoSheet(
+            isPresented: $showingNew,
+            title: Text("Neue Übung"),
+            detents: [.large]
+        ) {
             ExerciseEditorView { new in
                 do { try env.exerciseRepo.create(new); load() }
                 catch { errors.show(error) }

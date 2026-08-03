@@ -131,19 +131,36 @@ struct TrainingsPlanListView: View {
                 }
             }
         }
-        .sheet(isPresented: $showCreateSheet) {
+        .bentoSheet(
+            isPresented: $showCreateSheet,
+            title: Text("Neuer Trainingsplan"),
+            detents: [.large]
+        ) {
             CreateTrainingsPlanSheet(onCreate: {
                 Task { await load() }
             })
         }
-        .sheet(isPresented: $showAIGenerator) {
+        .bentoSheet(
+            isPresented: $showAIGenerator,
+            title: Text("KI-Plan-Generator"),
+            detents: [.large]
+        ) {
             NavigationStack {
                 AIPlanGeneratorView()
             }
         }
-        .sheet(item: $selectedPlan) { plan in
-            NavigationStack {
-                TrainingsPlanDetailView(plan: plan)
+        .bentoSheet(
+            isPresented: Binding(
+                get: { selectedPlan != nil },
+                set: { if !$0 { selectedPlan = nil } }
+            ),
+            title: Text("Trainingsplan"),
+            detents: [.large]
+        ) {
+            if let plan = selectedPlan {
+                NavigationStack {
+                    TrainingsPlanDetailView(plan: plan)
+                }
             }
         }
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))

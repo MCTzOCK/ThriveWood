@@ -97,9 +97,24 @@ struct ActiveSessionViewV2: View {
             .onAppear { recache(); restoreTrackerIfNeeded() }
             .onChange(of: session.sets.count) { _, _ in recache() }
             .onChange(of: completedSignature) { _, _ in recache() }
-            .sheet(isPresented: $showingFinish) { finishSheet }
-            .sheet(isPresented: $showingAddSheet) { addSheet }
-            .sheet(item: $currentExercise) { ex in ExerciseDetailsSheet(exercise: ex) }
+            .bentoSheet(isPresented: $showingFinish, title: Text("Abschließen"), detents: [.large]) {
+                finishSheet
+            }
+            .bentoSheet(isPresented: $showingAddSheet, title: Text("Übung"), detents: [.large]) {
+                addSheet
+            }
+            .bentoSheet(
+                isPresented: Binding(
+                    get: { currentExercise != nil },
+                    set: { if !$0 { currentExercise = nil } }
+                ),
+                title: Text("Übung"),
+                detents: [.large]
+            ) {
+                if let ex = currentExercise {
+                    ExerciseDetailsSheet(exercise: ex)
+                }
+            }
             .bentoDialog(
                 isPresented: $showingCancel,
                 systemImage: "exclamationmark.triangle.fill",

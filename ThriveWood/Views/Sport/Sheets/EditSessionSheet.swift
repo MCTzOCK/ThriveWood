@@ -76,19 +76,32 @@ struct EditSessionSheet: View {
                     .fontWeight(.semibold)
                 }
             }
-            .sheet(isPresented: $showingAddExercise) {
+            .bentoSheet(
+                isPresented: $showingAddExercise,
+                title: Text("Übung hinzufügen"),
+                detents: [.large]
+            ) {
                 ExerciseLibraryView(onSelect: { ex in
                     addExercise(ex)
-                }, asSheet: true, onlyFor: nil)
+                }, asSheet: false, onlyFor: nil)
             }
-            .sheet(item: $showingReplaceExercise) { original in
-                ReplaceExerciseSheet(
-                    originalExercise: original,
-                    trackingType: original.trackingType,
-                    onSelect: { replacement in
-                        replaceExercise(original, with: replacement)
-                    }
-                )
+            .bentoSheet(
+                isPresented: Binding(
+                    get: { showingReplaceExercise != nil },
+                    set: { if !$0 { showingReplaceExercise = nil } }
+                ),
+                title: Text("Übung ersetzen"),
+                detents: [.large]
+            ) {
+                if let original = showingReplaceExercise {
+                    ReplaceExerciseSheet(
+                        originalExercise: original,
+                        trackingType: original.trackingType,
+                        onSelect: { replacement in
+                            replaceExercise(original, with: replacement)
+                        }
+                    )
+                }
             }
             .errorAlert(errors)
         }

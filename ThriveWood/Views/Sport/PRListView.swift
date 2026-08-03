@@ -50,8 +50,17 @@ struct PRListView: View {
         .toolbar(.hidden, for: .navigationBar)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Übung suchen")
         .onAppear { load() }
-        .sheet(item: $selectedPR) { selection in
-            ExerciseProgressionSheet(exercise: selection.exercise, topSet: selection.topSet)
+        .bentoSheet(
+            isPresented: Binding(
+                get: { selectedPR != nil },
+                set: { if !$0 { selectedPR = nil } }
+            ),
+            title: Text("Progression"),
+            detents: [.large]
+        ) {
+            if let selection = selectedPR {
+                ExerciseProgressionSheet(exercise: selection.exercise, topSet: selection.topSet)
+            }
         }
     }
 
