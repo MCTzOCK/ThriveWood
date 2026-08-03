@@ -116,6 +116,9 @@ struct ActiveSessionViewV3: View {
                     vm.cancel()
                     dismiss()
                 },
+                BentoDialogAction(title: Text("Schließen, ohne abbrechen"), variant: .primary, role: .confirm) {
+                    dismiss()
+                },
                 BentoDialogAction(title: Text("Weiter"), role: .cancel) {}
             ]
         )
