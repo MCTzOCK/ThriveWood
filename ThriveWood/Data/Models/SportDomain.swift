@@ -406,14 +406,21 @@ final class TrainingsPlan {
 
     var isRotationPlan: Bool { planType == .rotation }
 
-    /// Sortierte Tage (Montag bis Sonntag) – für Wochentags-Pläne
+    /// Sortierte Tage (Montag bis Sonntag) – für Wochentags-Pläne.
+    /// Schließt Rotations-Slots (Tage mit Label) aus.
     var sortedDays: [TrainingsPlanDay] {
-        days.sorted { $0.weekday.rawValue < $1.weekday.rawValue }
+        days
+            .filter { $0.label.isEmpty }
+            .sorted { $0.weekday.rawValue < $1.weekday.rawValue }
     }
 
-    /// Sortierte Sequenz für Rotations-Pläne (nach rotationOrder)
+    /// Sortierte Sequenz für Rotations-Pläne (nach rotationOrder).
+    /// Nur Tage mit Label sind echte Rotations-Slots – die beim Anlegen
+    /// eines Plans automatisch erzeugten Wochentage bleiben unberücksichtigt.
     var rotationSequence: [TrainingsPlanDay] {
-        days.sorted { $0.rotationOrder < $1.rotationOrder }
+        days
+            .filter { !$0.label.isEmpty }
+            .sorted { $0.rotationOrder < $1.rotationOrder }
     }
 
     /// Workout für einen bestimmten Wochentag

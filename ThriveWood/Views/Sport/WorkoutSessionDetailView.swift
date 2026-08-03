@@ -137,14 +137,6 @@ struct WorkoutSessionDetailView: View {
                         title: Text(session.workout?.name ?? "Freies Training"),
                         subtitle: Text(timeRange)
                     ) {
-                        BentoIconButton(
-                            systemImage: "chevron.left",
-                            accessibilityLabel: Text("Zurück"),
-                            variant: .secondary,
-                            size: .medium
-                        ) {
-                            dismiss()
-                        }
 
                         Menu {
                             Button {

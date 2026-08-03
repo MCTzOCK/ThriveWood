@@ -166,7 +166,6 @@ struct WorkoutPhotoShareSheet: View {
     // Normalized: fraction of canvas size (-0.5 ... 0.5 from center)
     @State private var overlayOffsetX: CGFloat = 0
     @State private var overlayOffsetY: CGFloat = 0
-    @State private var shareItem: ShareItem?
     @GestureState private var dragTranslation: CGSize = .zero
 
     private let exportWidth: CGFloat = 2160
@@ -250,26 +249,27 @@ struct WorkoutPhotoShareSheet: View {
             controls
         }
         .bentoActionBar {
-            BentoButton(
-                Text("Teilen"),
-                systemImage: "square.and.arrow.up",
-                variant: .primary,
-                expands: true
-            ) {
-                exportImage()
-            }
-            .disabled(backgroundImage == nil)
-        }
-        .bentoSheet(
-            isPresented: Binding(
-                get: { shareItem != nil },
-                set: { if !$0 { shareItem = nil } }
-            ),
-            title: Text("Teilen"),
-            detents: [.medium]
-        ) {
-            if let item = shareItem {
-                WorkoutSummaryShareSheet(image: item.image)
+            if let img = currentRenderedImage() {
+                ShareLink(
+                    item: Image(uiImage: img),
+                    preview: SharePreview("Workout", image: Image(uiImage: img))
+                ) {
+                    BentoButton(
+                        Text("Teilen"),
+                        systemImage: "square.and.arrow.up",
+                        variant: .primary,
+                        expands: true
+                    ) {}
+                    .allowsHitTesting(false)
+                }
+            } else {
+                BentoButton(
+                    Text("Teilen"),
+                    systemImage: "square.and.arrow.up",
+                    variant: .primary,
+                    expands: true
+                ) {}
+                .disabled(true)
             }
         }
         .onChange(of: photoItem) { _, item in
@@ -281,6 +281,16 @@ struct WorkoutPhotoShareSheet: View {
                 }
             }
         }
+    }
+
+    /// Rendert das aktuelle Bild on-demand für den ShareLink.
+    private func currentRenderedImage() -> UIImage? {
+        guard let backgroundImage else { return nil }
+        let ratio = backgroundImage.size.height / max(backgroundImage.size.width, 1)
+        let exportSize = CGSize(width: exportWidth, height: exportWidth * ratio)
+        let renderer = ImageRenderer(content: canvasView(size: exportSize))
+        renderer.scale = 1.0
+        return renderer.uiImage
     }
 
     // MARK: - Canvas (shared preview & export, normalized coords)
@@ -359,72 +369,71 @@ struct WorkoutPhotoShareSheet: View {
     // MARK: - Controls
 
     private var controls: some View {
-        VStack(spacing: Theme.Spacing.m) {
-            HStack {
-                Text("Farbe")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                ColorPicker("", selection: $overlayColor, supportsOpacity: false)
-                    .labelsHidden()
-                    .frame(width: 44, height: 36)
-            }
+        BentoCard(style: .outlined, padding: .lg, radius: .large) {
+            VStack(spacing: Theme.Spacing.m) {
+                HStack {
+                    BentoText(verbatim: "Farbe", style: .bodyStrong)
+                    Spacer()
+                    ColorPicker("", selection: $overlayColor, supportsOpacity: false)
+                        .labelsHidden()
+                        .frame(width: 44, height: 36)
+                }
 
-            HStack {
-                Text("Ausrichtung")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Picker("", selection: $overlayOrientation) {
-                    ForEach(OverlayOrientation.allCases) { o in
-                        Label(o.label, systemImage: o.icon).tag(o)
+                BentoDivider()
+
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    BentoText(verbatim: "Ausrichtung", style: .caption, color: .secondary)
+                    BentoSegmentedPicker(options: OverlayOrientation.allCases, selection: $overlayOrientation) { o in
+                        Text(verbatim: o.label)
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
-            }
 
-            HStack {
                 if backgroundImage != nil {
-                    PhotosPicker(selection: $photoItem, matching: .images) {
-                        Label("Bild ändern", systemImage: "photo")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.tint)
-                    }
-                }
-                Spacer()
-                if backgroundImage != nil {
-                    Button {
-                        resetPositions()
-                        Haptics.selection()
-                    } label: {
-                        Label("Zurücksetzen", systemImage: "arrow.counterclockwise")
-                            .font(.caption2.weight(.semibold))
-                    }
-                }
-            }
-
-            if backgroundImage != nil {
-                Label("Overlay ziehen zum Verschieben", systemImage: "hand.draw")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            if backgroundImage == nil {
-                PhotosPicker(selection: $photoItem, matching: .images) {
+                    BentoDivider()
                     HStack(spacing: Theme.Spacing.s) {
-                        Image(systemName: "photo.badge.plus")
-                        Text("Bild auswählen")
+                        PhotosPicker(selection: $photoItem, matching: .images) {
+                            BentoButton(
+                                Text("Bild ändern"),
+                                systemImage: "photo",
+                                variant: .secondary,
+                                size: .small
+                            ) {}
+                            .allowsHitTesting(false)
+                        }
+                        Spacer()
+                        BentoButton(
+                            Text("Zurücksetzen"),
+                            systemImage: "arrow.counterclockwise",
+                            variant: .ghost,
+                            size: .small
+                        ) {
+                            resetPositions()
+                            Haptics.selection()
+                        }
                     }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Theme.Spacing.m)
-                    .background(Capsule().fill(Color.accentColor))
-                    .foregroundStyle(.white)
+
+                    BentoBadge(
+                        Text("Overlay ziehen zum Verschieben"),
+                        tone: .info,
+                        systemImage: "hand.draw"
+                    )
                 }
-                .buttonStyle(.plain)
+
+                if backgroundImage == nil {
+                    PhotosPicker(selection: $photoItem, matching: .images) {
+                        BentoButton(
+                            Text("Bild auswählen"),
+                            systemImage: "photo.badge.plus",
+                            variant: .primary,
+                            expands: true
+                        ) {}
+                        .allowsHitTesting(false)
+                    }
+                }
             }
         }
-        .padding(Theme.Spacing.l)
-        .background(Color(.systemGroupedBackground))
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.bottom, Theme.Spacing.l)
     }
 
     // MARK: - Drag Gesture
@@ -438,23 +447,6 @@ struct WorkoutPhotoShareSheet: View {
                 overlayOffsetX += value.translation.width / canvasSize.width
                 overlayOffsetY += value.translation.height / canvasSize.height
             }
-    }
-
-    // MARK: - Export
-
-    private func exportImage() {
-        guard let backgroundImage else { return }
-        let ratio = backgroundImage.size.height / max(backgroundImage.size.width, 1)
-        let exportSize = CGSize(width: exportWidth, height: exportWidth * ratio)
-
-        let renderer = ImageRenderer(content:
-            canvasView(size: exportSize)
-        )
-        renderer.scale = 1.0
-        if let uiImage = renderer.uiImage {
-            shareItem = ShareItem(image: uiImage)
-            Haptics.success()
-        }
     }
 
     // MARK: - Helpers

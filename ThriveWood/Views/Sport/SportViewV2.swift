@@ -254,7 +254,7 @@ struct SportViewV2: View {
             exploreTile(title: "Insights", subtitle: "Analysen", icon: "chart.bar.xaxis", tone: .info) {
                 AnyView(SportInsightsView())
             }
-            exploreTile(title: "Muskeln", subtitle: "Ranking", icon: "figure.musculature.fill", tone: .warning) {
+            exploreTile(title: "Muskeln", subtitle: "Ranking", icon: "trophy.fill", tone: .warning) {
                 AnyView(MuscleRankingScreen())
             }
             exploreTile(title: "Übungen", subtitle: "Bibliothek", icon: "figure.strengthtraining.traditional", tone: .danger) {

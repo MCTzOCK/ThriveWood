@@ -19,7 +19,6 @@ struct WorkoutSummaryImageSheet: View {
     let session: WorkoutSession
 
     @State private var selectedDesign: SummaryDesign = .dark
-    @State private var shareItem: ShareItem?
     @State private var renderScale: CGFloat = 3.0
 
     private var data: SummaryData {
@@ -67,57 +66,29 @@ struct WorkoutSummaryImageSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            TabView(selection: $selectedDesign) {
-                ForEach(SummaryDesign.allCases) { design in
-                    ScrollView(.vertical, showsIndicators: true) {
+        GeometryReader { geo in
+            VStack(spacing: 0) {
+                TabView(selection: $selectedDesign) {
+                    ForEach(SummaryDesign.allCases) { design in
                         WorkoutSummaryImage(data: data, design: design)
-                            .padding(.vertical, Theme.Spacing.m)
+                            .frame(width: geo.size.width, height: geo.size.height - 140)
                     }
-                    .tag(design)
+                    .tag(selectedDesign)
                 }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-            .frame(maxHeight: .infinity)
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .indexViewStyle(.page(backgroundDisplayMode: .always))
+                .frame(maxWidth: .infinity)
 
-            bottomBar
-        }
-        .bentoSheet(
-            isPresented: Binding(
-                get: { shareItem != nil },
-                set: { if !$0 { shareItem = nil } }
-            ),
-            title: Text("Teilen"),
-            detents: [.medium]
-        ) {
-            if let item = shareItem {
-                WorkoutSummaryShareSheet(image: item.image)
+                bottomBar
             }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var bottomBar: some View {
         VStack(spacing: Theme.Spacing.s) {
-            Button {
-                let renderer = ImageRenderer(content: WorkoutSummaryImage(data: data, design: selectedDesign))
-                renderer.scale = renderScale
-                if let uiImage = renderer.uiImage {
-                    shareItem = ShareItem(image: uiImage)
-                    Haptics.success()
-                }
-            } label: {
-                HStack(spacing: Theme.Spacing.s) {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Bild teilen")
-                }
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Theme.Spacing.m)
-                .background(Capsule().fill(Color.accentColor))
-                .foregroundStyle(.white)
-            }
-            .buttonStyle(.plain)
+            shareButton
 
             HStack(spacing: Theme.Spacing.m) {
                 Text(selectedDesign.label)
@@ -132,6 +103,33 @@ struct WorkoutSummaryImageSheet: View {
         }
         .padding(Theme.Spacing.l)
         .background(Color(.systemGroupedBackground))
+    }
+
+    @ViewBuilder
+    private var shareButton: some View {
+        let rendered = renderImage()
+        if let rendered {
+            ShareLink(
+                item: Image(uiImage: rendered),
+                preview: SharePreview(session.workout?.name ?? "Workout", image: Image(uiImage: rendered))
+            ) {
+                HStack(spacing: Theme.Spacing.s) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Bild teilen")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Theme.Spacing.m)
+                .background(Capsule().fill(Color.accentColor))
+                .foregroundStyle(.white)
+            }
+        }
+    }
+
+    private func renderImage() -> UIImage? {
+        let renderer = ImageRenderer(content: WorkoutSummaryImage(data: data, design: selectedDesign))
+        renderer.scale = renderScale
+        return renderer.uiImage
     }
 
     private func qualityButton(label: String, scale: CGFloat, selected: Bool) -> some View {
