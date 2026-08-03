@@ -38,6 +38,10 @@ struct BentoHabitRowView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
         }
+        // Card strikt an die Spaltenbreite der adaptive grid halten — kein
+        // horizontal fixedSize, sodass lange Wörter umbrechen statt die
+        // Nachbar-Karte zu überlappen.
+        .fixedSize(horizontal: false, vertical: true)
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") { onEdit() }
             Button("Archivieren", systemImage: "archivebox", role: .destructive) { onEdit() }
@@ -52,7 +56,7 @@ struct BentoHabitRowView: View {
     private var headerRow: some View {
         HStack {
             iconBadge
-            Spacer()
+            Spacer(minLength: 0)
             if showsEditButton {
                 editButton
             }
@@ -110,6 +114,8 @@ struct BentoHabitRowView: View {
             .strikethrough(isCompleted && !habit.isMeasurable, color: theme.colors.background.opacity(0.7))
             .lineLimit(2)
             .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
         if habit.isMeasurable, let p = progress {
             BentoText(
@@ -117,6 +123,8 @@ struct BentoHabitRowView: View {
                 style: .caption,
                 color: theme.colors.background.opacity(0.85)
             )
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
