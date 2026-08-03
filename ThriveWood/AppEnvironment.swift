@@ -22,6 +22,7 @@ final class AppEnvironment {
     let profileRepo: any UserProfileRepository
     let achievementRepo: AchievementRepository
     let bodyProgressRepo: BodyProgressRepository
+    let routineRepo: any HabitRoutineRepository
     
     let foodRepo: FoodRepository
     let foodEntryRepo: FoodEntryRepository
@@ -77,6 +78,7 @@ final class AppEnvironment {
         self.bodyProgressRepo = SwiftDataBodyProgressRepository(context: context)
         self.gymRepo = SwiftDataGymRepository(context: context)
         self.groupRepo = SwiftDataHabitGroupRepository(context: context)
+        self.routineRepo = SwiftDataHabitRoutineRepository(context: context)
 
 
         self.habitRepo = habitRepo
@@ -167,12 +169,14 @@ final class AppEnvironment {
     func archiveHabit(_ habit: Habit) async throws {
         try habitRepo.archive(habit)
         try groupRepo.removeHabitFromAllGroups(habit.id)
+        try routineRepo.removeHabitFromAllRoutines(habit.id)
         try await notificationService.cancelReminders(for: habit)
     }
     
     func deleteHabit(_ habit: Habit) async throws {
         try await notificationService.cancelReminders(for: habit)
         try groupRepo.removeHabitFromAllGroups(habit.id)
+        try routineRepo.removeHabitFromAllRoutines(habit.id)
         try habitRepo.delete(habit)
     }
 

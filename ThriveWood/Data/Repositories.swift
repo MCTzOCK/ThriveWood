@@ -701,6 +701,50 @@ final class SwiftDataHabitGroupRepository: SwiftDataRepository, HabitGroupReposi
     }
 }
 
+// MARK: - HabitRoutine
+
+@MainActor
+final class SwiftDataHabitRoutineRepository: SwiftDataRepository, HabitRoutineRepository {
+    func fetchAll() throws -> [HabitRoutine] {
+        try context.fetch(FetchDescriptor<HabitRoutine>(
+            sortBy: [SortDescriptor(\.sortOrder), SortDescriptor(\.createdAt)]
+        ))
+    }
+
+    func fetch(id: UUID) throws -> HabitRoutine? {
+        var d = FetchDescriptor<HabitRoutine>(predicate: #Predicate { $0.id == id })
+        d.fetchLimit = 1
+        return try context.fetch(d).first
+    }
+
+    func create(_ routine: HabitRoutine) throws {
+        guard !routine.title.trimmingCharacters(in: .whitespaces).isEmpty
+        else { throw RepositoryError.invalidInput("Titel darf nicht leer sein.") }
+        context.insert(routine)
+        try save()
+    }
+
+    func update(_ routine: HabitRoutine) throws { try save() }
+
+    func delete(_ routine: HabitRoutine) throws {
+        context.delete(routine)
+        try save()
+    }
+
+    func reorder(_ routines: [HabitRoutine]) throws {
+        for (index, routine) in routines.enumerated() { routine.sortOrder = index }
+        try save()
+    }
+
+    func removeHabitFromAllRoutines(_ habitID: UUID) throws {
+        let all = try fetchAll()
+        for routine in all where routine.habitIDs.contains(habitID) {
+            routine.habitIDs.removeAll { $0 == habitID }
+        }
+        if context.hasChanges { try save() }
+    }
+}
+
 // MARK: - Gym
 
 @MainActor

@@ -103,3 +103,14 @@ protocol HabitGroupRepository {
     func removeHabitFromAllGroups(_ habitID: UUID) throws
     func groupForHabit(_ habitID: UUID) throws -> HabitGroup?
 }
+
+protocol HabitRoutineRepository {
+    func fetchAll() throws -> [HabitRoutine]
+    func fetch(id: UUID) throws -> HabitRoutine?
+    func create(_ routine: HabitRoutine) throws
+    func update(_ routine: HabitRoutine) throws
+    func delete(_ routine: HabitRoutine) throws
+    func reorder(_ routines: [HabitRoutine]) throws
+    /// Entfernt die Habit-ID aus allen Routinen (Auto-Cleanup beim Archivieren/Löschen).
+    func removeHabitFromAllRoutines(_ habitID: UUID) throws
+}

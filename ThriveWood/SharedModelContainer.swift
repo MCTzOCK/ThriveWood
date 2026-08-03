@@ -17,6 +17,7 @@ enum SharedModelContainer {
             Habit.self,
             HabitCompletion.self,
             HabitGroup.self,
+            HabitRoutine.self,
             Forest.self,
             TreeEntity.self,
             UserProfile.self,
