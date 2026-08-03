@@ -191,13 +191,23 @@ struct RoutineRunView: View {
         BentoCard(tone: .accent, style: .elevated, padding: .lg, radius: .extraLarge) {
             VStack(alignment: .leading, spacing: theme.spacing.md) {
                 HStack(spacing: theme.spacing.lg) {
-                    BentoProgressRing(
-                        progress: vm.overallProgress,
-                        tone: .accent,
-                        size: 76,
-                        lineWidth: 8,
-                        label: Text(verbatim: "\(Int(vm.overallProgress * 100))%")
-                    )
+                    ZStack {
+                        Circle()
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 8)
+                        Circle()
+                            .trim(from: 0, to: max(0.001, vm.overallProgress))
+                            .stroke(
+                                Color.secondary,
+                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                            )
+                            .rotationEffect(.degrees(-90))
+                            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: vm.overallProgress)
+                        Text(verbatim: "\(Int(vm.overallProgress * 100))%")
+                            .font(.headline)
+                            .foregroundStyle(Color.secondary)
+                            .contentTransition(.numericText())
+                    }
+                    .frame(width: 76, height: 76)
 
                     VStack(alignment: .leading, spacing: theme.spacing.xs) {
                         BentoText(
