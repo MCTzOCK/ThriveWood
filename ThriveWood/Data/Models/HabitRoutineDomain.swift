@@ -18,6 +18,10 @@ final class HabitRoutine {
     var colorRaw: String
     /// Geordnete Liste der Habit-IDs in dieser Routine.
     var habitIDs: [UUID]
+    /// Optionaler Routine-Zielwert pro messbarem Habit (UUID -> Wert).
+    /// Fehlt der Eintrag oder ist 0, gilt das Tagesziel des Habits.
+    /// Wird nicht geordnet — `habitIDs` ist die Quell-Wahrheit für die Reihenfolge.
+    var habitTargets: [UUID: Double] = [:]
     var sortOrder: Int
     var createdAt: Date
 
@@ -27,6 +31,7 @@ final class HabitRoutine {
         iconSystemName: String = "sun.max.fill",
         color: HabitColor = .orange,
         habitIDs: [UUID] = [],
+        habitTargets: [UUID: Double] = [:],
         sortOrder: Int = 0,
         createdAt: Date = .now
     ) {
@@ -35,6 +40,7 @@ final class HabitRoutine {
         self.iconSystemName = iconSystemName
         self.colorRaw = color.rawValue
         self.habitIDs = habitIDs
+        self.habitTargets = habitTargets
         self.sortOrder = sortOrder
         self.createdAt = createdAt
     }

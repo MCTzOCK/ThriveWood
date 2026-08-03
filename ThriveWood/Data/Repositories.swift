@@ -738,8 +738,9 @@ final class SwiftDataHabitRoutineRepository: SwiftDataRepository, HabitRoutineRe
 
     func removeHabitFromAllRoutines(_ habitID: UUID) throws {
         let all = try fetchAll()
-        for routine in all where routine.habitIDs.contains(habitID) {
+        for routine in all where routine.habitIDs.contains(habitID) || routine.habitTargets[habitID] != nil {
             routine.habitIDs.removeAll { $0 == habitID }
+            routine.habitTargets[habitID] = nil
         }
         if context.hasChanges { try save() }
     }
