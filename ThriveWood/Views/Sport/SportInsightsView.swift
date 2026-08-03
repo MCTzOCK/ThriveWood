@@ -64,24 +64,18 @@ struct SportInsightsView: View {
             }
         }
         .bentoSheet(isPresented: $showingAll1RM, title: Text("Geschätztes 1RM"), detents: [.large]) {
-            NavigationStack {
-                AllExercisesList(title: "Geschätztes 1RM — Alle Übungen") {
-                    computeEstimated1RM(limit: 999)
-                }
+            AllExercisesList(title: "Geschätztes 1RM — Alle Übungen") {
+                computeEstimated1RM(limit: 999)
             }
         }
         .bentoSheet(isPresented: $showingAllOverload, title: Text("Progressive Overload"), detents: [.large]) {
-            NavigationStack {
-                AllOverloadList(title: "Progressive Overload — Alle Übungen") {
-                    computeProgressiveOverload()
-                }
+            AllOverloadList(title: "Progressive Overload — Alle Übungen") {
+                computeProgressiveOverload()
             }
         }
         .bentoSheet(isPresented: $showingAllTopExercises, title: Text("Top Übungen"), detents: [.large]) {
-            NavigationStack {
-                AllTopExercisesList(title: "Top Übungen — Alle") {
-                    computeTopExercises(limit: 999)
-                }
+            AllTopExercisesList(title: "Top Übungen — Alle") {
+                computeTopExercises(limit: 999)
             }
         }
     }
@@ -913,6 +907,10 @@ private struct InsightCard<Content: View>: View {
                 }
                 content()
             }
+            // Verhindert, dass breite Charts (intrinsische Mindestbreite)
+            // die Karten- und damit Screen-Breite überschreiten und ein
+            // ungewolltes horizontales Scrollen auslösen.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Theme.Spacing.l)
     }
@@ -923,7 +921,6 @@ private struct InsightCard<Content: View>: View {
 private struct AllTopExercisesList: View {
     let title: String
     let items: [TopExercise]
-    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [TopExercise]) {
         self.title = title
@@ -936,8 +933,12 @@ private struct AllTopExercisesList: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.s) {
+        LazyVStack(spacing: Theme.Spacing.s) {
+            if items.isEmpty {
+                Text("Keine Daten vorhanden.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+            } else {
                 ForEach(items, id: \.name) { item in
                     HStack(spacing: Theme.Spacing.m) {
                         Text("#\(item.rank)")
@@ -954,20 +955,11 @@ private struct AllTopExercisesList: View {
                     }
                     .padding(Theme.Spacing.m)
                     .cardStyle()
-                    .padding(.horizontal, Theme.Spacing.l)
                 }
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Schließen") { dismiss() }
-            }
-        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.bottom, Theme.Spacing.xl)
     }
 }
 
@@ -999,7 +991,6 @@ private struct QuickStatTile: View {
 private struct AllExercisesList: View {
     let title: String
     let items: [E1RM]
-    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [E1RM]) {
         self.title = title
@@ -1012,8 +1003,12 @@ private struct AllExercisesList: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.s) {
+        LazyVStack(spacing: Theme.Spacing.s) {
+            if items.isEmpty {
+                Text("Noch keine Sätze mit Gewicht erfasst.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+            } else {
                 ForEach(items, id: \.name) { item in
                     HStack {
                         Text(item.name)
@@ -1029,20 +1024,11 @@ private struct AllExercisesList: View {
                     }
                     .padding(Theme.Spacing.m)
                     .cardStyle()
-                    .padding(.horizontal, Theme.Spacing.l)
                 }
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Schließen") { dismiss() }
-            }
-        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.bottom, Theme.Spacing.xl)
     }
 }
 
@@ -1051,7 +1037,6 @@ private struct AllExercisesList: View {
 private struct AllOverloadList: View {
     let title: String
     let items: [OverloadItem]
-    @Environment(\.dismiss) private var dismiss
 
     init(title: String, items: [OverloadItem]) {
         self.title = title
@@ -1064,8 +1049,12 @@ private struct AllOverloadList: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.s) {
+        LazyVStack(spacing: Theme.Spacing.s) {
+            if items.isEmpty {
+                Text("Noch nicht genug Daten für einen Vergleich.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+            } else {
                 ForEach(items, id: \.name) { item in
                     HStack(spacing: Theme.Spacing.m) {
                         Text(item.name)
@@ -1082,19 +1071,10 @@ private struct AllOverloadList: View {
                     }
                     .padding(Theme.Spacing.m)
                     .cardStyle()
-                    .padding(.horizontal, Theme.Spacing.l)
                 }
             }
-            .padding(.vertical, Theme.Spacing.l)
-            .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Schließen") { dismiss() }
-            }
-        }
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.bottom, Theme.Spacing.xl)
     }
 }
