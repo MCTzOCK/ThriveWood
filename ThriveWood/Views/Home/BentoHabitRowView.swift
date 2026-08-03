@@ -36,10 +36,13 @@ struct BentoHabitRowView: View {
                 Spacer(minLength: 0)
                 bottomRow
             }
-            // 1:1 Aspect-Ratio: alle Kacheln exakt gleich groß & quadratisch.
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-            .aspectRatio(1, contentMode: .fit)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        // 1:1 Aspect-Ratio AUF der fertigen Karte (außerhalb des BentoCard-
+        // Containers): jede Kachel wird exakt quadratisch und damit alle
+        // exakt gleich groß — unabhängig vom Inhalt. Die Breite liefert die
+        // adaptive Grid-Spalte, die Höhe wird daraus berechnet.
+        .aspectRatio(1, contentMode: .fit)
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") { onEdit() }
             Button("Archivieren", systemImage: "archivebox", role: .destructive) { onEdit() }
@@ -133,17 +136,19 @@ struct BentoHabitRowView: View {
 
     private var bottomRow: some View {
         HStack(spacing: 6) {
-            BentoBadge(
-                Text("\(habit.points.rawValue)"),
-                tone: .neutral,
-                systemImage: "leaf.fill"
-            )
-            if streak > 0 {
+            VStack(spacing: 4) {
                 BentoBadge(
-                    Text("\(streak)"),
-                    tone: .warning,
-                    systemImage: "flame.fill"
+                    Text("\(habit.points.rawValue)"),
+                    tone: .neutral,
+                    systemImage: "leaf.fill"
                 )
+                if streak > 0 {
+                    BentoBadge(
+                        Text("\(streak)"),
+                        tone: .warning,
+                        systemImage: "flame.fill"
+                    )
+                }
             }
 
             Spacer()
