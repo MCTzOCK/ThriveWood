@@ -1036,15 +1036,22 @@ final class SwiftDataCompanionRepository: SwiftDataRepository, CompanionReposito
     func update(_ companion: Companion) throws { try save() }
 
     func choose(species: CompanionSpecies, name: String) throws -> Companion {
-        // Bestehende Companion entfernen (nur eins pro User).
-        let d = FetchDescriptor<Companion>()
-        for existing in try context.fetch(d) { context.delete(existing) }
-
+        // Bestehenden Companion aktualisieren (nicht löschen!), damit Coins,
+        // Accessoires, Evolution und Zutrauen erhalten bleiben — nur die Art
+        // und der Name wechseln.
+        let d = FetchDescriptor<Companion>(sortBy: [SortDescriptor(\.createdAt)])
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        let companion = Companion(
-            species: species,
-            name: trimmed.isEmpty ? species.defaultName : trimmed
-        )
+        let displayName = trimmed.isEmpty ? species.defaultName : trimmed
+
+        if let existing = try context.fetch(d).first {
+            existing.speciesRaw = species.rawValue
+            existing.name = displayName
+            try save()
+            return existing
+        }
+
+        // Noch keiner vorhanden → neuen anlegen.
+        let companion = Companion(species: species, name: displayName)
         context.insert(companion)
         try save()
         return companion

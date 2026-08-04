@@ -495,7 +495,19 @@ final class CompanionService {
 
     @discardableResult
     func choose(species: CompanionSpecies, name: String) throws -> Companion {
+        // Vorherige Art merken, um einen realistischen Bond-Reset zu machen,
+        // wenn wirklich die Art gewechselt wird (neues Wesen = fremd).
+        let previousSpecies = (try? repo.currentCompanion().species)
+        let isSpeciesChange = previousSpecies != nil && previousSpecies != species
+
         let c = try repo.choose(species: species, name: name)
+        // Bei einem echten Art-Wechsel startet das neue Wesen mit etwas
+        // weniger Zutrauen (es muss sich erst an dich gewöhnen) — aber Coins,
+        // Accessoires, Evolution und Bedürfnisse bleiben komplett erhalten.
+        if isSpeciesChange {
+            c.bond = min(c.bond, 30)
+            try? repo.update(c)
+        }
         syncSnapshot()
         return c
     }
