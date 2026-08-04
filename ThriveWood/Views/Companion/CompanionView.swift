@@ -75,6 +75,9 @@ struct CompanionView: View {
                     Haptics.impact(.soft)
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { petBounce.toggle() }
                     reactionTrigger &+= 1
+                    // Sofort-Reaktionssprechblase.
+                    let line = service.reactionSpeech(for: .pet)
+                    service.setSpeechBubble(line)
                 }
             } label: {
                 CompanionCreature(
@@ -107,6 +110,7 @@ struct CompanionView: View {
 
     private func speechBubble(_ text: String) -> some View {
         Text(text)
+            .foregroundStyle(.black)
             .font(Theme.Typography.callout)
             .padding(.horizontal, theme.spacing.md)
             .padding(.vertical, theme.spacing.sm)
@@ -183,32 +187,74 @@ struct CompanionView: View {
     private var actionsCard: some View {
         BentoCard(style: .elevated, padding: .lg) {
             VStack(alignment: .leading, spacing: theme.spacing.sm) {
-                BentoText(verbatim: "Pflege", style: .headline)
+                HStack {
+                    BentoText(verbatim: "Pflege", style: .headline)
+                    Spacer()
+                    HStack(spacing: theme.spacing.xxs) {
+                        Image(systemName: "coin.fill").foregroundStyle(.yellow)
+                            .font(Theme.Typography.caption)
+                        Text(verbatim: "\(service.coins)")
+                            .font(Theme.Typography.caption.weight(.semibold).monospacedDigit())
+                            .contentTransition(.numericText())
+                    }
+                }
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: theme.spacing.sm) {
-                    careButton(.hunger, icon: "fork.knife", label: "Füttern") { service.feed() }
-                    careButton(.hygiene, icon: "drop.degreesign", label: "Pflegen") { service.clean() }
-                    careButton(.fun, icon: "tennisball.fill", label: "Spielen") { service.play() }
-                    careButton(.bond, icon: "hand.draw.fill", label: "Streicheln") { service.pet() }
+                    careButton(.feed)
+                    careButton(.clean)
+                    careButton(.play)
+                    careButton(.pet)
                 }
             }
         }
     }
 
     @ViewBuilder
-    private func careButton(_ need: CompanionNeed, icon: String, label: String, action: @escaping () -> Bool) -> some View {
-        let cd = service.cooldownRemaining(for: need)
-        let active = cd <= 0
+    private func careButton(_ action: CompanionCareAction) -> some View {
+        let cd = service.cooldownRemaining(for: action.need)
+        let cost = action.coinCost
+        let affordable = service.coins >= cost
+        let active = cd <= 0 && affordable
         BentoButton(
-            Text(verbatim: label),
-            systemImage: icon,
+            Text(verbatim: action.label),
+            systemImage: action.icon,
             variant: active ? .secondary : .ghost,
             expands: true
         ) {
-            let ok = action()
-            if ok { reactionTrigger &+= 1 } else { Haptics.warning() }
+            let ok: Bool
+            switch action {
+            case .feed:  ok = service.feed()
+            case .clean: ok = service.clean()
+            case .play:  ok = service.play()
+            case .pet:   ok = service.pet()
+            }
+            if ok {
+                reactionTrigger &+= 1
+                // Sofort-Reaktionssprechblase (umgeht Throttle).
+                let line = service.reactionSpeech(for: action)
+                service.setSpeechBubble(line)
+            } else {
+                Haptics.warning()
+            }
         }
         .disabled(!active)
+        .overlay(alignment: .topTrailing) {
+            // Kosten-Badge (nur wenn nicht 0).
+            if cost > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: "coin.fill")
+                        .font(Theme.Typography.caption2)
+                        .foregroundStyle(affordable ? .yellow : .secondary)
+                    Text(verbatim: "\(cost)")
+                        .font(Theme.Typography.caption2.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(affordable ? .primary : .secondary)
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(theme.colors.surfaceSecondary))
+                .padding(6)
+            }
+        }
         .overlay(alignment: .bottomTrailing) {
             if cd > 0 {
                 Text(verbatim: "\(Int(cd))s")

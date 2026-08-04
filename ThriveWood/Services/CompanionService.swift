@@ -49,6 +49,12 @@ final class CompanionService {
         static let coinsPerWorkout: Int = 10
         static let coinsPerDailyGoal: Int = 20
         static let coinsPerLogin: Int = 2
+        /// Kosten der Pflegaktionen in Coins. Streicheln bleibt kostenlos
+        /// (reine Zutrauens-Aktion). Die anderen erzeugen eine Währungssenke,
+        /// damit Coins nicht nur ausgegeben, sondern auch verbraucht werden.
+        static let feedCost: Int = 3
+        static let cleanCost: Int = 4
+        static let playCost: Int = 3
 
         // Speech
         static let speechThrottle: TimeInterval = 60
@@ -89,6 +95,9 @@ final class CompanionService {
     private(set) var lastPettedAt: Date = .distantPast
     /// Letzte Reaktion (für Animations-Trigger im Tier). nil = keine.
     private(set) var lastReaction: CompanionReaction? = nil
+    /// Letzte Pflegaktion (für die sofortige Reaktions-Sprechblase in der UI).
+    /// nil = keine. Wird von der UI nach kurzer Zeit ignoriert.
+    private(set) var lastCareAction: CompanionCareAction? = nil
     /// Monoton wachsender Trigger — Views können darauf .animation(value:)
     /// setzen, um auf jegliche Companion-Änderung zu reagieren.
     private(set) var revision: Int = 0
@@ -304,11 +313,10 @@ final class CompanionService {
 
     // MARK: - Pflege-Aktionen (Haustier)
 
-    /// Füttern. Kostet nichts (Punkte-sink via Wald bleibt getrennt), füllt
-    /// Hunger + kleines Bond. Cooldown-gated.
+    /// Füttern. Kostet Coins, füllt Hunger + kleines Bond. Cooldown-gated.
     @discardableResult
     func feed() -> Bool {
-        let ok = performCare(\.lastFedAt, cooldown: Config.feedCooldown) { c in
+        let ok = performCare(\.lastFedAt, cooldown: Config.feedCooldown, coinCost: Config.feedCost, action: .feed) { c in
             c.hunger = min(Config.cap, c.hunger + Config.feedAmount)
             c.bond = min(Config.cap, c.bond + Config.feedBondGain)
             c.lastFedAt = .now
@@ -317,10 +325,10 @@ final class CompanionService {
         return ok
     }
 
-    /// Pflegen (baden/bürsten). Füllt Hygiene + kleines Bond.
+    /// Pflegen (baden/bürsten). Kostet Coins, füllt Hygiene + kleines Bond.
     @discardableResult
     func clean() -> Bool {
-        let ok = performCare(\.lastCleanedAt, cooldown: Config.cleanCooldown) { c in
+        let ok = performCare(\.lastCleanedAt, cooldown: Config.cleanCooldown, coinCost: Config.cleanCost, action: .clean) { c in
             c.hygiene = min(Config.cap, c.hygiene + Config.cleanAmount)
             c.bond = min(Config.cap, c.bond + Config.cleanBondGain)
             c.lastCleanedAt = .now
@@ -329,10 +337,10 @@ final class CompanionService {
         return ok
     }
 
-    /// Spielen. Füllt Fun + Bond.
+    /// Spielen. Kostet Coins, füllt Fun + Bond.
     @discardableResult
     func play() -> Bool {
-        let ok = performCare(\.lastPlayedAt, cooldown: Config.playCooldown) { c in
+        let ok = performCare(\.lastPlayedAt, cooldown: Config.playCooldown, coinCost: Config.playCost, action: .play) { c in
             c.fun = min(Config.cap, c.fun + Config.playAmount)
             c.bond = min(Config.cap, c.bond + Config.playBondGain)
             c.lastPlayedAt = .now
@@ -341,10 +349,10 @@ final class CompanionService {
         return ok
     }
 
-    /// Streicheln. Kurzer Cooldown, steigert nur Bond.
+    /// Streicheln. Kostenlos (reine Zutrauens-Aktion), kurzer Cooldown.
     @discardableResult
     func pet() -> Bool {
-        let ok = performCare(\.lastPettedAt, cooldown: Config.petCooldown) { c in
+        let ok = performCare(\.lastPettedAt, cooldown: Config.petCooldown, coinCost: 0, action: .pet) { c in
             c.bond = min(Config.cap, c.bond + Config.petBondGain)
             c.lastPettedAt = .now
         }
@@ -352,15 +360,18 @@ final class CompanionService {
         return ok
     }
 
-    /// Generische Care-Aktion mit Cooldown. `true` bei Erfolg, `false` wenn
-    /// noch im Cooldown (UI kann Feedback geben).
+    /// Generische Care-Aktion mit Cooldown + Coin-Kosten. `true` bei Erfolg,
+    /// `false` wenn im Cooldown oder zu wenige Coins (UI gibt Feedback).
     @discardableResult
-    private func performCare(_ keyPath: ReferenceWritableKeyPath<Companion, Date>, cooldown: TimeInterval, mutate: (Companion) -> Void) -> Bool {
+    private func performCare(_ keyPath: ReferenceWritableKeyPath<Companion, Date>, cooldown: TimeInterval, coinCost: Int, action: CompanionCareAction, mutate: (Companion) -> Void) -> Bool {
         do {
             let c = try repo.currentCompanion()
             let last = c[keyPath: keyPath]
             if Date().timeIntervalSince(last) < cooldown { return false }
+            if c.coins < coinCost { return false }
+            c.coins -= coinCost
             mutate(c)
+            lastCareAction = action
             try repo.update(c)
             syncSnapshot()
             Haptics.impact(.soft)
@@ -418,6 +429,25 @@ final class CompanionService {
     var canSpeak: Bool {
         guard let c = try? repo.currentCompanion() else { return true }
         return Date().timeIntervalSince(c.lastSpeechAt) >= Config.speechThrottle
+    }
+
+    /// Liefert eine **sofortige** Reaktions-Sprechblase nach einer Pflegaktion
+    /// (umgeht das Throttle — die Bestätigung soll sofort kommen). Greift auf
+    /// statische Templates zurück, kein AI-Call (schnell + vorhersehbar).
+    func reactionSpeech(for action: CompanionCareAction) -> String {
+        let name = (try? repo.currentCompanion().name) ?? ""
+        let pool: [String]
+        switch action {
+        case .feed:
+            pool = ["Mhhh, lecker! Danke! 😋", "Das hat gutgetan!", "\(name) ist satt und glücklich.", "Yummy!"]
+        case .clean:
+            pool = ["Puuh, viel besser! 🫧", "Jetzt bin ich wieder frisch!", "Das hat genötigt … aber danke!", "Blitzsauber!"]
+        case .play:
+            pool = ["Jaaaa, das war lustig! 🎉", "Nochmal! Nochmal!", "Ich liebe es, mit dir zu spielen!", "Das war toll!"]
+        case .pet:
+            pool = ["Ich liebe deine Streicheleinheiten ❤️", "Schnurr …", "Fühl mich so geborgen bei dir.", "Mehr davon!"]
+        }
+        return pool.randomElement() ?? pool[0]
     }
 
     // MARK: - Shop
@@ -515,6 +545,49 @@ enum CompanionReaction: Sendable {
         case .bubbles: return "🫧"
         case .plays:   return "🎉"
         case .happy:   return "✨"
+        }
+    }
+}
+
+// MARK: - Care Action Type
+
+/// Pflegaktion-Arten (für Sofort-Sprechblasen + UI-Helfer).
+enum CompanionCareAction: Sendable {
+    case feed, clean, play, pet
+
+    var need: CompanionNeed {
+        switch self {
+        case .feed:  return .hunger
+        case .clean: return .hygiene
+        case .play:  return .fun
+        case .pet:   return .bond
+        }
+    }
+
+    var coinCost: Int {
+        switch self {
+        case .feed:  return CompanionService.Config.feedCost
+        case .clean: return CompanionService.Config.cleanCost
+        case .play:  return CompanionService.Config.playCost
+        case .pet:   return 0
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .feed:  return "fork.knife"
+        case .clean: return "drop.degreesign"
+        case .play:  return "tennisball.fill"
+        case .pet:   return "hand.draw.fill"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .feed:  return "Füttern"
+        case .clean: return "Pflegen"
+        case .play:  return "Spielen"
+        case .pet:   return "Streicheln"
         }
     }
 }

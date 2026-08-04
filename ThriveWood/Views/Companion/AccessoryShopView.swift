@@ -55,13 +55,17 @@ struct AccessoryShopView: View {
         BentoCard(style: .outlined, padding: .md) {
             VStack(spacing: theme.spacing.xs) {
                 // Vorschau: Tier mit Accessoire.
+                // Vorschau immer mit Accessoire — auch vor dem Kauf, damit der
+                // User sieht, was er kauft. Nicht-besitzte Items werden leicht
+                // transparent, um den Besitz-Status zu signalisieren.
                 CompanionCreature(
                     species: service.species.kitType,
                     stage: service.stage.kitType,
                     mood: service.mood.kitType,
                     size: 70,
-                    accessory: owned ? item.asset.kitType : nil
+                    accessory: item.asset.kitType
                 )
+                .opacity(owned ? 1.0 : 0.85)
 
                 Text(item.name).font(Theme.Typography.caption.weight(.semibold))
                     .lineLimit(1)
