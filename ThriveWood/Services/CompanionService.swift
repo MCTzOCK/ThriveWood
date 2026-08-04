@@ -18,13 +18,40 @@ final class CompanionService {
 
     /// Tunbare Energie-Regeln (finetunbar).
     enum Config {
-        static let energyCap: Double = 100
+        static let cap: Double = 100
         static let habitGain: Double = 6
         static let workoutGain: Double = 12
         static let dailyGoalBonus: Double = 15
         static let loginBonus: Double = 3
         /// Verfall pro verpassten Tag (ab Tag 2 der Inaktivität).
         static let dailyDecay: Double = 8
+
+        // Haustier-Bedürfnisse
+        /// Bedürfnis-Verfall pro verpassten Tag (Hunger/Hygiene/Fun).
+        static let dailyNeedDecay: Double = 15
+        /// Wie viel eine Pflegaktion auffüllt (0...100).
+        static let feedAmount: Double = 35
+        static let cleanAmount: Double = 40
+        static let playAmount: Double = 35
+        static let petBondGain: Double = 4
+        /// Wie viel Bond andere Aktionen geben.
+        static let feedBondGain: Double = 1.5
+        static let cleanBondGain: Double = 1.0
+        static let playBondGain: Double = 2.0
+        /// Cooldowns für Pflegaktionen (Sekunden).
+        static let feedCooldown: TimeInterval = 60
+        static let cleanCooldown: TimeInterval = 60
+        static let playCooldown: TimeInterval = 60
+        static let petCooldown: TimeInterval = 5
+
+        // Coins
+        static let coinsPerHabit: Int = 5
+        static let coinsPerWorkout: Int = 10
+        static let coinsPerDailyGoal: Int = 20
+        static let coinsPerLogin: Int = 2
+
+        // Speech
+        static let speechThrottle: TimeInterval = 60
     }
 
     /// `true`, sobald mindestens eine Energie-Änderung ausgelöst wurde
@@ -35,12 +62,33 @@ final class CompanionService {
     /// Änderung aktualisiert, sodass Views (z.B. CompanionCard) live
     /// reagieren, ohne manuell neu laden zu müssen.
     private(set) var energy: Double = 60
+    private(set) var hunger: Double = 80
+    private(set) var hygiene: Double = 80
+    private(set) var fun: Double = 80
+    private(set) var bond: Double = 20
     private(set) var name: String = ""
     private(set) var species: CompanionSpecies = .fox
     private(set) var stage: CompanionStage = .seedling
     private(set) var activeDaysTotal: Int = 0
     private(set) var mood: CompanionMood = .content
     private(set) var decayPaused: Bool = false
+    private(set) var coins: Int = 0
+    private(set) var ownedAccessoryIDs: [String] = []
+    private(set) var equippedAccessoryID: String? = nil
+    /// Aktuelle Sprechblase (AI-generiert oder Template). nil = keine sichtbar.
+    private(set) var speechBubble: String? = nil
+    /// Das aktuell ausgerüstete Accessoire (aufgelöst aus equippedAccessoryID).
+    var equippedAccessory: AccessoryCatalogItem? {
+        guard let raw = equippedAccessoryID else { return nil }
+        return AccessoryCatalogItem.item(rawID: raw)
+    }
+    /// Letzte Pflegaktion-Zeitstempel (für Cooldown-Anzeige in der UI).
+    private(set) var lastFedAt: Date = .distantPast
+    private(set) var lastCleanedAt: Date = .distantPast
+    private(set) var lastPlayedAt: Date = .distantPast
+    private(set) var lastPettedAt: Date = .distantPast
+    /// Letzte Reaktion (für Animations-Trigger im Tier). nil = keine.
+    private(set) var lastReaction: CompanionReaction? = nil
     /// Monoton wachsender Trigger — Views können darauf .animation(value:)
     /// setzen, um auf jegliche Companion-Änderung zu reagieren.
     private(set) var revision: Int = 0
@@ -58,12 +106,23 @@ final class CompanionService {
     private func syncSnapshot() {
         guard let c = try? repo.currentCompanion() else { return }
         energy = c.energy
+        hunger = c.hunger
+        hygiene = c.hygiene
+        fun = c.fun
+        bond = c.bond
         name = c.name
         species = c.species
         activeDaysTotal = c.activeDaysTotal
         stage = CompanionStage.stage(forActiveDays: c.activeDaysTotal)
-        mood = CompanionMood.mood(forEnergy: c.energy)
+        mood = c.mood
         decayPaused = c.decayPaused
+        coins = c.coins
+        ownedAccessoryIDs = c.ownedAccessoryIDs
+        equippedAccessoryID = c.equippedAccessoryID
+        lastFedAt = c.lastFedAt
+        lastCleanedAt = c.lastCleanedAt
+        lastPlayedAt = c.lastPlayedAt
+        lastPettedAt = c.lastPettedAt
         revision &+= 1
     }
 
@@ -72,17 +131,31 @@ final class CompanionService {
     /// Habit erledigt (toggle oder increment-Schritt, der ≥0 Punkte bringt).
     func feedHabit(pointsDelta: Int) {
         guard pointsDelta > 0 else { return }
-        apply(gain: Config.habitGain)
+        apply(gain: Config.habitGain) { c in
+            // Ein erledigter Habit beschäftigt das Tier leicht + kleines
+            // Zutrauen durch die gemeinsame Routine.
+            c.fun = min(Config.cap, c.fun + 3)
+            c.bond = min(Config.cap, c.bond + 0.5)
+            c.coins &+= Config.coinsPerHabit
+        }
     }
 
     /// Workout abgeschlossen.
     func feedWorkout() {
-        apply(gain: Config.workoutGain)
+        apply(gain: Config.workoutGain) { c in
+            c.fun = min(Config.cap, c.fun + 8)
+            c.bond = min(Config.cap, c.bond + 1.0)
+            c.coins &+= Config.coinsPerWorkout
+        }
     }
 
     /// Tagesziel erreicht — zusätzlicher Bonus.
     func onDailyGoalReached() {
-        apply(gain: Config.dailyGoalBonus)
+        apply(gain: Config.dailyGoalBonus) { c in
+            c.fun = min(Config.cap, c.fun + 5)
+            c.bond = min(Config.cap, c.bond + 2.0)
+            c.coins &+= Config.coinsPerDailyGoal
+        }
     }
 
     /// Täglicher Login-Bonus (einmal pro Tag). Aufruf beim App-Start.
@@ -94,11 +167,12 @@ final class CompanionService {
     // MARK: - Internals
 
     /// Wendet eine Energie-Zunahme an und markiert den heutigen Tag als aktiv.
-    private func apply(gain: Double) {
+    private func apply(gain: Double, extras: ((Companion) -> Void)? = nil) {
         do {
             let c = try repo.currentCompanion()
-            c.energy = min(Config.energyCap, c.energy + gain)
+            c.energy = min(Config.cap, c.energy + gain)
             lastDelta = gain
+            extras?(c)
             markActiveDay(c)
             try repo.update(c)
             syncSnapshot()
@@ -128,7 +202,9 @@ final class CompanionService {
             let today = Calendar.app.startOfDay(for: .now)
             let last = Calendar.app.startOfDay(for: c.lastLoginDay)
             guard today != last else { return }
-            c.energy = min(Config.energyCap, c.energy + Config.loginBonus)
+            c.energy = min(Config.cap, c.energy + Config.loginBonus)
+            c.bond = min(Config.cap, c.bond + 0.5)
+            c.coins &+= Config.coinsPerLogin
             c.lastLoginDay = today
             try repo.update(c)
             syncSnapshot()
@@ -187,6 +263,24 @@ final class CompanionService {
                     c.energy = max(0, c.energy - Double(chargeable) * Config.dailyDecay)
                     lastDelta = -Double(chargeable) * Config.dailyDecay
                 }
+
+                // Haustier-Bedürfnisse verfallen jeden verpassten Tag (auch
+                // ohne Inaktivität — das ist die Kern-Pflege-Mechanik).
+                // missingDays = Tage seit letztem Rollover. Davon ist „heute"
+                // noch nicht voll verstrichen → nur (missingDays) Tage decay.
+                let needDays = max(0, missingDays)
+                if needDays > 0 {
+                    let drop = Double(needDays) * Config.dailyNeedDecay
+                    c.hunger = max(0, c.hunger - drop)
+                    c.hygiene = max(0, c.hygiene - drop)
+                    c.fun = max(0, c.fun - drop)
+                    // Bei niedriger Energie/Mood sinkt auch Bond leicht.
+                    let wellbeing = (c.energy + c.hunger + c.hygiene + c.fun + c.bond) / 5.0
+                    if wellbeing < 30 {
+                        c.bond = max(0, c.bond - Double(needDays) * 2)
+                    }
+                }
+
                 c.lastEnergyDecayDay = today
                 try repo.update(c)
             syncSnapshot()
@@ -206,6 +300,165 @@ final class CompanionService {
         let d = calendar.startOfDay(for: day)
         let last = calendar.startOfDay(for: c.lastActiveDay)
         return d >= last
+    }
+
+    // MARK: - Pflege-Aktionen (Haustier)
+
+    /// Füttern. Kostet nichts (Punkte-sink via Wald bleibt getrennt), füllt
+    /// Hunger + kleines Bond. Cooldown-gated.
+    @discardableResult
+    func feed() -> Bool {
+        let ok = performCare(\.lastFedAt, cooldown: Config.feedCooldown) { c in
+            c.hunger = min(Config.cap, c.hunger + Config.feedAmount)
+            c.bond = min(Config.cap, c.bond + Config.feedBondGain)
+            c.lastFedAt = .now
+        }
+        if ok { setReaction(.eats) }
+        return ok
+    }
+
+    /// Pflegen (baden/bürsten). Füllt Hygiene + kleines Bond.
+    @discardableResult
+    func clean() -> Bool {
+        let ok = performCare(\.lastCleanedAt, cooldown: Config.cleanCooldown) { c in
+            c.hygiene = min(Config.cap, c.hygiene + Config.cleanAmount)
+            c.bond = min(Config.cap, c.bond + Config.cleanBondGain)
+            c.lastCleanedAt = .now
+        }
+        if ok { setReaction(.bubbles) }
+        return ok
+    }
+
+    /// Spielen. Füllt Fun + Bond.
+    @discardableResult
+    func play() -> Bool {
+        let ok = performCare(\.lastPlayedAt, cooldown: Config.playCooldown) { c in
+            c.fun = min(Config.cap, c.fun + Config.playAmount)
+            c.bond = min(Config.cap, c.bond + Config.playBondGain)
+            c.lastPlayedAt = .now
+        }
+        if ok { setReaction(.plays) }
+        return ok
+    }
+
+    /// Streicheln. Kurzer Cooldown, steigert nur Bond.
+    @discardableResult
+    func pet() -> Bool {
+        let ok = performCare(\.lastPettedAt, cooldown: Config.petCooldown) { c in
+            c.bond = min(Config.cap, c.bond + Config.petBondGain)
+            c.lastPettedAt = .now
+        }
+        if ok { setReaction(.hearts) }
+        return ok
+    }
+
+    /// Generische Care-Aktion mit Cooldown. `true` bei Erfolg, `false` wenn
+    /// noch im Cooldown (UI kann Feedback geben).
+    @discardableResult
+    private func performCare(_ keyPath: ReferenceWritableKeyPath<Companion, Date>, cooldown: TimeInterval, mutate: (Companion) -> Void) -> Bool {
+        do {
+            let c = try repo.currentCompanion()
+            let last = c[keyPath: keyPath]
+            if Date().timeIntervalSince(last) < cooldown { return false }
+            mutate(c)
+            try repo.update(c)
+            syncSnapshot()
+            Haptics.impact(.soft)
+            return true
+        } catch {
+            #if DEBUG
+            print("[CompanionService] care failed: \(error)")
+            #endif
+            return false
+        }
+    }
+
+    /// Setzt eine kurze Reaktion (für UI-Animation), die nach ~1.2s verblasst.
+    private func setReaction(_ reaction: CompanionReaction) {
+        lastReaction = reaction
+        let trigger = revision
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.2))
+            if revision == trigger + 1 || revision == trigger {
+                lastReaction = nil
+            }
+        }
+    }
+
+    // MARK: - Cooldown-Helper (für UI)
+
+    func cooldownRemaining(for need: CompanionNeed) -> TimeInterval {
+        let c = (try? repo.currentCompanion())
+        guard let c else { return 0 }
+        let last: Date
+        let cd: TimeInterval
+        switch need {
+        case .hunger: last = c.lastFedAt;     cd = Config.feedCooldown
+        case .hygiene: last = c.lastCleanedAt; cd = Config.cleanCooldown
+        case .fun:    last = c.lastPlayedAt;  cd = Config.playCooldown
+        default:      return 0
+        }
+        let elapsed = Date().timeIntervalSince(last)
+        return max(0, cd - elapsed)
+    }
+
+    // MARK: - Sprechblasen
+
+    /// Setzt die aktuelle Sprechblase (von CompanionSpeechService geliefert).
+    func setSpeechBubble(_ text: String?) {
+        speechBubble = text
+        revision &+= 1
+        if let c = try? repo.currentCompanion() {
+            c.lastSpeechAt = .now
+            try? repo.update(c)
+        }
+    }
+
+    /// `true`, wenn eine neue Sprechblase generiert werden darf (Throttle).
+    var canSpeak: Bool {
+        guard let c = try? repo.currentCompanion() else { return true }
+        return Date().timeIntervalSince(c.lastSpeechAt) >= Config.speechThrottle
+    }
+
+    // MARK: - Shop
+
+    /// Kauft ein Accessoire. `true` bei Erfolg, `false` wenn zu teuer oder
+    /// schon besessen.
+    @discardableResult
+    func buy(_ item: AccessoryCatalogItem) -> Bool {
+        do {
+            let c = try repo.currentCompanion()
+            guard !c.ownedAccessoryIDs.contains(item.rawID) else { return false }
+            guard c.coins >= item.cost else { return false }
+            c.coins -= item.cost
+            c.ownedAccessoryIDs.append(item.rawID)
+            try repo.update(c)
+            syncSnapshot()
+            Haptics.success()
+            return true
+        } catch {
+            #if DEBUG
+            print("[CompanionService] buy failed: \(error)")
+            #endif
+            return false
+        }
+    }
+
+    /// Rüstet ein Accessoire aus (oder ab, wenn `rawID` nil oder gleich).
+    func equip(rawID: String?) {
+        do {
+            let c = try repo.currentCompanion()
+            // Nur ausrüsten, wenn auch besessen.
+            if let rawID, !c.ownedAccessoryIDs.contains(rawID) { return }
+            c.equippedAccessoryID = (c.equippedAccessoryID == rawID) ? nil : rawID
+            try repo.update(c)
+            syncSnapshot()
+            Haptics.selection()
+        } catch {
+            #if DEBUG
+            print("[CompanionService] equip failed: \(error)")
+            #endif
+        }
     }
 
     // MARK: - Setup / Wahl
@@ -241,6 +494,27 @@ final class CompanionService {
             #if DEBUG
             print("[CompanionService] setDecayPaused failed: \(error)")
             #endif
+        }
+    }
+}
+
+// MARK: - Reaction Types
+
+/// Visualische Reaktion des Tieres auf eine Pflegaktion (für CompanionKit).
+enum CompanionReaction: Sendable {
+    case hearts   // Streicheln → Herzen
+    case eats     // Füttern → Futter-Emoji
+    case bubbles  // Pflegen → Seifenblasen
+    case plays    // Spielen → Ball/Spielzeug
+    case happy    // generische Freude
+
+    var emoji: String {
+        switch self {
+        case .hearts:  return "💖"
+        case .eats:    return "😋"
+        case .bubbles: return "🫧"
+        case .plays:   return "🎉"
+        case .happy:   return "✨"
         }
     }
 }

@@ -33,6 +33,7 @@ struct FoxBody: View {
     let mood: CompanionMoodType
     let isBlinking: Bool
     let earWiggle: Double
+    var tailWag: Double = 0
 
     var body: some View {
         GeometryReader { geo in
@@ -64,7 +65,7 @@ struct FoxBody: View {
                             .offset(x: s * 0.16, y: -s * 0.18)
                     )
                     .offset(x: -s * 0.28, y: s * 0.18 + slump)
-                    .rotationEffect(.degrees(earWiggle * 8), anchor: .bottomTrailing)
+                    .rotationEffect(.degrees(tailWag * 40), anchor: .bottomTrailing)
 
                 // Kopf.
                 ZStack {
@@ -359,6 +360,7 @@ struct WolfBody: View {
     let mood: CompanionMoodType
     let isBlinking: Bool
     let earWiggle: Double
+    var tailWag: Double = 0
 
     var body: some View {
         GeometryReader { geo in
@@ -388,7 +390,7 @@ struct WolfBody: View {
                             .offset(x: s * 0.12, y: -s * 0.14)
                     )
                     .offset(x: s * 0.26, y: s * 0.16 + slump)
-                    .rotationEffect(.degrees(20 + earWiggle * 10), anchor: .bottomLeading)
+                    .rotationEffect(.degrees(20 + tailWag * 40), anchor: .bottomLeading)
 
                 // Kopf (spitzer, kantiger).
                 ZStack {

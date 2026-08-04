@@ -59,6 +59,7 @@ final class AppEnvironment {
     let wellnessService: WellnessService
     let companionRepo: any CompanionRepository
     let companionService: CompanionService
+    let companionSpeechService: CompanionSpeechService
 
     let workoutLiveActivity = WorkoutLiveActivityManager()
     
@@ -139,7 +140,9 @@ final class AppEnvironment {
         self.wellnessService = WellnessService(repo: wellnessRepo, completionRepo: completionRepo, sessionRepo: sessionRepo)
         let companionRepo = SwiftDataCompanionRepository(context: context)
         self.companionRepo = companionRepo
-        self.companionService = CompanionService(repo: companionRepo)
+        let companionService = CompanionService(repo: companionRepo)
+        self.companionService = companionService
+        self.companionSpeechService = CompanionSpeechService(companionService: companionService)
 
         // Thrive Companion: Habit-Erledigung füttert das Wesen.
         habitService.onHabitCompleted = { [weak companionService] delta in

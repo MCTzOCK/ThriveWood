@@ -17,16 +17,30 @@ public struct CompanionCreature: View {
     public let stage: CompanionStageType
     public let mood: CompanionMoodType
     public let size: CGFloat
+    public let accessory: CompanionAccessoryType?
+    public let reaction: CompanionReactionType?
+    public let reactionTrigger: Int
 
     @State private var breathe: Bool = false
     @State private var blink: Bool = false
     @State private var bounce: Bool = false
 
-    public init(species: CompanionSpeciesType, stage: CompanionStageType, mood: CompanionMoodType, size: CGFloat = 96) {
+    public init(
+        species: CompanionSpeciesType,
+        stage: CompanionStageType,
+        mood: CompanionMoodType,
+        size: CGFloat = 96,
+        accessory: CompanionAccessoryType? = nil,
+        reaction: CompanionReactionType? = nil,
+        reactionTrigger: Int = 0
+    ) {
         self.species = species
         self.stage = stage
         self.mood = mood
         self.size = size
+        self.accessory = accessory
+        self.reaction = reaction
+        self.reactionTrigger = reactionTrigger
     }
 
     public var body: some View {
@@ -37,6 +51,12 @@ public struct CompanionCreature: View {
         .frame(width: size, height: size)
         .scaleEffect(bounce ? 1.06 : 1.0)
         .animation(.spring(response: 0.35, dampingFraction: 0.55), value: mood)
+        .overlay(alignment: .top) {
+            if let reaction {
+                CompanionReactionOverlay(reaction: reaction, trigger: reactionTrigger)
+                    .offset(y: -size * 0.15)
+            }
+        }
     }
 
     @ViewBuilder
@@ -48,18 +68,35 @@ public struct CompanionCreature: View {
         let isBlinking = blinkPhase < 0.15
         // Ohren-Wackeln: ~1.6s Periode, leicht.
         let earWiggle = sin(t * .pi / 0.8) * 0.06
+        // Vibrant → Schwanzwedeln (schnellere Periode).
+        let tailWag = mood == .vibrant ? sin(t * .pi / 0.3) * 0.12 : earWiggle * 0.5
 
         ZStack {
             switch species {
-            case .fox:  FoxBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle)
+            case .fox:  FoxBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle, tailWag: tailWag)
             case .owl:  OwlBody(stage: stage, mood: mood, isBlinking: isBlinking)
             case .bear: BearBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle)
-            case .wolf: WolfBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle)
+            case .wolf: WolfBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle, tailWag: tailWag)
             case .deer: DeerBody(stage: stage, mood: mood, isBlinking: isBlinking)
+            }
+
+            // Accessoire obendrauf.
+            if let accessory {
+                CompanionAccessoryView(type: accessory, bodySize: size)
+                    .offset(y: accessoryOffset(for: accessory))
             }
         }
         .scaleEffect(breathScale, anchor: .center)
         .frame(width: size, height: size, alignment: .center)
+    }
+
+    /// Positioniert das Accessoire grob passend zur Slot-Höhe.
+    private func accessoryOffset(for accessory: CompanionAccessoryType) -> CGFloat {
+        switch accessory.slot {
+        case .hat:  return -size * 0.32
+        case .neck: return size * 0.10
+        case .toy:  return 0
+        }
     }
 }
 

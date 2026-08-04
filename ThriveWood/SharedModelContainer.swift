@@ -44,7 +44,8 @@ enum SharedModelContainer {
             FloorZone.self,
             WallSegment.self,
             WellnessEntry.self,
-            Companion.self
+            Companion.self,
+            AccessoryOwnership.self
         ])
 
         let modelConfiguration = ModelConfiguration(

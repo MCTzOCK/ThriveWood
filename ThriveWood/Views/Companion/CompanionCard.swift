@@ -26,7 +26,8 @@ struct CompanionCard: View {
                         species: service.species.kitType,
                         stage: service.stage.kitType,
                         mood: service.mood.kitType,
-                        size: 64
+                        size: 64,
+                        accessory: service.equippedAccessory?.asset.kitType
                     )
 
                     VStack(alignment: .leading, spacing: theme.spacing.xxs) {

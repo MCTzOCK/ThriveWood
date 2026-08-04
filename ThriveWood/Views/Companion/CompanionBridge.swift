@@ -31,3 +31,21 @@ extension CompanionMood {
         }
     }
 }
+
+extension AccessoryAsset {
+    var kitType: CompanionAccessoryType {
+        CompanionAccessoryType(rawValue: rawValue) ?? .topHat
+    }
+}
+
+extension CompanionReaction {
+    var kitType: CompanionReactionType {
+        switch self {
+        case .hearts:  return .hearts
+        case .eats:    return .eats
+        case .bubbles: return .bubbles
+        case .plays:   return .plays
+        case .happy:   return .happy
+        }
+    }
+}
