@@ -678,11 +678,12 @@ struct BentoSettingsView: View {
 
     private func companionColor(for species: CompanionSpecies) -> Color {
         switch species {
-        case .fox:  return .orange
-        case .owl:  return .indigo
-        case .bear: return .brown
-        case .wolf: return .gray
-        case .deer: return .pink
+        case .fox:        return .orange
+        case .owl:        return .indigo
+        case .bear:       return .brown
+        case .wolf:       return .gray
+        case .deer:       return .pink
+        case .highlandCow:return .brown
         }
     }
 

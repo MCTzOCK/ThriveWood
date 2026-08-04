@@ -12,51 +12,55 @@ import SwiftData
 
 /// Wählbare Companion-Arten. Default „fox".
 enum CompanionSpecies: String, CaseIterable, Identifiable, Sendable {
-    case fox, owl, bear, wolf, deer
+    case fox, owl, bear, wolf, deer, highlandCow
 
     var id: String { rawValue }
 
     /// Anzeigename.
     var label: String {
         switch self {
-        case .fox:  return "Fuchsjunges"
-        case .owl:  return "Eulenjunges"
-        case .bear: return "Bärenkeimling"
-        case .wolf: return "Wolfswelpe"
-        case .deer: return "Rehkitz"
+        case .fox:        return "Fuchsjunges"
+        case .owl:        return "Eulenjunges"
+        case .bear:       return "Bärenkeimling"
+        case .wolf:       return "Wolfswelpe"
+        case .deer:       return "Rehkitz"
+        case .highlandCow:return "Highland-Kalb"
         }
     }
 
     /// Spitzname-Vorschlag.
     var defaultName: String {
         switch self {
-        case .fox:  return "Funke"
-        case .owl:  return "Weise"
-        case .bear: return "Wurzel"
-        case .wolf: return "Pfad"
-        case .deer: return "Sanft"
+        case .fox:        return "Funke"
+        case .owl:        return "Weise"
+        case .bear:       return "Wurzel"
+        case .wolf:       return "Pfad"
+        case .deer:       return "Sanft"
+        case .highlandCow:return "Moorle"
         }
     }
 
     /// SF-Symbol für das Wesen (pro Evolutionsstufe skaliert).
     var symbol: String {
         switch self {
-        case .fox:  return "figure.play"
-        case .owl:  return "bird.fill"
-        case .bear: return "pawprint.fill"
-        case .wolf: return "pawprint.fill"
-        case .deer: return "figure.walk"
+        case .fox:        return "figure.play"
+        case .owl:        return "bird.fill"
+        case .bear:       return "pawprint.fill"
+        case .wolf:       return "pawprint.fill"
+        case .deer:       return "figure.walk"
+        case .highlandCow:return "tortoise.fill"
         }
     }
 
     /// Akzentfarbe des Wesens.
     var color: String {
         switch self {
-        case .fox:  return "orange"
-        case .owl:  return "indigo"
-        case .bear: return "brown"
-        case .wolf: return "gray"
-        case .deer: return "pink"
+        case .fox:        return "orange"
+        case .owl:        return "indigo"
+        case .bear:       return "brown"
+        case .wolf:       return "gray"
+        case .deer:       return "pink"
+        case .highlandCow:return "brown"
         }
     }
 }

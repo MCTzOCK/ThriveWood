@@ -78,6 +78,7 @@ public struct CompanionCreature: View {
             case .bear: BearBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle)
             case .wolf: WolfBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle, tailWag: tailWag)
             case .deer: DeerBody(stage: stage, mood: mood, isBlinking: isBlinking)
+            case .highlandCow: HighlandCowBody(stage: stage, mood: mood, isBlinking: isBlinking, earWiggle: earWiggle)
             }
 
             // Accessoire obendrauf.
@@ -103,7 +104,7 @@ public struct CompanionCreature: View {
 // MARK: - Mood / Stage / Species (CompanionKit-eigene Typen, bridgebar)
 
 public enum CompanionSpeciesType: String, CaseIterable, Identifiable, Sendable {
-    case fox, owl, bear, wolf, deer
+    case fox, owl, bear, wolf, deer, highlandCow
     public var id: String { rawValue }
 }
 

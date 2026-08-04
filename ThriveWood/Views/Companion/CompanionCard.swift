@@ -68,11 +68,12 @@ struct CompanionCard: View {
 
     private func tone(for species: CompanionSpecies) -> BentoTone {
         switch species {
-        case .fox:  return .warning
-        case .owl:  return .info
-        case .bear: return .neutral
-        case .wolf: return .neutral
-        case .deer: return .pink
+        case .fox:        return .warning
+        case .owl:        return .info
+        case .bear:       return .neutral
+        case .wolf:       return .neutral
+        case .deer:       return .pink
+        case .highlandCow:return .warning
         }
     }
 }

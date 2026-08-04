@@ -584,3 +584,183 @@ struct DeerAntler: Shape {
         return p
     }
 }
+
+// MARK: - Highland Cow
+
+/// Fluffige Scottish Highland-Kuh: langes rotes Fell, die typische
+/// Pony-Frisur über den Augen, kleine Hörner, großer sanfter Blick.
+struct HighlandCowBody: View {
+    let stage: CompanionStageType
+    let mood: CompanionMoodType
+    let isBlinking: Bool
+    let earWiggle: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            let s = min(geo.size.width, geo.size.height) * stage.bodyScale
+            let slump: CGFloat = mood.isSlumped ? 6 : 0
+            // Typisches Highland-rotbraun.
+            let fur = Color(red: 0.72, green: 0.40, blue: 0.20)
+            let furLight = Color(red: 0.82, green: 0.52, blue: 0.30)
+            let furDark = Color(red: 0.55, green: 0.28, blue: 0.12)
+            let cream = Color(red: 0.96, green: 0.92, blue: 0.84)
+
+            ZStack {
+                if stage.isEnlightened {
+                    Circle().fill(fur.opacity(0.18)).frame(width: s, height: s).blur(radius: 6)
+                }
+
+                // Großer fluffiger Körper (Highlands sind sehr behaart).
+                FluffyBlob()
+                    .fill(LinearGradient(colors: [furLight, furDark], startPoint: .top, endPoint: .bottom))
+                    .frame(width: s * 0.66, height: s * 0.54)
+                    .offset(y: s * 0.22 + slump)
+                    // Fransen-Schwung am Bauch.
+                    .overlay(
+                        FluffyBlob().fill(fur)
+                            .frame(width: s * 0.5, height: s * 0.18)
+                            .offset(y: s * 0.40 + slump)
+                            .blur(radius: 2)
+                    )
+
+                // Beine (klein, hinter dem Fell).
+                HStack(spacing: s * 0.22) {
+                    RoundedRectangle(cornerRadius: s * 0.04).fill(furDark)
+                        .frame(width: s * 0.08, height: s * 0.16)
+                    RoundedRectangle(cornerRadius: s * 0.04).fill(furDark)
+                        .frame(width: s * 0.08, height: s * 0.16)
+                }
+                .offset(y: s * 0.44 + slump)
+
+                // Kopf-Gruppe.
+                ZStack {
+                    // Kleine Hörner (ab Juvenile, weißlich, seitlich-oben).
+                    if stage != .seedling {
+                        CowHorn(side: .left)
+                            .fill(LinearGradient(colors: [Color(white: 0.95), Color(white: 0.75)], startPoint: .top, endPoint: .bottom))
+                            .frame(width: s * 0.14, height: s * 0.18)
+                            .offset(x: -s * 0.30, y: -s * 0.26)
+                        CowHorn(side: .right)
+                            .fill(LinearGradient(colors: [Color(white: 0.95), Color(white: 0.75)], startPoint: .top, endPoint: .bottom))
+                            .frame(width: s * 0.14, height: s * 0.18)
+                            .offset(x: s * 0.30, y: -s * 0.26)
+                    }
+
+                    // Fluffige Ohren (seitlich, leicht wackelnd).
+                    Ellipse().fill(furDark)
+                        .frame(width: s * 0.18, height: s * 0.22)
+                        .overlay(Ellipse().fill(furLight).scaleEffect(0.6))
+                        .offset(x: -s * 0.34, y: -s * 0.08)
+                        .rotationEffect(.degrees(-12 + earWiggle * 25), anchor: .bottomTrailing)
+                    Ellipse().fill(furDark)
+                        .frame(width: s * 0.18, height: s * 0.22)
+                        .overlay(Ellipse().fill(furLight).scaleEffect(0.6))
+                        .offset(x: s * 0.34, y: -s * 0.08)
+                        .rotationEffect(.degrees(12 - earWiggle * 25), anchor: .bottomLeading)
+
+                    // Großer runder fluffiger Kopf.
+                    FluffyBlob()
+                        .fill(LinearGradient(colors: [fur, furDark], startPoint: .top, endPoint: .bottom))
+                        .frame(width: s * 0.60, height: s * 0.56)
+
+                    // Der ikonische Pony-Franse über den Augen (langes Fell).
+                    FluffyBlob()
+                        .fill(furLight)
+                        .frame(width: s * 0.62, height: s * 0.22)
+                        .offset(y: -s * 0.18)
+                        .blur(radius: 1.5)
+
+                    // Helles Gesichtsfeld (Schnauzen-Bereich).
+                    Ellipse().fill(cream.opacity(0.85))
+                        .frame(width: s * 0.34, height: s * 0.28)
+                        .offset(y: s * 0.14)
+
+                    // Augen (groß, sanft — Highlands haben weichen Blick).
+                    HStack(spacing: s * 0.14) {
+                        CreatureEye(size: s * 0.10, shape: mood.eyeShape, isBlinking: isBlinking)
+                        CreatureEye(size: s * 0.10, shape: mood.eyeShape, isBlinking: isBlinking)
+                    }
+                    .offset(y: -s * 0.02)
+
+                    // Große Nüstern (typisch Rind).
+                    HStack(spacing: s * 0.06) {
+                        Ellipse().fill(furDark).frame(width: s * 0.05, height: s * 0.07)
+                        Ellipse().fill(furDark).frame(width: s * 0.05, height: s * 0.07)
+                    }
+                    .offset(y: s * 0.18)
+
+                    // Mund.
+                    CreatureMouth(width: s * 0.10, shape: mood.mouthShape)
+                        .offset(y: s * 0.26)
+                }
+                .saturation(mood.saturation)
+                .offset(y: -s * 0.04 + slump * 0.4)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+    }
+}
+
+/// Fluffiger Blob mit welligem Rand (für Fell-Look).
+struct FluffyBlob: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let w = rect.width, h = rect.height
+        let cx = rect.midX, cy = rect.midY
+        // Welliger Kreis mit mehreren Kontrollpunkten → flauschig.
+        let bumps: [(CGPoint, CGFloat)] = [
+            (CGPoint(x: cx, y: rect.minY), 0),
+            (CGPoint(x: rect.maxX, y: cy - h * 0.1), 8),
+            (CGPoint(x: cx, y: rect.maxY), -6),
+            (CGPoint(x: rect.minX, y: cy + h * 0.1), 4),
+            (CGPoint(x: rect.minX, y: cy - h * 0.1), -4),
+            (CGPoint(x: rect.maxX, y: cy + h * 0.1), 6)
+        ]
+        // Einfacher welliger Pfad über QuadCurves.
+        p.move(to: CGPoint(x: cx, y: rect.minY))
+        p.addQuadCurve(to: CGPoint(x: rect.maxX, y: cy),
+                       control: CGPoint(x: rect.maxX, y: rect.minY))
+        // Zacken am rechten Rand (Fell-Schwung).
+        for i in stride(from: CGFloat(0), through: 4, by: 1) {
+            let t = i / 4
+            let y = cy + h * 0.1 + t * h * 0.35
+            let xOut = rect.maxX + (i.truncatingRemainder(dividingBy: 2) == 0 ? w * 0.04 : -w * 0.02)
+            p.addQuadCurve(to: CGPoint(x: xOut, y: y),
+                           control: CGPoint(x: rect.maxX, y: y - h * 0.05))
+        }
+        p.addQuadCurve(to: CGPoint(x: cx, y: rect.maxY),
+                       control: CGPoint(x: rect.maxX, y: rect.maxY))
+        p.addQuadCurve(to: CGPoint(x: rect.minX, y: cy),
+                       control: CGPoint(x: rect.minX, y: rect.maxY))
+        for i in stride(from: CGFloat(0), through: 4, by: 1) {
+            let t = i / 4
+            let y = cy - h * 0.1 - t * h * 0.35
+            let xOut = rect.minX - (i.truncatingRemainder(dividingBy: 2) == 0 ? w * 0.04 : -w * 0.02)
+            p.addQuadCurve(to: CGPoint(x: xOut, y: y),
+                           control: CGPoint(x: rect.minX, y: y + h * 0.05))
+        }
+        p.addQuadCurve(to: CGPoint(x: cx, y: rect.minY),
+                       control: CGPoint(x: rect.minX, y: rect.minY))
+        _ = bumps
+        return p
+    }
+}
+
+/// Kuh-Horn (leicht gebogen, seitlich).
+struct CowHorn: Shape {
+    enum Side { case left, right }
+    let side: Side
+
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let dir: CGFloat = side == .left ? -1 : 1
+        // Basis breit am Kopf, Spitze nach oben-außen gebogen.
+        p.move(to: CGPoint(x: rect.midX - dir * rect.width * 0.3, y: rect.maxY))
+        p.addQuadCurve(to: CGPoint(x: rect.midX + dir * rect.width * 0.5, y: rect.minY),
+                       control: CGPoint(x: rect.midX + dir * rect.width * 0.6, y: rect.maxY * 0.4))
+        p.addQuadCurve(to: CGPoint(x: rect.midX - dir * rect.width * 0.1, y: rect.maxY),
+                       control: CGPoint(x: rect.midX + dir * rect.width * 0.1, y: rect.minY + rect.height * 0.2))
+        p.closeSubpath()
+        return p
+    }
+}

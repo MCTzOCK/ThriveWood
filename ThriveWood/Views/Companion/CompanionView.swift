@@ -28,8 +28,8 @@ struct CompanionView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: theme.spacing.lg) {
                 heroWithSpeech
-                needsCard
                 actionsCard
+                needsCard
                 accessoriesRow
                 settingsCard
             }
@@ -419,11 +419,12 @@ struct CompanionPicker: View {
 
     private func color(for species: CompanionSpecies) -> Color {
         switch species {
-        case .fox:  return .orange
-        case .owl:  return .indigo
-        case .bear: return .brown
-        case .wolf: return .gray
-        case .deer: return .pink
+        case .fox:        return .orange
+        case .owl:        return .indigo
+        case .bear:       return .brown
+        case .wolf:       return .gray
+        case .deer:       return .pink
+        case .highlandCow:return .brown
         }
     }
 }
