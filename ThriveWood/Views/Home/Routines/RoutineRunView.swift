@@ -274,7 +274,7 @@ struct RoutineRunView: View {
                     .symbolEffect(.bounce, value: true)
                 BentoText("Routine abgeschlossen!", style: .title3)
                 BentoText(
-                    "Schließe sich in einem Moment automatisch.",
+                    "Schließt sich in einem Moment automatisch.",
                     style: .callout,
                     color: theme.colors.onSurfaceMuted
                 )

@@ -35,9 +35,9 @@ struct SportView: View {
             .sheet(isPresented: $showingNewWorkout) {
                 WorkoutEditorView(workout: nil).onDisappear { vm?.load() }
             }
-            .sheet(item: $editingWorkout) { w in
+            /*.sheet(item: $editingWorkout) { w in
                 WorkoutEditorView(workout: w).onDisappear { vm?.load() }
-            }
+            }*/
             .sheet(isPresented: $showingPaywall) { PaywallView() }
             .sheet(item: $selectedExercise) { e in
                 ExerciseDetailsSheet(exercise: e)

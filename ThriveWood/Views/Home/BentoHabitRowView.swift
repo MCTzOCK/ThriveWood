@@ -42,7 +42,7 @@ struct BentoHabitRowView: View {
         // Containers): jede Kachel wird exakt quadratisch und damit alle
         // exakt gleich groß — unabhängig vom Inhalt. Die Breite liefert die
         // adaptive Grid-Spalte, die Höhe wird daraus berechnet.
-        .aspectRatio(1, contentMode: .fit)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") { onEdit() }
             Button("Archivieren", systemImage: "archivebox", role: .destructive) { onEdit() }
@@ -57,6 +57,14 @@ struct BentoHabitRowView: View {
     private var headerRow: some View {
         HStack {
             iconBadge
+            Spacer(minLength: 0)
+            if streak > 0 {
+                BentoBadge(
+                    Text("\(streak)"),
+                    tone: .warning,
+                    systemImage: "flame.fill"
+                )
+            }
             Spacer(minLength: 0)
             if showsEditButton {
                 editButton
@@ -119,7 +127,7 @@ struct BentoHabitRowView: View {
             // Lange Namen werden mit „…" abgeschnitten statt die Kachelbreite
             // zu überschreiten und Nachbar-Kacheln zu überlappen.
             .truncationMode(.tail)
-
+        
         if habit.isMeasurable, let p = progress {
             BentoText(
                 "\(formatValue(p.value)) / \(formatValue(p.target)) \(abbreviatedUnit)",
@@ -136,21 +144,12 @@ struct BentoHabitRowView: View {
 
     private var bottomRow: some View {
         HStack(spacing: 6) {
-            VStack(spacing: 4) {
-                BentoBadge(
-                    Text("\(habit.points.rawValue)"),
-                    tone: .neutral,
-                    systemImage: "leaf.fill"
-                )
-                if streak > 0 {
-                    BentoBadge(
-                        Text("\(streak)"),
-                        tone: .warning,
-                        systemImage: "flame.fill"
-                    )
-                }
-            }
-
+            BentoBadge(
+                Text("\(habit.points.rawValue)"),
+                tone: .neutral,
+                systemImage: "leaf.fill"
+            )
+        
             Spacer()
 
             if habit.isMeasurable {
