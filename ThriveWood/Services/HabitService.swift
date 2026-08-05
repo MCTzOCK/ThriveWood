@@ -15,6 +15,12 @@ final class HabitService {
     private let habits: any HabitRepository
     private let completions: any HabitCompletionRepository
 
+    /// Optionaler Hook, der nach jeder positiven Habit-Aktion (Toggle an /
+    /// Increment, das Punkte bringt) mit der Punktedifferenz aufgerufen wird.
+    /// Wird für den „Thrive Companion" genutzt (Energie-Boost). Default `nil`
+    /// → kein Verhaltenswechsel für alle Bestands-Call-Sites.
+    var onHabitCompleted: ((Int) -> Void)?
+
     init(habits: any HabitRepository, completions: any HabitCompletionRepository) {
         self.habits = habits
         self.completions = completions
@@ -36,6 +42,7 @@ final class HabitService {
         } else {
             let c = HabitCompletion(habit: habit, day: normalizedDay)
             try completions.add(c)
+            onHabitCompleted?(c.pointsAwarded)
             return c.pointsAwarded
         }
     }
@@ -88,7 +95,9 @@ final class HabitService {
         completion.completedAt = .now
         completion.recalculatePoints()
         try completions.add(completion)
-        return completion.pointsAwarded - oldPoints
+        let delta = completion.pointsAwarded - oldPoints
+        if delta > 0 { onHabitCompleted?(delta) }
+        return delta
     }
 
     /// Gibt die vorhandene Completion zurück oder erstellt eine neue mit currentValue = 0.

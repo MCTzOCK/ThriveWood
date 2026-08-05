@@ -24,6 +24,9 @@ final class HomeViewModel {
     var availablePoints: Int = 0
     var searchText: String = ""
     var habitProgress: [UUID: (value: Double, target: Double, progress: Double)] = [:]
+    /// `true`, sobald das Tagesziel heute erreicht wurde — verhindert, dass
+    /// der Companion-Bonus mehrfach feuert.
+    private var dailyGoalReachedToday: Bool = false
     
     let errors = ErrorState()
     
@@ -257,6 +260,15 @@ final class HomeViewModel {
     private func reloadPoints() {
         pointsToday = (try? env.habitService.pointsEarned(on: selectedDate)) ?? pointsToday
         availablePoints = (try? env.scoringService.availablePoints()) ?? availablePoints
+
+        // Thrive Companion: Tagesziel erreicht → Bonus (einmal/Tag).
+        let reached = dailyGoal > 0 && pointsToday >= dailyGoal
+        if reached && !dailyGoalReachedToday {
+            dailyGoalReachedToday = true
+            env.companionService.onDailyGoalReached()
+        } else if !reached {
+            dailyGoalReachedToday = false
+        }
     }
 
 }

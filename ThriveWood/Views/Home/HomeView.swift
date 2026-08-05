@@ -147,6 +147,8 @@ struct HomeView: View {
                 
                 heroProgressCard(vm: vm)
 
+                CompanionCard()
+
                 bentoHabitList(vm: vm)
             }
         }
@@ -377,10 +379,12 @@ struct HomeView: View {
                         )
                     }
                 }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                .padding(.top, theme.spacing.sm)
+                .transition(.opacity)
             }
         }
         .animation(theme.motion.snappy, value: completedCollapsed)
+        .animation(theme.motion.snappy, value: habits.map(\.id))
     }
 
     var oldBody: some View {

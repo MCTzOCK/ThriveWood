@@ -22,6 +22,7 @@ struct BentoSettingsView: View {
     @State private var showingExport = false
     @State private var showingPaywall = false
     @State private var showingManageSubs = false
+    @State private var showingCompanion = false
     @State private var navigationPath = NavigationPath()
     @Environment(\.bentoTheme) private var theme
 
@@ -58,6 +59,9 @@ struct BentoSettingsView: View {
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showingPaywall) { PaywallView() }
+        .bentoSheet(isPresented: $showingCompanion, title: Text("Companion"), detents: [.large]) {
+            CompanionView()
+        }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isRerun: true) { showOnboarding = false }
         }
@@ -105,42 +109,46 @@ struct BentoSettingsView: View {
     // MARK: - Content
 
     private func content(profile: UserProfile) -> some View {
-        @Bindable var profile = profile
-
-        return BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
-            VStack(spacing: Theme.Spacing.l) {
-                pageHeader
-
-                profileHeroCard(profile: profile)
-
-                subscriptionCard
-
+        BentoScreen(scrolls: true, showsIndicators: false, horizontalPadding: .none, verticalPadding: .none) {
+            // Type-Erasure an den Sektions-Grenzen: verhindert, dass der
+            // gesamte Profil-Tab als ein einziger riesiger generischer
+            // Composite-Type kompiliert wird (Stack-Overflow auf dem Gerät:
+            // EXC_BAD_ACCESS code=2 beim Tab-Wechsel).
+            AnyView(
                 VStack(spacing: Theme.Spacing.l) {
-                    habitsAndGoalsSection(profile: profile)
-                    sportSection(profile: profile)
-                    notificationsSection(profile: profile)
-                    appleHealthSection
-                    appIconSection
-                    onboardingSection
-                    dataSection
-                    aboutSection
+                    AnyView(pageHeader)
+                    AnyView(profileHeroCard(profile: profile))
+                    AnyView(subscriptionCard)
+
+                    AnyView(
+                        VStack(spacing: Theme.Spacing.l) {
+                            AnyView(habitsAndGoalsSection(profile: profile))
+                            AnyView(sportSection(profile: profile))
+                            AnyView(notificationsSection(profile: profile))
+                    AnyView(appleHealthSection)
+                    AnyView(companionSection)
+                    AnyView(appIconSection)
+                            AnyView(onboardingSection)
+                            AnyView(dataSection)
+                            AnyView(aboutSection)
+                        }
+                        .padding(.horizontal, Theme.Spacing.l)
+                    )
+
+                    AnyView(dangerZone)
+                    AnyView(footerText)
                 }
-                .padding(.horizontal, Theme.Spacing.l)
-
-                dangerZone
-
-                footerText
+                .padding(.bottom, Theme.Spacing.xxxl)
+            )
+            .onChange(of: profile.dailyPointGoal) { _, _ in save(profile) }
+            .onChange(of: profile.weekStartsOnRaw) { _, _ in
+                AppCalendarConfig.shared.update(weekStartsOn: profile.weekStartsOn)
+                save(profile)
             }
-            .padding(.bottom, Theme.Spacing.xxxl)
+            .onChange(of: profile.preferredWeightUnitRaw) { _, _ in save(profile) }
+            .onChange(of: profile.defaultRestSeconds) { _, _ in save(profile) }
+            .onChange(of: profile.iCloudSyncEnabled) { _, _ in save(profile) }
         }
-        .onChange(of: profile.dailyPointGoal) { _, _ in save(profile) }
-        .onChange(of: profile.weekStartsOnRaw) { _, _ in
-            AppCalendarConfig.shared.update(weekStartsOn: profile.weekStartsOn)
-            save(profile)
-        }
-        .onChange(of: profile.preferredWeightUnitRaw) { _, _ in save(profile) }
-        .onChange(of: profile.defaultRestSeconds) { _, _ in save(profile) }
-        .onChange(of: profile.iCloudSyncEnabled) { _, _ in save(profile) }
     }
 
     // MARK: - Page Header
@@ -626,6 +634,56 @@ struct BentoSettingsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(Theme.Spacing.m)
             }
+        }
+    }
+
+    // MARK: - Companion
+
+    private var companionSection: some View {
+        let companion = (try? env.companionService.current())
+        let energy = companion?.energy ?? 0
+        let name = companion?.name ?? "—"
+        let mood = companion?.mood ?? .content
+        let species = companion?.species ?? .fox
+
+        return settingsSection(title: "COMPANION", icon: "pawprint.fill", tone: .warning) {
+            Button {
+                showingCompanion = true
+            } label: {
+                HStack(spacing: Theme.Spacing.m) {
+                    ZStack {
+                        Circle()
+                            .fill(companionColor(for: species).opacity(0.15))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: species.symbol)
+                            .font(Theme.Typography.body.weight(.semibold))
+                            .foregroundStyle(companionColor(for: species))
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        BentoText(verbatim: "\(name) \(mood.emoji)", style: .body)
+                        BentoText(verbatim: "\(mood.label) · \(Int(energy))/100 Energie", style: .caption, color: .secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(Theme.Typography.caption.weight(.bold))
+                        .foregroundStyle(.tertiary)
+                }
+                .contentShape(Rectangle())
+                .padding(.horizontal, Theme.Spacing.l)
+                .padding(.vertical, Theme.Spacing.m)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func companionColor(for species: CompanionSpecies) -> Color {
+        switch species {
+        case .fox:        return .orange
+        case .owl:        return .indigo
+        case .bear:       return .brown
+        case .wolf:       return .gray
+        case .deer:       return .pink
+        case .highlandCow:return .brown
         }
     }
 

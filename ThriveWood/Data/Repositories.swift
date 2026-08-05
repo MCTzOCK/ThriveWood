@@ -1020,3 +1020,41 @@ final class SwiftDataWellnessRepository: SwiftDataRepository, WellnessRepository
     }
 }
 
+// MARK: - Companion
+
+@MainActor
+final class SwiftDataCompanionRepository: SwiftDataRepository, CompanionRepository {
+    func currentCompanion() throws -> Companion {
+        let d = FetchDescriptor<Companion>(sortBy: [SortDescriptor(\.createdAt)])
+        if let existing = try context.fetch(d).first { return existing }
+        let companion = Companion()
+        context.insert(companion)
+        try save()
+        return companion
+    }
+
+    func update(_ companion: Companion) throws { try save() }
+
+    func choose(species: CompanionSpecies, name: String) throws -> Companion {
+        // Bestehenden Companion aktualisieren (nicht löschen!), damit Coins,
+        // Accessoires, Evolution und Zutrauen erhalten bleiben — nur die Art
+        // und der Name wechseln.
+        let d = FetchDescriptor<Companion>(sortBy: [SortDescriptor(\.createdAt)])
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let displayName = trimmed.isEmpty ? species.defaultName : trimmed
+
+        if let existing = try context.fetch(d).first {
+            existing.speciesRaw = species.rawValue
+            existing.name = displayName
+            try save()
+            return existing
+        }
+
+        // Noch keiner vorhanden → neuen anlegen.
+        let companion = Companion(species: species, name: displayName)
+        context.insert(companion)
+        try save()
+        return companion
+    }
+}
+

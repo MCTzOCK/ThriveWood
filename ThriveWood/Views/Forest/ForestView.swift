@@ -24,9 +24,12 @@ struct ForestView: View {
                 }
             }
         }
-        .navigationTitle("Mein Wald")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
+        // Standard-NavBar sichtbar lassen (für den Back-Button), aber den
+        // Titel ausblenden, da der BentoPageHeader den Titel bereits zeigt.
+        .toolbarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) { EmptyView() }
+        }
         .task {
             if vm == nil { vm = ForestViewModel(env: env) }
             vm?.load()

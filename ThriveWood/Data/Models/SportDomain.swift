@@ -10,7 +10,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class Exercise {
+final class Exercise: Identifiable {
     @Attribute(.unique) var id: UUID
     var name: String
     var details: String
@@ -98,7 +98,7 @@ final class Exercise {
 
 
 @Model
-final class Workout {
+final class Workout: Identifiable {
     @Attribute(.unique) var id: UUID
     var name: String
     var details: String

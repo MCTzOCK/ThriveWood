@@ -36,8 +36,13 @@ struct BentoHabitRowView: View {
                 Spacer(minLength: 0)
                 bottomRow
             }
-            .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        // 1:1 Aspect-Ratio AUF der fertigen Karte (außerhalb des BentoCard-
+        // Containers): jede Kachel wird exakt quadratisch und damit alle
+        // exakt gleich groß — unabhängig vom Inhalt. Die Breite liefert die
+        // adaptive Grid-Spalte, die Höhe wird daraus berechnet.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") { onEdit() }
             Button("Archivieren", systemImage: "archivebox", role: .destructive) { onEdit() }
@@ -52,7 +57,15 @@ struct BentoHabitRowView: View {
     private var headerRow: some View {
         HStack {
             iconBadge
-            Spacer()
+            Spacer(minLength: 0)
+            if streak > 0 {
+                BentoBadge(
+                    Text("\(streak)"),
+                    tone: .warning,
+                    systemImage: "flame.fill"
+                )
+            }
+            Spacer(minLength: 0)
             if showsEditButton {
                 editButton
             }
@@ -110,13 +123,20 @@ struct BentoHabitRowView: View {
             .strikethrough(isCompleted && !habit.isMeasurable, color: theme.colors.background.opacity(0.7))
             .lineLimit(2)
             .multilineTextAlignment(.leading)
-
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // Lange Namen werden mit „…" abgeschnitten statt die Kachelbreite
+            // zu überschreiten und Nachbar-Kacheln zu überlappen.
+            .truncationMode(.tail)
+        
         if habit.isMeasurable, let p = progress {
             BentoText(
                 "\(formatValue(p.value)) / \(formatValue(p.target)) \(abbreviatedUnit)",
                 style: .caption,
                 color: theme.colors.background.opacity(0.85)
             )
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -129,14 +149,7 @@ struct BentoHabitRowView: View {
                 tone: .neutral,
                 systemImage: "leaf.fill"
             )
-            if streak > 0 {
-                BentoBadge(
-                    Text("\(streak)"),
-                    tone: .warning,
-                    systemImage: "flame.fill"
-                )
-            }
-
+        
             Spacer()
 
             if habit.isMeasurable {
