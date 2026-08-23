@@ -124,7 +124,13 @@ final class ActiveSessionViewModel {
         session.sets.append(set)
         scheduleSave()
         Haptics.selection()
-        refreshGroup(for: exercise.id)
+        // Neue Übung? refreshGroup findet sie sonst nicht (kein bestehender
+        // Gruppen-Eintrag) → vollständiger Neuaufbau, sonst targeted refresh.
+        if groups.contains(where: { $0.id == exercise.id }) {
+            refreshGroup(for: exercise.id)
+        } else {
+            rebuildGroups()
+        }
         recomputeStats()
     }
 
