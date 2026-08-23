@@ -139,8 +139,10 @@ final class BackupService {
         
         let supplementEntryCount = try importSupplementEntries(backup.supplementEntries, supplementMap: supplementMap)
         result.supplementEntries = supplementEntryCount
-        
-        
+
+        // Unio: Nach dem Import den vollständigen Export aktualisieren
+        ThriveWoodUnio.scheduleExport()
+
         return result
     }
 

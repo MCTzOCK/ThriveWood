@@ -69,6 +69,7 @@ final class ForestService {
         forest.spentPoints += cost
         try forestRepo.update(forest)
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
         return tree
     }
 
@@ -87,12 +88,14 @@ final class ForestService {
         forest.spentPoints += cost
         try forestRepo.update(forest)
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     // MARK: Remove
 
     func remove(_ tree: TreeEntity) throws {
         try treeRepo.delete(tree)
+        ThriveWoodUnio.scheduleExport()
     }
 
     // MARK: Derived

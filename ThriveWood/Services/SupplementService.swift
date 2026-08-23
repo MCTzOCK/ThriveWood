@@ -72,10 +72,11 @@ final class SupplementService: ObservableObject {
 
         try supplementRepo.create(supplement)
         await scheduleNotifications(for: supplement)
-        
+
         // Trigger UI update
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     func update(_ supplement: Supplement) async throws {
@@ -83,6 +84,7 @@ final class SupplementService: ObservableObject {
         await scheduleNotifications(for: supplement)
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     func archive(_ supplement: Supplement) throws {
@@ -90,6 +92,7 @@ final class SupplementService: ObservableObject {
         notificationService.cancelNotifications(for: "supplement-\(supplement.id.uuidString)")
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     // MARK: - Tracking
@@ -107,6 +110,7 @@ final class SupplementService: ObservableObject {
         }
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     func skipDose(_ supplement: Supplement, doseNumber: Int, on date: Date = .now) throws {
@@ -123,6 +127,7 @@ final class SupplementService: ObservableObject {
         }
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     func isDoseTaken(_ supplement: Supplement, doseNumber: Int, on date: Date = .now) throws -> Bool {

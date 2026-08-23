@@ -178,29 +178,34 @@ final class AppEnvironment {
         else      { try habitRepo.update(habit) }
         try await notificationService.scheduleReminders(for: habit)
         achievementService.checkHabits()
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func archiveHabit(_ habit: Habit) async throws {
         try habitRepo.archive(habit)
         try groupRepo.removeHabitFromAllGroups(habit.id)
         try routineRepo.removeHabitFromAllRoutines(habit.id)
         try await notificationService.cancelReminders(for: habit)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func deleteHabit(_ habit: Habit) async throws {
         try await notificationService.cancelReminders(for: habit)
         try groupRepo.removeHabitFromAllGroups(habit.id)
         try routineRepo.removeHabitFromAllRoutines(habit.id)
         try habitRepo.delete(habit)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func saveGroup(_ group: HabitGroup, isNew: Bool) throws {
         if isNew { try groupRepo.create(group) }
         else     { try groupRepo.update(group) }
+        ThriveWoodUnio.scheduleExport()
     }
 
     func deleteGroup(_ group: HabitGroup) throws {
         try groupRepo.delete(group)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func moveHabitToGroup(_ habitID: UUID, from oldGroupID: UUID?, to newGroupID: UUID?) throws {
@@ -212,6 +217,7 @@ final class AppEnvironment {
         if let newID = newGroupID {
             try groupRepo.addHabit(habitID, to: newID)
         }
+        ThriveWoodUnio.scheduleExport()
     }
     
 }

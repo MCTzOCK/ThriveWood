@@ -37,11 +37,13 @@ final class HabitService {
         if let existing = try completions.completion(for: habit, on: normalizedDay) {
             let delta = -existing.pointsAwarded
             try completions.delete(existing)
+            ThriveWoodUnio.scheduleExport()
             WidgetCenter.shared.reloadAllTimelines()
             return delta
         } else {
             let c = HabitCompletion(habit: habit, day: normalizedDay)
             try completions.add(c)
+            ThriveWoodUnio.scheduleExport()
             onHabitCompleted?(c.pointsAwarded)
             return c.pointsAwarded
         }
@@ -75,6 +77,7 @@ final class HabitService {
         completion.completedAt = .now
         completion.recalculatePoints()
         try completions.add(completion)
+        ThriveWoodUnio.scheduleExport()
         return completion.pointsAwarded - oldPoints
     }
 
@@ -88,6 +91,7 @@ final class HabitService {
             // Letzter Schritt rückgängig → Completion löschen
             let diff = -oldPoints
             try completions.delete(completion)
+            ThriveWoodUnio.scheduleExport()
             return diff
         }
 
@@ -95,6 +99,7 @@ final class HabitService {
         completion.completedAt = .now
         completion.recalculatePoints()
         try completions.add(completion)
+        ThriveWoodUnio.scheduleExport()
         let delta = completion.pointsAwarded - oldPoints
         if delta > 0 { onHabitCompleted?(delta) }
         return delta

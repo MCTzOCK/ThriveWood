@@ -24,6 +24,7 @@ final class WellnessService {
         } else {
             try repo.add(entry)
         }
+        ThriveWoodUnio.scheduleExport()
     }
 
     func entryForDay(_ day: Date) throws -> WellnessEntry? {
@@ -36,6 +37,7 @@ final class WellnessService {
 
     func delete(_ entry: WellnessEntry) throws {
         try repo.delete(entry)
+        ThriveWoodUnio.scheduleExport()
     }
 
     struct WellnessSummary {

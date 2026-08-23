@@ -20,8 +20,9 @@ final class BodyProgressService {
     func addEntry(_ entry: BodyProgressEntry) {
         do {
             try repo.add(entry)
+            ThriveWoodUnio.scheduleExport()
         } catch {
-            
+
         }
     }
     
@@ -40,16 +41,18 @@ final class BodyProgressService {
     func deleteEntry(_ entry: BodyProgressEntry) {
         do {
             try repo.delete(entry)
+            ThriveWoodUnio.scheduleExport()
         } catch {
-            
+
         }
     }
-    
+
     func updateEntry(_ entry: BodyProgressEntry) {
         do {
             try repo.update(entry)
+            ThriveWoodUnio.scheduleExport()
         } catch {
-            
+
         }
     }
     

@@ -31,20 +31,24 @@ final class GymService {
         let gym = Gym(name: name, details: details, color: color, iconSystemName: iconSystemName, address: address)
         try gymRepo.create(gym)
         Haptics.success()
+        ThriveWoodUnio.scheduleExport()
         return gym
     }
 
     func updateGym(_ gym: Gym) throws {
         try gymRepo.update(gym)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func archiveGym(_ gym: Gym) throws {
         try gymRepo.archive(gym)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func deleteGym(_ gym: Gym) throws {
         try gymRepo.delete(gym)
         Haptics.impact()
+        ThriveWoodUnio.scheduleExport()
     }
 
     // MARK: - GymExercise

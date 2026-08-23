@@ -10,6 +10,7 @@ import SwiftData
 
 @main
 struct ThriveWoodApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     var sharedModelContainer = SharedModelContainer.shared
     @State private var env: AppEnvironment = AppEnvironment(context: SharedModelContainer.shared.mainContext)
 
@@ -42,6 +43,14 @@ struct ThriveWoodApp: App {
                     }
                     
                     //}
+                    
+                    // Unio: vollständigen Export nach App-Start/Update einplanen
+                    ThriveWoodUnio.scheduleExport()
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    // Unio: vollständigen Export beim Wechsel in den Hintergrund schreiben
+                    guard phase == .background else { return }
+                    Task { await ThriveWoodUnio.scheduler.exportImmediately() }
                 }
             }
         }

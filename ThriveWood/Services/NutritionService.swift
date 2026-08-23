@@ -59,11 +59,13 @@ final class NutritionService: ObservableObject {
         } else {
             try foodRepo.create(food)
         }
+        ThriveWoodUnio.scheduleExport()
     }
 
     func toggleFavorite(_ food: Food) throws {
         food.isFavorite.toggle()
         try foodRepo.update(food)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func recentFoods(limit: Int = 10) throws -> [Food] {
@@ -101,18 +103,21 @@ final class NutritionService: ObservableObject {
 
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     func deleteEntry(_ entry: FoodEntry) throws {
         try entryRepo.delete(entry)
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     func updateEntry(_ entry: FoodEntry) throws {
         try entryRepo.update(entry)
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     // MARK: - Nutrition Calculation
@@ -204,16 +209,19 @@ final class NutritionService: ObservableObject {
     func createTemplate(_ template: MealTemplate) throws {
         try templateRepo.create(template)
         lastUpdate = .now
+        ThriveWoodUnio.scheduleExport()
     }
 
     func updateTemplate(_ template: MealTemplate) throws {
         try templateRepo.update(template)
         lastUpdate = .now
+        ThriveWoodUnio.scheduleExport()
     }
 
     func deleteTemplate(_ template: MealTemplate) throws {
         try templateRepo.delete(template)
         lastUpdate = .now
+        ThriveWoodUnio.scheduleExport()
     }
 
     /// Loggt alle Items eines Templates als einzelne FoodEntries
@@ -239,6 +247,7 @@ final class NutritionService: ObservableObject {
         try templateRepo.incrementUsage(template)
         lastUpdate = .now
         WidgetCenter.shared.reloadAllTimelines()
+        ThriveWoodUnio.scheduleExport()
     }
 
     func updateTemplate(_ template: MealTemplate, with newItems: [MealTemplateItem]) throws {
@@ -256,6 +265,7 @@ final class NutritionService: ObservableObject {
         
         try templateRepo.update(template)
         lastUpdate = .now
+        ThriveWoodUnio.scheduleExport()
     }
     
     /// Erstellt ein Template aus bestehenden Entries
@@ -284,6 +294,7 @@ final class NutritionService: ObservableObject {
         
         try templateRepo.create(template)
         lastUpdate = .now
+        ThriveWoodUnio.scheduleExport()
         return template
     }
 

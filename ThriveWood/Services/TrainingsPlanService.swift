@@ -37,44 +37,52 @@ final class TrainingsPlanService {
         guard !name.isEmpty else {
             throw ServiceError.validationFailed("Name darf nicht leer sein")
         }
-        
-        return try repo.create(name: name, details: details, color: color)
+
+        let plan = try repo.create(name: name, details: details, color: color)
+        ThriveWoodUnio.scheduleExport()
+        return plan
     }
-    
+
     // MARK: - Update
-    
+
     func updatePlan(_ plan: TrainingsPlan, name: String, details: String, color: String) throws {
         guard !name.isEmpty else {
             throw ServiceError.validationFailed("Name darf nicht leer sein")
         }
-        
+
         plan.name = name
         plan.details = details
         plan.color = color
         try repo.update(plan)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func setActivePlan(_ plan: TrainingsPlan) throws {
         try repo.setActive(plan)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func assignWorkout(_ workout: Workout?, to weekday: TPWeekday, in plan: TrainingsPlan) throws {
         try repo.assignWorkout(workout, to: weekday, in: plan)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func toggleRestDay(_ weekday: TPWeekday, in plan: TrainingsPlan) throws {
         guard let day = plan.days.first(where: { $0.weekday == weekday }) else { return }
         try repo.setRestDay(weekday, in: plan, isRest: !day.isRestDay)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func updateDayNotes(_ notes: String, for weekday: TPWeekday, in plan: TrainingsPlan) throws {
         try repo.updateDayNotes(notes, for: weekday, in: plan)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     // MARK: - Delete
-    
+
     func deletePlan(_ plan: TrainingsPlan) throws {
         try repo.delete(plan)
+        ThriveWoodUnio.scheduleExport()
     }
     
     // MARK: - Quick Actions
@@ -106,19 +114,23 @@ final class TrainingsPlanService {
             let label = String(Character(UnicodeScalar(65 + i)!))
             try repo.addRotationEntry(workout: nil, label: label, to: plan)
         }
+        ThriveWoodUnio.scheduleExport()
         return plan
     }
 
     func advanceRotation(_ plan: TrainingsPlan) throws {
         try repo.advanceRotation(plan)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func resetRotation(_ plan: TrainingsPlan) throws {
         try repo.resetRotation(plan)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func addRotationWorkout(_ workout: Workout?, label: String, to plan: TrainingsPlan) throws {
         try repo.addRotationEntry(workout: workout, label: label, to: plan)
+        ThriveWoodUnio.scheduleExport()
     }
 
     /// Aktualisiert Label und Workout eines Rotations-Slots.
@@ -131,6 +143,7 @@ final class TrainingsPlanService {
         day.label = label
         day.workout = workout
         try repo.update(plan)
+        ThriveWoodUnio.scheduleExport()
     }
 
     /// Entfernt einen Rotations-Slot und sortiert die restlichen neu.
@@ -138,6 +151,7 @@ final class TrainingsPlanService {
         plan.days.removeAll { $0.id == day.id }
         for (i, d) in plan.rotationSequence.enumerated() { d.rotationOrder = i }
         try repo.removeDay(day, from: plan)
+        ThriveWoodUnio.scheduleExport()
     }
 
     func handleSessionFinished() {

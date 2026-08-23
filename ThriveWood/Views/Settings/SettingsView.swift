@@ -300,6 +300,9 @@ struct SettingsView: View {
                         .padding(.bottom, Theme.Spacing.s)
                 }
 
+                // MARK: Unio
+                UnioSettingsSection()
+
                 // MARK: Über
                 AboutCard(version: version)
 

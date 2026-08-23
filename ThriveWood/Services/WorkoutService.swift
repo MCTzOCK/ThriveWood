@@ -60,17 +60,20 @@ final class WorkoutService {
         )
         workout.exercises.append(slot)
         try workouts.update(workout)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func removeExercise(_ slot: WorkoutExercise, from workout: Workout) throws {
         workout.exercises.removeAll { $0.id == slot.id }
         for (i, e) in workout.exercises.enumerated() { e.order = i }
         try workouts.update(workout)
+        ThriveWoodUnio.scheduleExport()
     }
-    
+
     func reorderExercises(_ slots: [WorkoutExercise], in workout: Workout) throws {
         for (i, slot) in slots.enumerated() { slot.order = i }
         try workouts.update(workout)
+        ThriveWoodUnio.scheduleExport()
     }
     
     // MARK: Session Lifecycle
@@ -112,6 +115,7 @@ final class WorkoutService {
         }
         
         self.activeSession = session
+        ThriveWoodUnio.scheduleExport()
         
         let totalSets = session.workout?.exercises.reduce(0) { $0 + $1.targetSets } ?? 0
         
@@ -132,6 +136,7 @@ final class WorkoutService {
         session.perceivedExertion = perceivedExertion
         session.notes = notes
         try sessions.update(session)
+        ThriveWoodUnio.scheduleExport()
 
         // Session-Statistiken haben sich geändert (neue PRs möglich) → Caches leeren.
         topSetCache.removeAll()
@@ -163,6 +168,7 @@ final class WorkoutService {
     func cancelSession() throws {
         guard let session = activeSession else { throw ServiceError.noActiveSession }
         try sessions.delete(session)
+        ThriveWoodUnio.scheduleExport()
         self.activeSession = nil
         topSetCache.removeAll()
         workingStatsCache.removeAll()
@@ -183,16 +189,21 @@ final class WorkoutService {
         )
         session.sets.append(set)
         try sessions.update(session)
+        ThriveWoodUnio.scheduleExport()
         return set
     }
-    
+
     func markSet(_ set: SetEntry, completed: Bool) throws {
         set.isCompleted = completed
         set.completedAt = completed ? .now : nil
         try sessions.update(set.session ?? WorkoutSession())
+        ThriveWoodUnio.scheduleExport()
     }
-    
-    func archiveWorkout(_ workout: Workout) throws { try workouts.archive(workout) }
+
+    func archiveWorkout(_ workout: Workout) throws {
+        try workouts.archive(workout)
+        ThriveWoodUnio.scheduleExport()
+    }
     
     func getTopSet(for exercise: Exercise) -> SetEntry? {
         if let cached = topSetCache[exercise.id] {
